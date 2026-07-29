@@ -1,7 +1,7 @@
 # Create the SKE cluster
 resource "stackit_ske_cluster" "cluster" {
   project_id = var.project_id
-  name       = "dbaas"
+  name       = var.cluster_name
 
   node_pools = [
     {
