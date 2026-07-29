@@ -1,4 +1,4 @@
-name: Terraform SKE Provisioning
+name: SKE Provisioning and Argo CD Bootstrap
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 jobs:
   terraform:
+    name: SKE Provisioning
     runs-on: stackit-ubuntu-22
 
     steps:
@@ -58,3 +59,55 @@ jobs:
         with:
           name: kubeconfig
           path: terraform/kubeconfig.yaml
+
+
+    argocd:
+      name: Argo CD Bootstrap
+      needs: terraform
+      runs-on: stackit-ubuntu-22
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v4
+
+
+        - name: Download kubeconfig
+          uses: actions/download-artifact@v3
+          with:
+            name: kubeconfig
+
+
+        - name: Configure kubeconfig
+          run: |
+            mkdir -p ~/.kube
+            cp kubeconfig.yaml ~/.kube/config
+            chmod 600 ~/.kube/config
+
+
+        - name: Verify Kubernetes connection
+          run: |
+            kubectl get nodes
+
+
+        - name: Install Argo CD namespace
+          run: |
+            kubectl create namespace argocd \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+
+
+        - name: Install Argo CD
+          run: |
+            kubectl apply \
+              -n argocd \
+              -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+
+        - name: Wait for Argo CD
+          run: |
+            kubectl wait \
+              --for=condition=available \
+              deployment/argocd-server \
+              -n argocd \
+              --timeout=300s
