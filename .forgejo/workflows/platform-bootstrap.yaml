@@ -79,5 +79,16 @@ jobs:
       - name: Install Argo CD
         run: |
           kubectl apply \
+            --server-side \
             -n argocd \
-            -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+            -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.0/manifests/install.yaml
+
+      - name: Verify Argo CD installation
+        run: |
+          kubectl wait \
+            --for=condition=available \
+            deployment/argocd-server \
+            -n argocd \
+            --timeout=300s
+
+          kubectl get pods -n argocd
