@@ -14,10 +14,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
 
       - name: Terraform Init
         working-directory: terraform
@@ -25,7 +23,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform init
-
 
       - name: Terraform Plan
         working-directory: terraform
@@ -35,7 +32,6 @@ jobs:
           TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
           TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
         run: terraform plan
-
 
       - name: Terraform Apply
         working-directory: terraform
@@ -48,9 +44,6 @@ jobs:
 
       - name: Export kubeconfig
         working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           terraform output -raw kubeconfig > kubeconfig.yaml
 
@@ -61,53 +54,46 @@ jobs:
           path: terraform/kubeconfig.yaml
 
 
-    argocd:
-      name: Argo CD Bootstrap
-      needs: terraform
-      runs-on: stackit-ubuntu-22
+  argocd:
+    name: Argo CD Bootstrap
+    needs: terraform
+    runs-on: stackit-ubuntu-22
 
-      steps:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Checkout
-          uses: actions/checkout@v4
+      - name: Download kubeconfig
+        uses: actions/download-artifact@v3
+        with:
+          name: kubeconfig
 
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          cp kubeconfig.yaml ~/.kube/config
+          chmod 600 ~/.kube/config
 
-        - name: Download kubeconfig
-          uses: actions/download-artifact@v3
-          with:
-            name: kubeconfig
+      - name: Verify Kubernetes connection
+        run: |
+          kubectl get nodes
 
+      - name: Install Argo CD namespace
+        run: |
+          kubectl create namespace argocd \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
 
-        - name: Configure kubeconfig
-          run: |
-            mkdir -p ~/.kube
-            cp kubeconfig.yaml ~/.kube/config
-            chmod 600 ~/.kube/config
+      - name: Install Argo CD
+        run: |
+          kubectl apply \
+            -n argocd \
+            -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-
-        - name: Verify Kubernetes connection
-          run: |
-            kubectl get nodes
-
-
-        - name: Install Argo CD namespace
-          run: |
-            kubectl create namespace argocd \
-              --dry-run=client \
-              -o yaml | kubectl apply -f -
-
-
-        - name: Install Argo CD
-          run: |
-            kubectl apply \
-              -n argocd \
-              -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-
-        - name: Wait for Argo CD
-          run: |
-            kubectl wait \
-              --for=condition=available \
-              deployment/argocd-server \
-              -n argocd \
-              --timeout=300s
+      - name: Wait for Argo CD
+        run: |
+          kubectl wait \
+            --for=condition=available \
+            deployment/argocd-server \
+            -n argocd \
+            --timeout=300s
