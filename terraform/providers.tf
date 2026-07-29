@@ -11,6 +11,11 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.31"
     }
+
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.12"
+    }
   }
 
   backend "s3" {
@@ -37,4 +42,22 @@ terraform {
 provider "stackit" {
   default_region           = "eu01"
   service_account_key      = var.service_account_key
+}
+
+provider "helm" {
+  kubernetes {
+    host = data.stackit_ske_kubeconfig.cluster.host
+
+    client_certificate = base64decode(
+      data.stackit_ske_kubeconfig.cluster.client_certificate
+    )
+
+    client_key = base64decode(
+      data.stackit_ske_kubeconfig.cluster.client_key
+    )
+
+    cluster_ca_certificate = base64decode(
+      data.stackit_ske_kubeconfig.cluster.cluster_ca_certificate
+    )
+  }
 }
