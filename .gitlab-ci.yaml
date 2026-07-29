@@ -1,0 +1,7 @@
+stages:
+  - validate
+
+validate:
+  stage: validate
+  script:
+    - echo "Pipeline configured successfully"

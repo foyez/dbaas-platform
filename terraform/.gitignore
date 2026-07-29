@@ -1,0 +1,19 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Variable files
+*.tfvars
+*.tfvars.json
+tfplan
+
+# Secrets
+*.json
+*.pem
+*.key
+kubeconfig.yaml
+
+# Environment files
+.env
