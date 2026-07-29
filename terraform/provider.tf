@@ -36,6 +36,5 @@ terraform {
 
 provider "stackit" {
   default_region           = "eu01"
-  service_account_key_path = var.service_account_key_path
-  # private_key_path         = var.private_key_path
+  service_account_key      = var.service_account_key
 }

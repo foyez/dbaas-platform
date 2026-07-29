@@ -14,9 +14,8 @@ variable "service_account_key_path" {
   default     = "./stackit-sa-key.json"
 }
 
-# variable "private_key_path" {
-#   description = "SSH private key path"
-#   type        = string
-#   default     = "/Users/KaziFoyezAhmed/.ssh/id_rsa"
-# }
-
+variable "service_account_key" {
+  description = "Stackit service account JSON"
+  type = string
+  sensitive = true
+}
