@@ -7,5 +7,5 @@ spec:
   version: "16"
   instances: 3
   storage: 5Gi
-  database: customer
+  database: customer-db
   username: customer-admin

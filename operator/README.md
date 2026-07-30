@@ -1,135 +1,302 @@
-# postgresql-dbpaas-platform
-// TODO(user): Add simple overview of use/purpose
+# PostgreSQL DBASS Platform
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+## Connectivity Demonstration
 
-## Getting Started
+The PostgreSQL connectivity component demonstrates how a client workload inside Kubernetes connects to and uses the managed PostgreSQL database provisioned by the PaaS Operator.
 
-### Prerequisites
-- go version v1.24.6+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+The database server runs **PostgreSQL 16**, while the client workload uses the lightweight **`alpine/psql:16.3`** image. The client container provides PostgreSQL command-line utilities such as `psql` and `pg_isready` for connecting to the database and validating its availability.
 
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
+The connectivity architecture is:
 
-```sh
-make docker-build docker-push IMG=<some-registry>/postgresql-dbpaas-platform:tag
+```text
+                 Kubernetes
+
++---------------------------+
+| psql-client Deployment    |
+| alpine/psql:16.3          |
+|                           |
+| psql                      |
+| pg_isready                |
++-------------+-------------+
+              |
+              | PostgreSQL protocol
+              |
+              v
+
++---------------------------+
+| Managed PostgreSQL 16     |
+| Created by Operator       |
+| customer-db               |
++---------------------------+
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+The `psql-client` Deployment does not run a database server. It acts only as a PostgreSQL client and connects to the managed PostgreSQL instance created and maintained by the Operator.
 
-**Install the CRDs into the cluster:**
+Database connection details are provided through a Kubernetes Secret containing:
 
-```sh
-make install
+* Database host
+* PostgreSQL port
+* Username
+* Password
+* Database name
+
+These values are injected into the client container using PostgreSQL environment variables:
+
+| Variable     | Purpose                    |
+| ------------ | -------------------------- |
+| `PGHOST`     | PostgreSQL server endpoint |
+| `PGPORT`     | PostgreSQL service port    |
+| `PGUSER`     | Database username          |
+| `PGPASSWORD` | Database password          |
+| `PGDATABASE` | Target database name       |
+
+The `pg_isready` utility is used as a readiness probe to verify that the PostgreSQL server is reachable and accepting connections. It checks that the database endpoint is available and that the client can establish a connection.
+
+---
+
+### Connecting to PostgreSQL
+
+Deploy the client workload:
+
+```bash
+kubectl apply -f psql-client.yaml
 ```
 
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
+Verify that the client pod is running:
 
-```sh
-make deploy IMG=<some-registry>/postgresql-dbpaas-platform:tag
+```bash
+kubectl get pods -n postgres-demo
 ```
 
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
+Access the client container:
 
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
-
-```sh
-kubectl apply -k config/samples/
+```bash
+kubectl exec -it deployment/psql-client -n postgres-demo -- sh
 ```
 
->**NOTE**: Ensure that the samples has default values to test it out.
+Connect to the managed database:
 
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
-
-```sh
-kubectl delete -k config/samples/
+```bash
+psql
 ```
 
-**Delete the APIs(CRDs) from the cluster:**
+The `psql` client automatically uses the configured PostgreSQL environment variables to establish the connection.
 
-```sh
-make uninstall
+---
+
+### Verifying the PostgreSQL Server
+
+After connecting with `psql`, the PostgreSQL server information can be verified.
+
+#### 1. Check PostgreSQL version
+
+Run:
+
+```sql
+SELECT version();
 ```
 
-**UnDeploy the controller from the cluster:**
+Example output:
 
-```sh
-make undeploy
+```text
+PostgreSQL 16.4 (Ubuntu 16.4-1.pgdg22.04+1)
 ```
 
-## Project Distribution
+or:
 
-Following the options to release and provide this solution to the users.
-
-### By providing a bundle with all YAML files
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/postgresql-dbpaas-platform:tag
+```sql
+SHOW server_version;
 ```
 
-**NOTE:** The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without its
-dependencies.
+Example output:
 
-2. Using the installer
-
-Users can just run 'kubectl apply -f <URL for YAML BUNDLE>' to install
-the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/postgresql-dbpaas-platform/<tag or branch>/dist/install.yaml
+```text
+16.4
 ```
 
-### By providing a Helm Chart
+This confirms that the connected database server is running PostgreSQL 16.
 
-1. Build the chart using the optional helm plugin
+---
 
-```sh
-kubebuilder edit --plugins=helm/v2-alpha
+#### 2. Check the current database connection
+
+Run:
+
+```sql
+SELECT current_database();
 ```
 
-2. See that a chart was generated under 'dist/chart', and users
-can obtain this solution from there.
+Example:
 
-**NOTE:** If you change the project, you need to update the Helm Chart
-using the same command above to sync the latest changes. Furthermore,
-if you create webhooks, you need to use the above command with
-the '--force' flag and manually ensure that any custom configuration
-previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml'
-is manually re-applied afterwards.
+```text
+ current_database
+------------------
+ customer-db
+```
 
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+The `psql` shortcut can also be used:
 
-**NOTE:** Run `make help` for more information on all potential `make` targets
+```text
+\conninfo
+```
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+Example:
 
-## License
+```text
+You are connected to database "customer-db" as user "app-user"
+on host "managed-postgres.default.svc.cluster.local" port "5432".
+SSL connection (protocol: TLSv1.3)
+```
 
-Copyright 2026.
+This shows:
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+* Database name
+* Connected user
+* Database host
+* PostgreSQL port
+* SSL connection status
 
-    http://www.apache.org/licenses/LICENSE-2.0
+---
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+#### 3. Identify the exact PostgreSQL instance
 
+When multiple PostgreSQL instances exist, the current server identity can be checked using:
+
+```sql
+SELECT
+    inet_server_addr(),
+    inet_server_port(),
+    pg_backend_pid();
+```
+
+Example output:
+
+```text
+ inet_server_addr | inet_server_port | pg_backend_pid
+------------------+------------------+---------------
+ 10.244.1.25      | 5432             | 12345
+```
+
+Meaning:
+
+* `inet_server_addr()` → IP address of the PostgreSQL server receiving the connection
+* `inet_server_port()` → PostgreSQL port
+* `pg_backend_pid()` → PostgreSQL process handling the current client session
+
+---
+
+### Verifying Kubernetes Service Connectivity
+
+The Kubernetes Service used by the client can be checked with:
+
+```bash
+kubectl get svc -n postgres-demo
+```
+
+Example:
+
+```text
+NAME          TYPE        CLUSTER-IP
+customer-db   ClusterIP   10.96.10.20
+```
+
+The service endpoints can be checked with:
+
+```bash
+kubectl get endpoints -n postgres-demo
+```
+
+Example:
+
+```text
+NAME          ENDPOINTS
+customer-db   10.244.1.25:5432
+```
+
+The endpoint IP should match the value returned by:
+
+```sql
+SELECT inet_server_addr();
+```
+
+This confirms that the `psql-client` workload is communicating with the expected PostgreSQL instance.
+
+---
+
+### Checking Read/Write Instance
+
+If the Operator supports PostgreSQL replication with primary and replica instances, the connected instance role can be checked:
+
+```sql
+SELECT pg_is_in_recovery();
+```
+
+Results:
+
+```text
+false
+```
+
+means:
+
+* The client is connected to the primary instance.
+* Read and write operations are allowed.
+
+```text
+true
+```
+
+means:
+
+* The client is connected to a standby/replica instance.
+* The instance is normally read-only.
+
+---
+
+### Verifying the Connection Target from Kubernetes
+
+The client Deployment receives the database endpoint from the Kubernetes Secret:
+
+```yaml
+PGHOST:
+  valueFrom:
+    secretKeyRef:
+      name: managed-postgres-app
+      key: host
+```
+
+The configured host can be inspected using:
+
+```bash
+kubectl get secret managed-postgres-app \
+-n postgres-demo \
+-o jsonpath="{.data.host}" | base64 -d
+```
+
+Example output:
+
+```text
+customer-db-postgres.postgres-demo.svc.cluster.local
+```
+
+This hostname represents the PostgreSQL service endpoint used by the `psql-client` Deployment.
+
+---
+
+### Connectivity Verification Summary
+
+For a PaaS demonstration, the following commands provide evidence that the managed PostgreSQL product is working correctly:
+
+```sql
+SELECT version();
+
+\conninfo
+
+SELECT pg_is_in_recovery();
+```
+
+They verify:
+
+1. The PostgreSQL server version is correct (**PostgreSQL 16**).
+2. The client is connected to the expected database service and instance.
+3. The connection is established to the correct read/write PostgreSQL role.

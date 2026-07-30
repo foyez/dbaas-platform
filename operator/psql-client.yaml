@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: psql-client
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: psql-client
+  template:
+    metadata:
+      labels:
+        app: psql-client
+    spec:
+      containers:
+        - name: psql-client
+          image: alpine/psql:16.3
+
+          # keep the client container running
+          command:
+            - sh
+            - -c
+            - sleep infinity
+
+          env:
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: customer-db-app
+                  key: host
+
+                  
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: customer-db-app
+                  key: port
+
+
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: customer-db-app
+                  key: username
+
+
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: customer-db-app
+                  key: password
+
+
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: customer-db-app
+                  key: dbname
+
+
+            - name: PGSSLMODE
+              value: require
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
