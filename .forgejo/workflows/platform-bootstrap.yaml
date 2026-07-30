@@ -6,12 +6,59 @@ on:
       - main
 
 jobs:
-  platform-bootstrap:
-    name: Platform Bootstrap
+  ske-provision:
+    name: Provision SKE Cluster
     runs-on: stackit-ubuntu-22
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: terraform
+        env:
+          TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
+          TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: terraform
+        env:
+          TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
+          TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
+        run: terraform apply -auto-approve tfplan
+
+      # - name: Export kubeconfig
+      #   working-directory: terraform
+      #   run: terraform output -raw kubeconfig > kubeconfig.yaml
+
+      # # GHES compatibility: upload-artifact@v4 is not supported.
+      # # Keep v3 until the STACKIT GitHub Enterprise instance is upgraded.
+      # - name: Upload kubeconfig artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: kubeconfig
+      #     path: terraform/kubeconfig.yaml
+      #     retention-days: 1
+
+  argocd:
+    name: Bootstrap Argo CD
+    runs-on: stackit-ubuntu-22
+    needs: ske-provision
+
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Terraform
@@ -24,58 +71,37 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform init
 
-      - name: Terraform Plan
-        working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
-          TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
-        run: terraform plan
-
-      - name: Terraform Apply
-        working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
-          TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
-        run: terraform apply -auto-approve
-
       - name: Export kubeconfig
         working-directory: terraform
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          terraform output -raw kubeconfig > kubeconfig.yaml
+        run: terraform output -raw kubeconfig > kubeconfig.yaml
 
+      # install creates the file with the correct permissions 
       - name: Configure kubeconfig
-        working-directory: terraform
         run: |
-          mkdir -p ~/.kube
-          cp kubeconfig.yaml ~/.kube/config
-          chmod 600 ~/.kube/config
+          mkdir -p "$HOME/.kube"
+          install -m 600 terraform/kubeconfig.yaml "$HOME/.kube/config"
 
       - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.32.0
 
-
-      - name: Verify Kubernetes connection
+      - name: Verify cluster connection
         run: |
+          kubectl config current-context
           kubectl get nodes
 
-
-      - name: Install Argo CD namespace
+      - name: Create Argo CD namespace
         run: |
           kubectl create namespace argocd \
             --dry-run=client \
             -o yaml | kubectl apply -f -
 
-
+      # --server-side avoids client-side apply annotation size limits of approximately 256KB
+      # when applying Kubernetes resources with large manifests.
       - name: Install Argo CD
         run: |
           kubectl apply \
@@ -83,7 +109,7 @@ jobs:
             -n argocd \
             -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.0/manifests/install.yaml
 
-      - name: Verify Argo CD installation
+      - name: Wait for Argo CD
         run: |
           kubectl wait \
             --for=condition=available \
@@ -91,4 +117,6 @@ jobs:
             -n argocd \
             --timeout=300s
 
+      - name: Verify Argo CD installation
+        run: |
           kubectl get pods -n argocd
