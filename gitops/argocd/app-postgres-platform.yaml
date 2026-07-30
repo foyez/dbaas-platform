@@ -11,7 +11,7 @@ spec:
     path: gitops/postgres-platform
   destination:
     server: https://kubernetes.default.svc
-    namespace: postgres-platform-system
+    namespace: postgresql-dbpaas-platform-system
   syncPolicy:
     automated:
       prune: true
