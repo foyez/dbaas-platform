@@ -7,4 +7,4 @@ resources:
 images:
   - name: controller
     newName: docker.io/foyezar/postgres-platform-operator
-    newTag: init   # CI overwrites this line — the value here is only a placeholder
+    newTag: a4d0e6d
