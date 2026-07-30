@@ -129,7 +129,7 @@ jobs:
           kubectl create secret generic postgres-platform-repo \
             -n argocd \
             --from-literal=type=git \
-            --from-literal=url=https://level3.git.onstackit.cloud/LEVEL3/foyez.git \
+            --from-literal=url=https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git \
             --from-literal=username=${{ secrets.STACKIT_GIT_USERNAME }} \
             --from-literal=password=${{ secrets.STACKIT_DBAAS_REPO_TOKEN }} \
             --dry-run=client \
