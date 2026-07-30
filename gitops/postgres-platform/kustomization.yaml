@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../operator/config/default
+
+images:
+  - name: controller
+    newName: docker.io/foyezar/postgres-platform-operator
+    newTag: init   # CI overwrites this line — the value here is only a placeholder

@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-databases
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
+    targetRevision: main
+    path: gitops/applications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

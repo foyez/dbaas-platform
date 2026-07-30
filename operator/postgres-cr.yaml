@@ -1,0 +1,15 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: PostgreSQL
+metadata:
+  name: customer-db
+  namespace: paas-databases
+spec:
+  version: "16"
+  instances: 3  # number of PostgrSQL pods (1 primary + N-1 replicas)
+                # minimum 1 for dev, 3 for HA production
+  storage: 1Gi
+  database: customer
+  username: customer-admin
+  connectionPooler:
+    enabled: true
+    poolSize: 20

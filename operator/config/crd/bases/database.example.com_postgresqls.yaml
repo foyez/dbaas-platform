@@ -1,0 +1,91 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.21.0
+  name: postgresqls.database.example.com
+spec:
+  group: database.example.com
+  names:
+    kind: PostgreSQL
+    listKind: PostgreSQLList
+    plural: postgresqls
+    singular: postgresql
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: PHASE
+      type: string
+    - jsonPath: .status.readyInstances
+      name: READY
+      type: integer
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: PostgreSQL is the Schema for the postgresqls API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of PostgreSQL
+            properties:
+              database:
+                description: Database is the name of the initial database to create.
+                type: string
+              instances:
+                default: 1
+                description: Instances is the number of PostgreSQL instances in the
+                  cluster.
+                format: int32
+                minimum: 1
+                type: integer
+              storage:
+                description: Storage is the persistent volume size for each PostgreSQL
+                  instance.
+                type: string
+              username:
+                description: Username is the owner of the initial database.
+                type: string
+              version:
+                description: Version specifies the PostgreSQL major version (for example,
+                  16 or 17).
+                type: string
+            required:
+            - database
+            - storage
+            - username
+            - version
+            type: object
+          status:
+            description: status defines the observed state of PostgreSQL
+            properties:
+              phase:
+                type: string
+              readyInstances:
+                format: int32
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

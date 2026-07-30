@@ -120,3 +120,25 @@ jobs:
       - name: Verify Argo CD installation
         run: |
           kubectl get pods -n argocd
+
+      - name: Configure Argo CD repository credentials
+        run: |
+          kubectl create secret generic postgres-platform-repo \
+            -n argocd \
+            --from-literal=type=git \
+            --from-literal=url=https://level3.git.onstackit.cloud/LEVEL3/foyez.git \
+            --from-literal=username=${{ secrets.STACKIT_GIT_USERNAME }} \
+            --from-literal=password=${{ secrets.STACKIT_DBAAS_REPO_TOKEN }} \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+          kubectl label secret postgres-platform-repo \
+            -n argocd \
+            argocd.argoproj.io/secret-type=repository \
+            --overwrite
+
+      - name: Bootstrap Argo CD Applications
+        run: |
+          kubectl apply -f gitops/argocd/app-cnpg.yaml
+          kubectl apply -f gitops/argocd/app-postgres-platform.yaml
+          kubectl apply -f gitops/argocd/app-databases.yaml
