@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'terraform/**'
+      - '.forgejo/workflows/platform-bootstrap.yaml'
 
 jobs:
   ske-provision:

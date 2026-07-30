@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - 'operator/**'
+      - '.forgejo/workflows/operator-ci.yaml'
 
 permissions:
   contents: write   # needed to push the image-tag bump commit back
