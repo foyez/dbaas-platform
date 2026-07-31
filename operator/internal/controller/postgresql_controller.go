@@ -16,6 +16,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// +kubebuilder:rbac:groups=database.example.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=postgresqls/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=database.example.com,resources=postgresqls/finalizers,verbs=update
+// +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+
 // PostgreSQLReconciler reconciles a PostgreSQL object
 type PostgreSQLReconciler struct {
 	client.Client
