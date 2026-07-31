@@ -31,6 +31,12 @@ type PostgreSQLSpec struct {
 	// +kubebuilder:validation:Required
 	Username string `json:"username"`
 
+	// MaxConnections specifies the maximum number of client connections.
+	// If omitted, the CloudNativePG/PostgreSQL default is used.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	// MaxConnections *int32 `json:"maxConnections,omitempty"`
+
 	// ConnectionPooler configures the optional PgBouncer connection pooler.
 	// ConnectionPooler ConnectionPoolerSpec `json:"connectionPooler,omitempty"`
 }
