@@ -17,7 +17,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /instances:
+  /api/v1/instances:
     post:
       tags: [instances]
       operationId: createInstance
@@ -95,7 +95,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /instances/{instanceId}:
+  /api/v1/instances/{instanceId}:
     delete:
       tags:
         - Instances
@@ -148,7 +148,7 @@ paths:
                 error: conflict
                 message: Instance is already being deleted.
 
-  /instances/{id}/connection:
+  /api/v1/instances/{id}/connection:
     get:
       tags: [instances]
       operationId: getInstanceConnection
