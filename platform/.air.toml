@@ -1,0 +1,45 @@
+# Air configuration for Go hot reload during development
+
+# Directory where Air watches for changes
+root = "."
+
+# Temporary directory where Air stores the rebuilt binary
+tmp_dir = "tmp"
+
+
+[build]
+
+# Command Air runs whenever Go files change
+cmd = "go build -tags dev -o ./tmp/main ./cmd/server"
+
+# Binary that Air executes after successful build
+entrypoint = "./tmp/main"
+
+# File extensions to watch
+include_ext = ["go", "yaml", "yml"]
+
+# Directories to ignore
+exclude_dir = ["tmp", "vendor"]
+
+# Delay before rebuilding after detecting changes (milliseconds)
+delay = 1000
+
+# Use polling because Podman-on-macOS bind mounts may not emit fs notify events.
+poll = true
+poll_interval = 1000
+
+# handle signal: ctrl+c
+send_interrupt = true
+kill_delay = 500
+
+
+[log]
+
+# Show timestamps in logs
+time = true
+
+
+[misc]
+
+# Clean temporary files when Air exits
+clean_on_exit = true

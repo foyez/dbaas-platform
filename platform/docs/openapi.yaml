@@ -1,0 +1,376 @@
+openapi: 3.0.3
+
+info:
+  title: PostgreSQL Platform API
+  version: 0.1.0
+  description: API for managing PostgreSQL instances.
+
+servers:
+  - url: http://localhost:8080
+    description: Local
+
+tags:
+  - name: instances
+    description: Operations on PaaS product instances
+ 
+security:
+  - bearerAuth: []
+
+paths:
+  /instances:
+    post:
+      tags: [instances]
+      operationId: createInstance
+      summary: Create a new product instance
+      description: >
+        Accepts a request to provision a new product instance. The instance
+        is created asynchronously; this endpoint returns as soon as the
+        underlying resource has been accepted, not once provisioning has
+        completed. Clients should poll `GET /instances/{id}` and inspect
+        `status` until it reaches `Running`.
+
+
+        This operation is idempotent when the `Idempotency-Key` header is
+        supplied: repeating the same request with the same key returns the
+        original instance instead of creating a duplicate.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInstanceRequest'
+            examples:
+              basic:
+                value:
+                  name: my-postgres-db
+                  version: 16
+                  storage: 10Gi
+      responses:
+        '202':
+          description: >
+            Request accepted. The instance has been registered and
+            provisioning has started asynchronously.
+          headers:
+            Location:
+              description: URL of the created instance resource
+              schema:
+                type: string
+                example: /v1/instances/inst-7f3a2b
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+              examples:
+                accepted:
+                  value:
+                    id: inst-7f3a2b
+                    name: my-postgres-db
+                    version: 16
+                    storage: 10Gi
+                    status: Pending
+                    createdAt: "2026-08-04T09:12:00Z"
+        '200':
+          description: >
+            Idempotent replay: a request with this `Idempotency-Key` was
+            already processed. Returns the current state of the existing
+            instance rather than creating a new one.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: An instance with this name already exists and does not match the idempotency key provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /instances/{instanceId}:
+    delete:
+      tags:
+        - Instances
+      summary: Delete a PostgreSQL instance
+      description: |
+        Deletes a PostgreSQL instance asynchronously.
+
+        The request returns immediately with **202 Accepted**.
+        Actual deletion is performed later by the Kubernetes operator.
+
+      operationId: deleteInstance
+
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          description: Unique instance identifier.
+          schema:
+            type: string
+          example: pg-demo
+
+      responses:
+        "202":
+          description: Deletion accepted.
+          headers:
+            Location:
+              description: Endpoint to monitor instance status.
+              schema:
+                type: string
+              example: /instances/pg-demo
+
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAcceptedResponse"
+              example:
+                message: Deletion initiated.
+                status: Deleting
+
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+        "409":
+          description: Instance is already being deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: conflict
+                message: Instance is already being deleted.
+
+  /instances/{id}/connection:
+    get:
+      tags: [instances]
+      operationId: getInstanceConnection
+      summary: Get connection details for an instance
+      description: >
+        Returns the connection endpoint for a product instance. Only
+        available once the instance's status is `Running`; while
+        provisioning is still in progress, this returns `409 Conflict`.
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '200':
+          description: Connection details for the instance
+          headers:
+            Cache-Control:
+              description: Always set to no-store since this endpoint may expose connection metadata
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionInfo'
+              examples:
+                running:
+                  value:
+                    instanceId: inst-7f3a2b
+                    host: inst-7f3a2b-rw.svc.cluster.local
+                    port: 5432
+                    database: appdb
+                    sslMode: require
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Instance exists but is not yet in a Running state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notReady:
+                  value:
+                    error:
+                      code: INSTANCE_NOT_READY
+                      message: "Instance is currently Provisioning and has no connection endpoint yet."
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    InstanceId:
+      name: id
+      in: path
+      required: true
+      description: Unique identifier of the product instance
+      schema:
+        type: string
+        example: inst-7f3a2b
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: >
+        Client-generated unique key (UUID recommended) identifying a
+        logical create operation. Replaying the same key returns the
+        original result instead of creating a duplicate instance.
+      schema:
+        type: string
+        format: uuid
+        example: 5b1e3c2a-4f3a-4e9a-9d0a-2f6b7a8c9d10
+
+  schemas:
+    CreateInstanceRequest:
+      type: object
+      required: [name, storage, version]
+      properties:
+        name:
+          type: string
+          description: >
+            Unique instance name. Must be DNS-1123 compliant since it
+            becomes the underlying Kubernetes resource name.
+          pattern: '^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$'
+          minLength: 3
+          maxLength: 63
+          example: my-app-db
+        version:
+          type: string
+          description: Major CNPG/PostgreSQL version.
+          enum: ["14", "15", "16"]
+          example: "16"
+        storage:
+          type: string
+          description: Kubernetes resource quantity for storage.
+          pattern: '^[0-9]+(Gi|Mi)$'
+          example: 10Gi
+        instances:
+          type: integer
+          description: >
+            Number of CNPG cluster instances. 1 = no HA, 3 = HA with replicas.
+          minimum: 1
+          maximum: 5
+          default: 1
+          example: 1
+        username:
+          type: string
+          description: Team or user identifier, used for filtering and RBAC.
+          maxLength: 128
+          example: team-checkout
+      additionalProperties: false
+      example:
+        name: my-app-db
+        version: "16"
+        storage: 10Gi
+        instances: 1
+        username: team-checkout
+
+    Instance:
+      type: object
+      properties:
+        id:
+          type: string
+          example: inst-7f3a2b
+        name:
+          type: string
+          example: my-postgres-db
+        status:
+          type: string
+          enum: [Pending, Provisioning, Running, Updating, Deleting, Failed]
+          example: Pending
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-08-04T09:12:00Z"
+        _links:
+          type: object
+          properties:
+            self:
+              type: string
+              example: /v1/instances/inst-7f3a2b
+            connection:
+              type: string
+              example: /v1/instances/inst-7f3a2b/connection
+            credentials:
+              type: string
+              example: /v1/instances/inst-7f3a2b/credentials
+
+    ConnectionInfo:
+      type: object
+      properties:
+        instanceId:
+          type: string
+          example: inst-7f3a2b
+        host:
+          type: string
+          example: inst-7f3a2b-rw.svc.cluster.local
+        port:
+          type: integer
+          example: 5432
+        database:
+          type: string
+          example: appdb
+        sslMode:
+          type: string
+          example: require
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: INSTANCE_NOT_FOUND
+            message:
+              type: string
+              example: Product instance does not exist.
+
+  responses:
+    BadRequest:
+      description: Malformed request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid authentication credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated but not permitted to access this instance
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Instance does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Request was well-formed but semantically invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

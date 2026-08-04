@@ -1,0 +1,42 @@
+# Development stage
+FROM golang:1.26-alpine AS dev
+
+WORKDIR /app
+
+RUN go install github.com/air-verse/air@latest
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["air", "-c", ".air.toml"]
+
+# Build stage
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+# Download dependencies first (better layer caching)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Build static binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build \
+    -ldflags="-s -w" \
+    -o server \
+    ./cmd/server
+
+# Run stage
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /app
+COPY --from=builder /app/server .
+USER 65532:65532
+EXPOSE 8080
+ENTRYPOINT ["./server"]
