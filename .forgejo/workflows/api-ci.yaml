@@ -26,7 +26,7 @@ jobs:
           docker --version
           docker info
 
-      - name: Log in to Docker Hub
+      - name: Log in to STACKIT Container Registry
         run: |
           echo "${{ secrets.STACKIT_CONTAINER_ROBOT_TOKEN }}" | \
             docker login registry.onstackit.cloud \
