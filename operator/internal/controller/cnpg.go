@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
-	databasev1 "github.com/foyez/postgres-platform/api/v1"
+	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )

@@ -28,7 +28,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/foyez/postgres-platform/test/utils"
+	"github.com/foyez/dbaas-platform/operator/test/utils"
 )
 
 var (

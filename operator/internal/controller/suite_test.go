@@ -33,7 +33,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	databasev1 "github.com/foyez/postgres-platform/api/v1"
+	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
+	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -61,6 +62,9 @@ var _ = BeforeSuite(func() {
 
 	var err error
 	err = databasev1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = cnpgv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme

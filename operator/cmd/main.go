@@ -20,8 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
-	databasev1 "github.com/foyez/postgres-platform/api/v1"
-	"github.com/foyez/postgres-platform/internal/controller"
+	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
+	"github.com/foyez/dbaas-platform/operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

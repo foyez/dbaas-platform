@@ -11,7 +11,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
-	databasev1 "github.com/foyez/postgres-platform/api/v1"
+	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )

@@ -7,7 +7,7 @@ domain: example.com
 layout:
 - go.kubebuilder.io/v4
 projectName: postgresql-dbpaas-platform
-repo: github.com/foyez/postgres-platform
+repo: github.com/foyez/dbaas-platform/operator
 resources:
 - api:
     crdVersion: v1
@@ -16,6 +16,6 @@ resources:
   domain: example.com
   group: database
   kind: PostgreSQL
-  path: github.com/foyez/postgres-platform/api/v1
+  path: github.com/foyez/dbaas-platform/operator/api/v1
   version: v1
 version: "3"

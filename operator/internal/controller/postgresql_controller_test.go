@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	databasev1 "github.com/foyez/postgres-platform/api/v1"
+	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 )
 
 var _ = Describe("PostgreSQL Controller", func() {
