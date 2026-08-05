@@ -23,7 +23,7 @@ help:
 build:
 	${CONTAINER_TOOL} build \
 		-t ${IMG} \
-		--target builder \
+		--target prod \
 		-f Containerfile .
 
 
