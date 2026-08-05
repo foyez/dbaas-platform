@@ -37,3 +37,7 @@ type CreateInstanceResult struct {
 	Instance *Instance
 	Replayed bool
 }
+
+type ListInstancesResult struct {
+	Instances []*Instance
+}

@@ -16,6 +16,7 @@ func NewRouter(h *InstanceHandler) *gin.Engine {
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/instances", h.CreateInstance)
+		v1.GET("/instances", h.ListInstances)
 	}
 
 	return r

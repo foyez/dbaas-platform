@@ -28,3 +28,7 @@ type InstanceResponse struct {
 	Status    domain.InstanceStatus `json:"status"`
 	CreatedAt time.Time             `json:"createdAt"`
 }
+
+type ListInstancesResponse struct {
+	Items []InstanceResponse `json:"items"`
+}

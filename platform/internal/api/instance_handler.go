@@ -100,3 +100,33 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 
 	httpx.JSON(c, http.StatusAccepted, resp)
 }
+
+func (h *InstanceHandler) ListInstances(c *gin.Context) {
+	result, err := h.svc.ListInstances(c.Request.Context())
+	if err != nil {
+		h.logger.Error(
+			"failed to list instances",
+			"error", err,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	resp := ListInstancesResponse{
+		Items: make([]InstanceResponse, 0, len(result.Instances)),
+	}
+
+	for _, inst := range result.Instances {
+		resp.Items = append(resp.Items, InstanceResponse{
+			ID:        inst.ID,
+			Name:      inst.Name,
+			Version:   inst.Version,
+			Storage:   inst.Storage,
+			Status:    inst.Status,
+			CreatedAt: inst.CreatedAt,
+		})
+	}
+
+	httpx.JSON(c, http.StatusOK, resp)
+}

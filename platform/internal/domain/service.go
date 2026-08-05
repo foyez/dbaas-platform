@@ -9,6 +9,8 @@ import "context"
 type InstanceService interface {
 	CreateInstance(ctx context.Context, input CreateInstanceInput) (*CreateInstanceResult, error)
 
+	ListInstances(ctx context.Context) (*ListInstancesResult, error)
+
 	// Future APIs:
 	// GetInstance(...)
 	// ListInstances(...)

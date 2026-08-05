@@ -22,6 +22,8 @@ func NewClient(
 	}
 }
 
+const namespace = "database-system"
+
 func (c *client) CreateInstance(
 	ctx context.Context,
 	input domain.CreateInstanceInput,
@@ -30,7 +32,7 @@ func (c *client) CreateInstance(
 	pg := &databasev1.PostgreSQL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      input.Name,
-			Namespace: "database-system",
+			Namespace: namespace,
 		},
 		Spec: databasev1.PostgreSQLSpec{
 			Version:  strconv.Itoa(input.Version),
@@ -47,19 +49,7 @@ func (c *client) CreateInstance(
 	// Call Kubernetes API.
 
 	// Wait/read status if required.
-	version, err := strconv.Atoi(pg.Spec.Version)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domain.Instance{
-		ID:        string(pg.UID),
-		Name:      pg.Name,
-		Version:   version,
-		Storage:   pg.Spec.Storage,
-		Status:    domain.InstanceStatusPending,
-		CreatedAt: pg.CreationTimestamp.Time.UTC(),
-	}, nil
+	return toDomainInstance(pg), nil
 }
 
 func (c *client) GetInstanceByIdempotencyKey(
@@ -69,4 +59,41 @@ func (c *client) GetInstanceByIdempotencyKey(
 	// Lookup existing instance.
 
 	return nil, nil
+}
+
+func (c *client) ListInstances(ctx context.Context) ([]*domain.Instance, error) {
+	pgList := &databasev1.PostgreSQLList{}
+
+	if err := c.k8sClient.List(
+		ctx,
+		pgList,
+		ctrlclient.InNamespace(namespace),
+	); err != nil {
+		return nil, err
+	}
+
+	instances := make([]*domain.Instance, 0, len(pgList.Items))
+	for i := range pgList.Items {
+		instances = append(instances, toDomainInstance(&pgList.Items[i]))
+	}
+
+	return instances, nil
+}
+
+func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
+	version, _ := strconv.Atoi(pg.Spec.Version)
+
+	status := domain.InstanceStatusPending
+	if pg.Status.Phase == "Ready" {
+		status = domain.InstanceStatusRunning
+	}
+
+	return &domain.Instance{
+		ID:        string(pg.UID),
+		Name:      pg.Name,
+		Version:   version,
+		Storage:   pg.Spec.Storage,
+		Status:    status,
+		CreatedAt: pg.CreationTimestamp.Time.UTC(),
+	}
 }

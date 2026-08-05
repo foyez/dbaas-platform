@@ -62,3 +62,14 @@ func validateCreateInstance(
 
 	return nil
 }
+
+func (s *instanceService) ListInstances(ctx context.Context) (*domain.ListInstancesResult, error) {
+	instances, err := s.client.ListInstances(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.ListInstancesResult{
+		Instances: instances,
+	}, nil
+}

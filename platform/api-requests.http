@@ -8,7 +8,10 @@ POST {{apiV1}}/instances
 Content-Type: {{contentType}}
 
 {
-  "name": "my-postgres-db",
+  "name": "my-db-2",
   "version": 16,
   "storage": "10Gi"
 }
+
+### List Instances
+GET {{apiV1}}/instances

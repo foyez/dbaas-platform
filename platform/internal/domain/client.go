@@ -17,6 +17,8 @@ type InstanceClient interface {
 		key string,
 	) (*Instance, error)
 
+	ListInstances(ctx context.Context) ([]*Instance, error)
+
 	// Future operations:
 	// GetInstance(...)
 	// ListInstances(...)
