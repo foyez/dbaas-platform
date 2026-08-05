@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:8080
+@apiV1 = {{baseUrl}}/api/v1
+@contentType = application/json
+@eventID = 7dd2f067-a9bf-4869-a04c-0f769aa036be
+
+### Create Instance
+POST {{apiV1}}/instances
+Content-Type: {{contentType}}
+
+{
+  "name": "my-postgres-db",
+  "version": 16,
+  "storage": "10Gi"
+}

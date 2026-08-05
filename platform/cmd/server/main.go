@@ -6,6 +6,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/api"
 	"github.com/foyez/dbaas-platform/platform/internal/config"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/cnpg"
+	"github.com/foyez/dbaas-platform/platform/internal/infra/k8s"
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 )
@@ -17,9 +18,16 @@ func main() {
 	}
 
 	log := logger.New(cfg.App.LogLevel, cfg.App.Env)
-	client := cnpg.NewClient()
 
-	svc := service.NewInstanceService(client, log)
+	k8sClient, err := k8s.NewClient()
+	if err != nil {
+		log.Error("failed creating kubernetes client", "error", err)
+		return
+	}
+
+	instanceClient := cnpg.NewClient(k8sClient)
+
+	svc := service.NewInstanceService(instanceClient, log)
 	handler := api.NewInstanceHandler(svc, log)
 
 	r := api.NewRouter(handler)
@@ -29,5 +37,4 @@ func main() {
 	if err := r.Run(cfg.Server.Address); err != nil {
 		log.Error("failded to start API server", "error", err)
 	}
-
 }

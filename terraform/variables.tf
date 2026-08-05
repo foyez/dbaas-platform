@@ -9,6 +9,12 @@ variable "service_account_key" {
   sensitive = true
 }
 
+# variable "service_account_key_path" {
+#   description = "Stackit service accoutn key path"
+#   type        = string
+#   default     = "./stackit-sa-key.json"
+# }
+
 variable "cluster_name" {
   type    = string
   default = "dbaas"

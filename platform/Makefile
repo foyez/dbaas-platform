@@ -20,6 +20,7 @@ help:
 # Build production image using final stage
 build:
 	podman build \
+		--platform linux/arm64 \
 		-t $(APP_NAME):latest \
 		--target production \
 		-f Containerfile .
@@ -29,6 +30,7 @@ build:
 # Mount source code so Air can detect changes
 dev:
 	podman build \
+		--platform linux/arm64 \
 		-t $(IMAGE_NAME) \
 		--target dev \
 		-f Containerfile .
@@ -37,6 +39,7 @@ dev:
 		--rm \
 		-p 8080:8080 \
 		-v $$(pwd):/app:Z \
+		-v $$HOME/.kube:/root/.kube:Z \
 		-v go-cache:/go/pkg/mod \
 		$(IMAGE_NAME)
 

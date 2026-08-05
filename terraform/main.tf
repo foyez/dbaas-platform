@@ -26,6 +26,6 @@ resource "stackit_ske_kubeconfig" "ske_kubeconfig" {
   cluster_name = stackit_ske_cluster.cluster.name
 
   refresh        = true
-  expiration     = 604800 # 7 days
-  refresh_before = 86400  # 1 day before expiration
+  expiration     = 2592000  # 30 days
+  refresh_before = 86400    # 1 day before expiration
 }
