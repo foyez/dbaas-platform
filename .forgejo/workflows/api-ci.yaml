@@ -1,4 +1,4 @@
-name: Operator CI
+name: DBAAS API CI
 on:
   push:
     branches:
@@ -16,7 +16,7 @@ jobs:
     runs-on: stackit-ubuntu-22
     defaults:
       run:
-        working-directory: operator
+        working-directory: platform
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
