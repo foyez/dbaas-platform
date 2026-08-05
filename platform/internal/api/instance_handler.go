@@ -9,6 +9,7 @@ import (
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/httpx"
+	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -129,4 +130,29 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 	}
 
 	httpx.JSON(c, http.StatusOK, resp)
+}
+
+func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		h.logger.Warn("invalid instance id")
+
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	if err := h.svc.DeleteInstance(c, id); err != nil {
+		h.logger.Error(
+			"failed to delete instance",
+			"error", err,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	httpx.JSON(c, http.StatusAccepted, DeleteInstanceResponse{
+		Message: "Deletetion initiated",
+		Status:  "Deleting",
+	})
 }

@@ -73,3 +73,7 @@ func (s *instanceService) ListInstances(ctx context.Context) (*domain.ListInstan
 		Instances: instances,
 	}, nil
 }
+
+func (s *instanceService) DeleteInstance(ctx context.Context, id string) error {
+	return s.client.DeleteInstance(ctx, id)
+}

@@ -8,8 +8,8 @@ import "context"
 // InstanceService defines business operations for managing PostgreSQL instances.
 type InstanceService interface {
 	CreateInstance(ctx context.Context, input CreateInstanceInput) (*CreateInstanceResult, error)
-
 	ListInstances(ctx context.Context) (*ListInstancesResult, error)
+	DeleteInstance(ctx context.Context, id string) error
 
 	// Future APIs:
 	// GetInstance(...)

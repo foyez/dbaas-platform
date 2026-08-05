@@ -18,6 +18,7 @@ type InstanceClient interface {
 	) (*Instance, error)
 
 	ListInstances(ctx context.Context) ([]*Instance, error)
+	DeleteInstance(ctx context.Context, id string) error
 
 	// Future operations:
 	// GetInstance(...)

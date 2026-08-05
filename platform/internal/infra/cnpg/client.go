@@ -6,6 +6,7 @@ import (
 
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
+	"github.com/foyez/dbaas-platform/platform/internal/service"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -78,6 +79,28 @@ func (c *client) ListInstances(ctx context.Context) ([]*domain.Instance, error) 
 	}
 
 	return instances, nil
+}
+
+func (c *client) DeleteInstance(ctx context.Context, id string) error {
+	pgList := &databasev1.PostgreSQLList{}
+
+	if err := c.k8sClient.List(
+		ctx,
+		pgList,
+		ctrlclient.InNamespace(namespace),
+	); err != nil {
+		return err
+	}
+
+	for i := range pgList.Items {
+		pg := &pgList.Items[i]
+
+		if string(pg.UID) == id {
+			return c.k8sClient.Delete(ctx, pg)
+		}
+	}
+
+	return service.ErrNotFound
 }
 
 func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {

@@ -32,3 +32,8 @@ type InstanceResponse struct {
 type ListInstancesResponse struct {
 	Items []InstanceResponse `json:"items"`
 }
+
+type DeleteInstanceResponse struct {
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}

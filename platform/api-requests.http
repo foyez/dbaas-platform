@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:8080
 @apiV1 = {{baseUrl}}/api/v1
 @contentType = application/json
-@eventID = 7dd2f067-a9bf-4869-a04c-0f769aa036be
+@instanceID = 9990e61c-c783-4ccb-8f91-a7365a298dfb
 
 ### Create Instance
 POST {{apiV1}}/instances
@@ -15,3 +15,6 @@ Content-Type: {{contentType}}
 
 ### List Instances
 GET {{apiV1}}/instances
+
+### Delete Instance
+DELETE {{apiV1}}/instances/{{instanceID}}
