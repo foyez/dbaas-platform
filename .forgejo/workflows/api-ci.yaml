@@ -21,16 +21,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26.4'
-
-      - name: Build and vet
-        run: |
-          make build
-          make vet
-
       - name: Verify Docker
         run: |
           docker --version
@@ -52,9 +42,10 @@ jobs:
       - name: Build and push operator image
         env:
           IMG: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:${{ steps.vars.outputs.tag }}
+          CONTAINER_TOOL: docker
         run: |
-          make docker-build
-          make docker-push
+          make build
+          make push
 
       # - name: Bump image tag in gitops overlay
       #   run: |

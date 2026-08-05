@@ -2,6 +2,8 @@
 APP_NAME=platform
 
 # Docker/Podman image name
+IMG ?= api:latest
+CONTAINER_TOOL ?= podman
 IMAGE_NAME=$(APP_NAME):dev
 
 
@@ -19,23 +21,28 @@ help:
 
 # Build production image using final stage
 build:
-	podman build \
+	${CONTAINER_TOOL} build \
 		--platform linux/arm64 \
-		-t $(APP_NAME):latest \
-		--target production \
+		-t ${IMG} \
+		--target builder \
 		-f Containerfile .
+
+
+# Push production image
+push:
+	${CONTAINER_TOOL} push ${IMG}
 
 
 # Run development container
 # Mount source code so Air can detect changes
 dev:
-	podman build \
+	${CONTAINER_TOOL} build \
 		--platform linux/arm64 \
 		-t $(IMAGE_NAME) \
 		--target dev \
 		-f Containerfile .
 
-	exec podman run \
+	exec ${CONTAINER_TOOL} run \
 		--rm \
 		-p 8080:8080 \
 		-v $$(pwd):/app:Z \
