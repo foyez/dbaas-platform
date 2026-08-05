@@ -22,7 +22,6 @@ help:
 # Build production image using final stage
 build:
 	${CONTAINER_TOOL} build \
-		--platform linux/arm64 \
 		-t ${IMG} \
 		--target builder \
 		-f Containerfile .

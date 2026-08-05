@@ -21,10 +21,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify Docker
+      - name: Check architecture
         run: |
-          docker --version
-          docker info
+          uname -m
+          docker version
 
       - name: Log in to STACKIT Container Registry
         run: |
