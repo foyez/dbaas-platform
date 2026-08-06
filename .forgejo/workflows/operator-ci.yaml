@@ -83,7 +83,7 @@ jobs:
 
           # Now modify the file
           sed -i "s#newTag: .*#newTag: ${{ steps.vars.outputs.tag }}#" \
-            ../gitops/operator/overlays/production/kustomization.yaml
+            ../gitops/operator/overlays/prod/kustomization.yaml
 
           git add ../gitops/operator/overlays/prod/kustomization.yaml
 
