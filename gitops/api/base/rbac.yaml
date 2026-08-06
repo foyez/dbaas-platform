@@ -1,0 +1,37 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dbaas-api
+  namespace: database-system
+
+rules:
+  # Allow the API to manage Operator CRs.
+  - apiGroups:
+      - database.example.com
+    resources:
+      - postgresqls
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+      
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dbaas-api
+  namespace: database-system
+
+subjects:
+  - kind: ServiceAccount
+    name: dbaas-api
+    namespace: dbaas-api
+
+roleRef:
+  kind: Role
+  name: dbaas-api
+  apiGroup: rbac.authorization.k8s.io
+

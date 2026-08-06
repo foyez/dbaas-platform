@@ -36,13 +36,7 @@ jobs:
         run: |
           make build
           make vet
-
-      # - name: Install Docker
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y docker.io
-      #     sudo systemctl start docker
-      #     sudo systemctl enable docker
+          make test
 
       - name: Verify Docker
         run: |
@@ -72,13 +66,13 @@ jobs:
       - name: Bump image tag in gitops overlay
         run: |
           sed -i "s#newTag: .*#newTag: ${{ steps.vars.outputs.tag }}#" \
-            ../gitops/postgres-platform/kustomization.yaml
+            ../gitops/operator/overlays/prod/kustomization.yaml
 
       - name: Commit and push updated image tag
         run: |
           git config user.name "forgejo-actions"
           git config user.email "actions@noreply.local"
-          git add ../gitops/postgres-platform/kustomization.yaml
+          git add ../gitops/operator/overlays/prod/kustomization.yaml
           git commit -m "chore: bump postgres-platform-operator image to ${{ steps.vars.outputs.tag }}" \
             || (echo "No changes to commit" && exit 0)
           git push origin HEAD:main

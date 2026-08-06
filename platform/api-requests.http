@@ -2,7 +2,7 @@
 @baseUrl = http://foyez.runs.onstackit.cloud
 @apiV1 = {{baseUrl}}/api/v1
 @contentType = application/json
-@instanceID = 9990e61c-c783-4ccb-8f91-a7365a298dfb
+@instanceID = a65ce98e-958c-407b-b5b0-76fa44e84880
 
 ### Create Instance
 POST {{apiV1}}/instances

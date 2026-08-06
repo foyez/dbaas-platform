@@ -1,17 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
+
 metadata:
-  name: postgres-databases
+  name: database-resources
   namespace: argocd
+
 spec:
   project: default
+
   source:
     repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
     targetRevision: main
-    path: gitops/applications
+    path: gitops/database/overlays/prod
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: database-system
+
   syncPolicy:
     automated:
       prune: true

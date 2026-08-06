@@ -1,11 +1,13 @@
 apiVersion: database.example.com/v1
 kind: PostgreSQL
+
 metadata:
-  name: customer-db
-  namespace: default
+  name: internal-db
+  namespace: database-system
+
 spec:
   version: "16"
   instances: 3
   storage: 5Gi
-  database: customer
+  database: customerdb
   username: customer-admin

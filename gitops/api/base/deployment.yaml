@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbaas-deploy
+  namespace: dbaas-api
+spec:
+  selector:
+    matchLabels:
+      app: dbaas
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dbaas
+    spec:
+      serviceAccountName: dbaas-api
+      imagePullSecrets:
+        - name: stackit-registry-secret
+
+      containers:
+        - name: dbaas-api
+          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api@sha256:f3121ae155aed0a8d471e0d4156a65c3730341b56ff38034163c4090bffe2896
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 8080
+          #
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbaas-svc
+  namespace: dbaas-api
+spec:
+  type: ClusterIP
+  selector:
+    app: dbaas
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP

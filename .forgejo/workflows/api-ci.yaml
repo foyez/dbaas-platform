@@ -39,7 +39,7 @@ jobs:
           TAG=$(git rev-parse --short HEAD)
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push operator image
+      - name: Build and push api image
         env:
           IMG: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:${{ steps.vars.outputs.tag }}
           CONTAINER_TOOL: docker
@@ -47,16 +47,16 @@ jobs:
           make build
           make push
 
-      # - name: Bump image tag in gitops overlay
-      #   run: |
-      #     sed -i "s#newTag: .*#newTag: ${{ steps.vars.outputs.tag }}#" \
-      #       ../gitops/postgres-platform/kustomization.yaml
+      - name: Bump image tag in gitops overlay
+        run: |
+          sed -i "s#newTag: .*#newTag: ${{ steps.vars.outputs.tag }}#" \
+            ../gitops/api/overlays/prod/kustomization.yaml
 
-      # - name: Commit and push updated image tag
-      #   run: |
-      #     git config user.name "forgejo-actions"
-      #     git config user.email "actions@noreply.local"
-      #     git add ../gitops/postgres-platform/kustomization.yaml
-      #     git commit -m "chore: bump postgres-platform-operator image to ${{ steps.vars.outputs.tag }}" \
-      #       || (echo "No changes to commit" && exit 0)
-      #     git push origin HEAD:main
+      - name: Commit and push updated image tag
+        run: |
+          git config user.name "forgejo-actions"
+          git config user.email "actions@noreply.local"
+          git add ../gitops/api/overlays/prod/kustomization.yaml
+          git commit -m "chore: bump dbaas-platform-api image to ${{ steps.vars.outputs.tag }}" \
+            || (echo "No changes to commit" && exit 0)
+          git push origin HEAD:main

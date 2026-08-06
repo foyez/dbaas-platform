@@ -1,20 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
+
 metadata:
-  name: cnpg-operator
+  name: cnpg
   namespace: argocd
+
 spec:
   project: default
+
   source:
-    repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
+    repoURL: https://your-forgejo.example.com/your-org/platform.git
     targetRevision: main
-    path: gitops/cnpg
+    path: gitops/cnpg/overlays/prod
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: cnpg-system
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
