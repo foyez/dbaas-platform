@@ -9,4 +9,4 @@ resources:
 images:
   - name: controller
     newName: docker.io/foyezar/postgres-platform-operator
-    newTag: 7ab12cd
+    newTag: 377c181
