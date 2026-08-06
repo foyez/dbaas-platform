@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dbaas-api
+  namespace: dbaas-api
+spec:
+  ingressClassName: nginx
+
+  rules:
+    - host: foyez.runs.onstackit.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dbaas-svc
+                port:
+                  number: 8080
