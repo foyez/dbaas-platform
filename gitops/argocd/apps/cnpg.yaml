@@ -9,7 +9,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://your-forgejo.example.com/your-org/platform.git
+    repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
     targetRevision: main
     path: gitops/cnpg/overlays/prod
 
