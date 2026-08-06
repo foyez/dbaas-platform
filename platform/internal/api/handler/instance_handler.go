@@ -1,12 +1,13 @@
-// Package api contains HTTP handlers responsible for handling incoming
+// Package handler contains HTTP handlers responsible for handling incoming
 // API requests, validating DTOs, calling application services, and
 // returning HTTP responses.
-package api
+package handler
 
 import (
 	"log/slog"
 	"net/http"
 
+	"github.com/foyez/dbaas-platform/platform/internal/api"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/httpx"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
@@ -30,7 +31,7 @@ func NewInstanceHandler(
 
 // CreateInstance handles POST /v1/instances requests.
 func (h *InstanceHandler) CreateInstance(c *gin.Context) {
-	var req CreateInstanceRequest
+	var req api.CreateInstanceRequest
 
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
 		h.logger.Warn(
@@ -90,7 +91,7 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 	// 	return
 	// }
 
-	resp := InstanceResponse{
+	resp := api.InstanceResponse{
 		ID:        instance.ID,
 		Name:      instance.Name,
 		Version:   input.Version,
@@ -121,12 +122,12 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 		return
 	}
 
-	resp := ListInstancesResponse{
-		Items: make([]InstanceResponse, 0, len(result.Instances)),
+	resp := api.ListInstancesResponse{
+		Items: make([]api.InstanceResponse, 0, len(result.Instances)),
 	}
 
 	for _, inst := range result.Instances {
-		resp.Items = append(resp.Items, InstanceResponse{
+		resp.Items = append(resp.Items, api.InstanceResponse{
 			ID:        inst.ID,
 			Name:      inst.Name,
 			Version:   inst.Version,
@@ -158,7 +159,7 @@ func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 		return
 	}
 
-	httpx.JSON(c, http.StatusAccepted, DeleteInstanceResponse{
+	httpx.JSON(c, http.StatusAccepted, api.DeleteInstanceResponse{
 		Message: "Deletetion initiated",
 		Status:  "Deleting",
 	})

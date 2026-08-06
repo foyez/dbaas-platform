@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"net/http"
@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/foyez/dbaas-platform/platform/internal/api/mocks"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
+	"github.com/foyez/dbaas-platform/platform/internal/domain/mocks"
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/go-openapi/testify/v2/require"

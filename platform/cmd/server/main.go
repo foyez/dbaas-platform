@@ -3,7 +3,8 @@ package main
 import (
 	"log/slog"
 
-	"github.com/foyez/dbaas-platform/platform/internal/api"
+	"github.com/foyez/dbaas-platform/platform/internal/api/handler"
+	"github.com/foyez/dbaas-platform/platform/internal/api/router"
 	"github.com/foyez/dbaas-platform/platform/internal/config"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/cnpg"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/k8s"
@@ -28,9 +29,9 @@ func main() {
 	instanceClient := cnpg.NewClient(k8sClient)
 
 	svc := service.NewInstanceService(instanceClient, log)
-	handler := api.NewInstanceHandler(svc, log)
+	handler := handler.NewInstanceHandler(svc, log)
 
-	r := api.NewRouter(handler)
+	r := router.New(handler)
 
 	setupDocs(r)
 
