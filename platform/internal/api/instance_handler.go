@@ -48,12 +48,19 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 	}
 
 	input := domain.CreateInstanceInput{
-		Name:           req.Name,
-		Version:        req.Version,
-		Storage:        req.Storage,
-		Username:       req.Username,
-		IdempotencyKey: c.GetHeader("Idempotency-Key"),
+		Name:     req.Name,
+		Version:  req.Version,
+		Storage:  req.Storage,
+		Username: req.Username,
 	}
+
+	key := c.GetHeader("Idempotency-Key")
+	if key == "" {
+		httpx.RespondError(c, service.ErrMissingIdempotencyKey)
+		return
+	}
+
+	input.IdempotencyKey = key
 
 	result, err := h.svc.CreateInstance(
 		c.Request.Context(),

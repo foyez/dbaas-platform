@@ -2,11 +2,14 @@ package cnpg
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"strconv"
 
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -29,10 +32,12 @@ func (c *client) CreateInstance(
 	ctx context.Context,
 	input domain.CreateInstanceInput,
 ) (*domain.Instance, error) {
+	resourceName := crName(input.IdempotencyKey)
+
 	// Build your custom CNPG CR.
 	pg := &databasev1.PostgreSQL{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      input.Name,
+			Name:      resourceName,
 			Namespace: namespace,
 		},
 		Spec: databasev1.PostgreSQLSpec{
@@ -44,6 +49,23 @@ func (c *client) CreateInstance(
 	}
 
 	if err := c.k8sClient.Create(ctx, pg); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			existing := &databasev1.PostgreSQL{}
+
+			if err := c.k8sClient.Get(
+				ctx,
+				ctrlclient.ObjectKey{
+					Namespace: "database-system",
+					Name:      resourceName,
+				},
+				existing,
+			); err != nil {
+				return nil, err
+			}
+
+			return toDomainInstance(existing), nil
+		}
+
 		return nil, err
 	}
 
@@ -119,4 +141,9 @@ func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
 		Status:    status,
 		CreatedAt: pg.CreationTimestamp.Time.UTC(),
 	}
+}
+
+func crName(idempotencyKey string) string {
+	sum := sha256.Sum256([]byte(idempotencyKey))
+	return "instance-" + hex.EncodeToString(sum[:8])
 }

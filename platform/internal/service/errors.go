@@ -6,7 +6,8 @@ package service
 import "errors"
 
 var (
-	ErrAlreadyExists = errors.New("instance name already exists")
-	ErrNotFound      = errors.New("instance not found")
-	ErrInvalidInput  = errors.New("invalid input")
+	ErrAlreadyExists         = errors.New("instance name already exists")
+	ErrNotFound              = errors.New("instance not found")
+	ErrInvalidInput          = errors.New("invalid input")
+	ErrMissingIdempotencyKey = errors.New("missing idempotency key")
 )

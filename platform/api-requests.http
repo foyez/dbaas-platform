@@ -5,6 +5,7 @@
 
 ### Create Instance
 POST {{apiV1}}/instances
+Idempotency-Key: 8ad1fdf6-4b6e-48b0-bec2-3c6c4f386632
 Content-Type: {{contentType}}
 
 {
