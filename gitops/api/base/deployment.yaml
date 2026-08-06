@@ -19,7 +19,7 @@ spec:
 
       containers:
         - name: dbaas-api
-          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api@sha256:f3121ae155aed0a8d471e0d4156a65c3730341b56ff38034163c4090bffe2896
+          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:latest
           ports:
             - containerPort: 8080
           resources:
