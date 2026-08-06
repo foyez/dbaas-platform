@@ -13,4 +13,5 @@ const (
 	CodeInternalError         ErrorCode = "INTERNAL_ERROR"
 	CodeInstanceNotFound      ErrorCode = "INSTANCE_NOT_FOUND"
 	CodeInstanceAlreadyExists ErrorCode = "INSTANCE_ALREADY_EXISTS"
+	CodeMissingIdempotencyKey ErrorCode = "MISSING_IDEMPOTENCY_KEY"
 )

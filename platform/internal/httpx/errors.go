@@ -28,6 +28,11 @@ var errorMappings = []errorMapping{
 		status: http.StatusConflict,
 		code:   CodeInstanceAlreadyExists,
 	},
+	{
+		err:    service.ErrMissingIdempotencyKey,
+		status: http.StatusBadRequest,
+		code:   CodeMissingIdempotencyKey,
+	},
 }
 
 // RespondError converts application errors into standardized HTTP responses.

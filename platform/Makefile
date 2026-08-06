@@ -56,8 +56,11 @@ run:
 
 
 # Execute unit tests
+# v: verbose
+# -count=1 - disable test result caching
+#  go test -v pkg_path -run test_name
 test:
-	go test ./...
+	go test -count=1 -v ./...
 
 
 # Remove generated files
