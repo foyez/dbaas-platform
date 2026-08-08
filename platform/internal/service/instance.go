@@ -63,6 +63,16 @@ func validateCreateInstance(
 	return nil
 }
 
+// GetInstance retrives a single instances by its ID.
+func (s *instanceService) GetInstance(ctx context.Context, id string) (*domain.Instance, error) {
+	if id == "" {
+		return nil, ErrInvalidInput
+	}
+
+	return s.client.GetInstance(ctx, id)
+}
+
+// ListInstances retrive list instances.
 func (s *instanceService) ListInstances(ctx context.Context) (*domain.ListInstancesResult, error) {
 	instances, err := s.client.ListInstances(ctx)
 	if err != nil {
@@ -72,6 +82,37 @@ func (s *instanceService) ListInstances(ctx context.Context) (*domain.ListInstan
 	return &domain.ListInstancesResult{
 		Instances: instances,
 	}, nil
+}
+
+// UpdateInstance updates an instance.
+func (s *instanceService) UpdateInstance(
+	ctx context.Context,
+	input domain.UpdateInstanceInput,
+) (*domain.Instance, error) {
+	if err := validateUpdateInstance(input); err != nil {
+		return nil, err
+	}
+
+	return s.client.UpdateInstance(ctx, input)
+}
+
+func validateUpdateInstance(
+	input domain.UpdateInstanceInput,
+) error {
+	if input.ID == "" {
+		return ErrInvalidInput
+	}
+	if input.Version == nil && input.Storage == nil {
+		return ErrNoUpdateFields
+	}
+	if input.Version != nil && (*input.Version < 14 || *input.Version > 16) {
+		return ErrInvalidInput
+	}
+	if input.Storage != nil && *input.Storage == "" {
+		return ErrInvalidInput
+	}
+
+	return nil
 }
 
 func (s *instanceService) DeleteInstance(ctx context.Context, id string) error {

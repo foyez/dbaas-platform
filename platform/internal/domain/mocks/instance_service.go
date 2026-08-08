@@ -23,6 +23,15 @@ func (m *MockInstanceService) CreateInstance(
 	return args.Get(0).(*domain.CreateInstanceResult), args.Error(1)
 }
 
+func (m *MockInstanceService) GetInstance(ctx context.Context, id string) (*domain.Instance, error) {
+	args := m.Called(ctx, id)
+
+	if result := args.Get(0); result != nil {
+		return result.(*domain.Instance), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *MockInstanceService) ListInstances(ctx context.Context) (*domain.ListInstancesResult, error) {
 	args := m.Called(ctx)
 
@@ -30,6 +39,18 @@ func (m *MockInstanceService) ListInstances(ctx context.Context) (*domain.ListIn
 		return result.(*domain.ListInstancesResult), args.Error(1)
 	}
 	return nil, args.Error(1)
+}
+
+func (m *MockInstanceService) UpdateInstance(
+	ctx context.Context,
+	input domain.UpdateInstanceInput,
+) (*domain.Instance, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*domain.Instance), args.Error(1)
 }
 
 func (m *MockInstanceService) DeleteInstance(ctx context.Context, id string) error {

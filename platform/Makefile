@@ -2,7 +2,7 @@
 APP_NAME=platform
 
 # Docker/Podman image name
-IMG ?= api:latest
+IMG ?= dbaas-api:latest
 CONTAINER_TOOL ?= podman
 IMAGE_NAME=$(APP_NAME):dev
 

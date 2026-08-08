@@ -41,3 +41,9 @@ type CreateInstanceResult struct {
 type ListInstancesResult struct {
 	Instances []*Instance
 }
+
+type UpdateInstanceInput struct {
+	ID      string
+	Version *int
+	Storage *string
+}

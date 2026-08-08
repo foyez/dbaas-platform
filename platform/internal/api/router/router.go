@@ -18,6 +18,8 @@ func New(h *handler.InstanceHandler) *gin.Engine {
 	{
 		v1.POST("/instances", h.CreateInstance)
 		v1.GET("/instances", h.ListInstances)
+		v1.GET("/instances/:id", h.GetInstance)
+		v1.PATCH("/instances/:id", h.UpdateInstance)
 		v1.DELETE("/instances/:id", h.DeleteInstance)
 	}
 

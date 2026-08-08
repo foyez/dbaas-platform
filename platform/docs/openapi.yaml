@@ -8,6 +8,8 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local
+  - url: http://foyez.runs.onstackit.cloud
+    description: Server
 
 tags:
   - name: instances

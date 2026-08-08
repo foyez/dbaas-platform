@@ -140,6 +140,103 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 	httpx.JSON(c, http.StatusOK, resp)
 }
 
+// GetInstance handles GET /v1/instances/:id requests.
+func (h *InstanceHandler) GetInstance(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		h.logger.Warn("invalid instance id")
+
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	instance, err := h.svc.GetInstance(c.Request.Context(), id)
+	if err != nil {
+		h.logger.Error(
+			"failed to get instance",
+			"error", err,
+			"id", id,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	resp := api.InstanceResponse{
+		ID:        instance.ID,
+		Name:      instance.Name,
+		Version:   instance.Version,
+		Storage:   instance.Storage,
+		Status:    instance.Status,
+		CreatedAt: instance.CreatedAt,
+	}
+
+	httpx.JSON(c, http.StatusOK, resp)
+}
+
+// UpdateInstance handles PATCH /v1/instances/:id requests.
+func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		h.logger.Warn("invalid instance id")
+
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	var req api.UpdateInstanceRequest
+
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		h.logger.Warn(
+			"invalid update instance request",
+			"error", err,
+		)
+
+		httpx.Error(
+			c,
+			http.StatusBadRequest,
+			httpx.CodeInvalidRequest,
+			err.Error(),
+		)
+		return
+	}
+
+	input := domain.UpdateInstanceInput{
+		ID:      id,
+		Version: req.Version,
+		Storage: req.Storage,
+	}
+
+	instance, err := h.svc.UpdateInstance(c.Request.Context(), input)
+	if err != nil {
+		h.logger.Error(
+			"failed to update instance",
+			"error", err,
+			"id", id,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	resp := api.InstanceResponse{
+		ID:        instance.ID,
+		Name:      instance.Name,
+		Version:   instance.Version,
+		Storage:   instance.Storage,
+		Status:    instance.Status,
+		CreatedAt: instance.CreatedAt,
+	}
+
+	h.logger.Info(
+		"instance updated",
+		"id", instance.ID,
+	)
+
+	httpx.JSON(c, http.StatusAccepted, resp)
+}
+
+// DeleteInstance handles DELETE /v1/instances/:id requests.
 func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {

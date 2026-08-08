@@ -20,6 +20,15 @@ type CreateInstanceRequest struct {
 	Username  string `json:"username" binding:"omitempty,max=128"`
 }
 
+type ListInstancesResponse struct {
+	Items []InstanceResponse `json:"items"`
+}
+
+type UpdateInstanceRequest struct {
+	Version *int    `json:"version" binding:"omitempty,oneof=14 15 16"`
+	Storage *string `json:"storage" binding:"omitempty"`
+}
+
 type InstanceResponse struct {
 	ID        string                `json:"id"`
 	Name      string                `json:"name"`
@@ -27,10 +36,6 @@ type InstanceResponse struct {
 	Storage   string                `json:"storage"`
 	Status    domain.InstanceStatus `json:"status"`
 	CreatedAt time.Time             `json:"createdAt"`
-}
-
-type ListInstancesResponse struct {
-	Items []InstanceResponse `json:"items"`
 }
 
 type DeleteInstanceResponse struct {

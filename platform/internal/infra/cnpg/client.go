@@ -8,7 +8,6 @@ import (
 
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
-	"github.com/foyez/dbaas-platform/platform/internal/service"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -84,6 +83,28 @@ func (c *client) GetInstanceByIdempotencyKey(
 	return nil, nil
 }
 
+func (c *client) GetInstance(ctx context.Context, id string) (*domain.Instance, error) {
+	pgList := &databasev1.PostgreSQLList{}
+
+	if err := c.k8sClient.List(
+		ctx,
+		pgList,
+		ctrlclient.InNamespace(namespace),
+	); err != nil {
+		return nil, err
+	}
+
+	for i := range pgList.Items {
+		pg := &pgList.Items[i]
+
+		if string(pg.UID) == id {
+			return toDomainInstance(pg), nil
+		}
+	}
+
+	return nil, domain.ErrNotFound
+}
+
 func (c *client) ListInstances(ctx context.Context) ([]*domain.Instance, error) {
 	pgList := &databasev1.PostgreSQLList{}
 
@@ -101,6 +122,46 @@ func (c *client) ListInstances(ctx context.Context) ([]*domain.Instance, error) 
 	}
 
 	return instances, nil
+}
+
+func (c *client) UpdateInstance(
+	ctx context.Context,
+	input domain.UpdateInstanceInput,
+) (*domain.Instance, error) {
+	pgList := &databasev1.PostgreSQLList{}
+
+	if err := c.k8sClient.List(
+		ctx,
+		pgList,
+		ctrlclient.InNamespace(namespace),
+	); err != nil {
+		return nil, err
+	}
+
+	var pg *databasev1.PostgreSQL
+	for i := range pgList.Items {
+		if string(pgList.Items[i].UID) == input.ID {
+			pg = &pgList.Items[i]
+			break
+		}
+	}
+
+	if pg == nil {
+		return nil, domain.ErrNotFound
+	}
+
+	if input.Version != nil {
+		pg.Spec.Version = strconv.Itoa(*input.Version)
+	}
+	if input.Storage != nil {
+		pg.Spec.Storage = *input.Storage
+	}
+
+	if err := c.k8sClient.Update(ctx, pg); err != nil {
+		return nil, err
+	}
+
+	return toDomainInstance(pg), nil
 }
 
 func (c *client) DeleteInstance(ctx context.Context, id string) error {
@@ -122,7 +183,7 @@ func (c *client) DeleteInstance(ctx context.Context, id string) error {
 		}
 	}
 
-	return service.ErrNotFound
+	return domain.ErrNotFound
 }
 
 func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
