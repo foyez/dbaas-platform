@@ -6,6 +6,7 @@ package service
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 )
@@ -99,7 +100,7 @@ func (s *instanceService) UpdateInstance(
 func validateUpdateInstance(
 	input domain.UpdateInstanceInput,
 ) error {
-	if input.ID == "" {
+	if strings.TrimSpace(input.ID) == "" {
 		return ErrInvalidInput
 	}
 	if input.Version == nil && input.Storage == nil {
@@ -116,5 +117,9 @@ func validateUpdateInstance(
 }
 
 func (s *instanceService) DeleteInstance(ctx context.Context, id string) error {
+	if strings.TrimSpace(id) == "" {
+		return ErrInvalidInput
+	}
+
 	return s.client.DeleteInstance(ctx, id)
 }
