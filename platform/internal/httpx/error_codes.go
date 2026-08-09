@@ -14,4 +14,5 @@ const (
 	CodeInstanceNotFound      ErrorCode = "INSTANCE_NOT_FOUND"
 	CodeInstanceAlreadyExists ErrorCode = "INSTANCE_ALREADY_EXISTS"
 	CodeMissingIdempotencyKey ErrorCode = "MISSING_IDEMPOTENCY_KEY"
+	CodeNoUpdateFields        ErrorCode = "NO_UPDATE_FIELDS"
 )

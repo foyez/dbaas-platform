@@ -33,6 +33,11 @@ var errorMappings = []errorMapping{
 		status: http.StatusBadRequest,
 		code:   CodeMissingIdempotencyKey,
 	},
+	{
+		err:    service.ErrNoUpdateFields,
+		status: http.StatusBadRequest,
+		code:   CodeNoUpdateFields,
+	},
 }
 
 // RespondError converts application errors into standardized HTTP responses.

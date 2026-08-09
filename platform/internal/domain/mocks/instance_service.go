@@ -46,11 +46,11 @@ func (m *MockInstanceService) UpdateInstance(
 	input domain.UpdateInstanceInput,
 ) (*domain.Instance, error) {
 	args := m.Called(ctx, input)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
 
-	return args.Get(0).(*domain.Instance), args.Error(1)
+	if result := args.Get(0); result != nil {
+		return result.(*domain.Instance), args.Error(1)
+	}
+	return nil, args.Error(1)
 }
 
 func (m *MockInstanceService) DeleteInstance(ctx context.Context, id string) error {
