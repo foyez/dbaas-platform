@@ -97,109 +97,112 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/instances/{instanceId}:
-    delete:
-      tags:
-        - Instances
-      summary: Delete a PostgreSQL instance
-      description: |
-        Deletes a PostgreSQL instance asynchronously.
-
-        The request returns immediately with **202 Accepted**.
-        Actual deletion is performed later by the Kubernetes operator.
-
-      operationId: deleteInstance
-
-      parameters:
-        - name: instanceId
-          in: path
-          required: true
-          description: Unique instance identifier.
-          schema:
-            type: string
-          example: pg-demo
-
-      responses:
-        "202":
-          description: Deletion accepted.
-          headers:
-            Location:
-              description: Endpoint to monitor instance status.
-              schema:
-                type: string
-              example: /instances/pg-demo
-
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DeleteAcceptedResponse"
-              example:
-                message: Deletion initiated.
-                status: Deleting
-
-        "404":
-          $ref: '#/components/responses/NotFound'
-
-        "409":
-          description: Instance is already being deleted.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error: conflict
-                message: Instance is already being deleted.
-
-  /api/v1/instances/{id}/connection:
     get:
       tags: [instances]
-      operationId: getInstanceConnection
-      summary: Get connection details for an instance
+      operationId: listInstances
+      summary: List PostgreSQL instances
+      description: Returns all instances visible to the caller.
+      responses:
+        '200':
+          description: List of instances.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListInstancesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/instances/{id}:
+    get:
+      tags: [instances]
+      operationId: getInstance
+      summary: Get a PostgreSQL instance
       description: >
-        Returns the connection endpoint for a product instance. Only
-        available once the instance's status is `Running`; while
-        provisioning is still in progress, this returns `409 Conflict`.
+        Returns the current state of a single instance, including its
+        `status`. Use this to poll an instance created via
+        `POST /instances` until it reaches `Running`.
       parameters:
         - $ref: '#/components/parameters/InstanceId'
       responses:
         '200':
-          description: Connection details for the instance
-          headers:
-            Cache-Control:
-              description: Always set to no-store since this endpoint may expose connection metadata
-              schema:
-                type: string
-                example: no-store
+          description: The instance.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectionInfo'
-              examples:
-                running:
-                  value:
-                    instanceId: inst-7f3a2b
-                    host: inst-7f3a2b-rw.svc.cluster.local
-                    port: 5432
-                    database: appdb
-                    sslMode: require
+                $ref: '#/components/schemas/Instance'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          description: Instance exists but is not yet in a Running state.
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags: [instances]
+      operationId: updateInstance
+      summary: Update a PostgreSQL instance
+      description: >
+        Applies a partial update to an instance, such as a storage resize
+        or a PostgreSQL version upgrade. The update is applied
+        asynchronously; this endpoint returns as soon as the change has
+        been accepted, not once it has completed. At least one field
+        must be provided.
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInstanceRequest'
+            examples:
+              resize:
+                value:
+                  storage: 20Gi
+      responses:
+        '202':
+          description: Update accepted and applied asynchronously.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                notReady:
-                  value:
-                    error:
-                      code: INSTANCE_NOT_READY
-                      message: "Instance is currently Provisioning and has no connection endpoint yet."
+                $ref: '#/components/schemas/Instance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [instances]
+      operationId: deleteInstance
+      summary: Delete a PostgreSQL instance
+      description: >
+        Deletes a PostgreSQL instance asynchronously. The request returns
+        immediately with `202 Accepted`; actual deletion is performed
+        later by the Kubernetes operator.
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '202':
+          description: Deletion accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAcceptedResponse'
+              example:
+                message: Deletion initiated
+                status: Deleting
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -240,17 +243,15 @@ components:
         name:
           type: string
           description: >
-            Unique instance name. Must be DNS-1123 compliant since it
-            becomes the underlying Kubernetes resource name.
-          pattern: '^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$'
+            Unique instance name, 3-63 characters.
           minLength: 3
           maxLength: 63
           example: my-app-db
         version:
-          type: string
+          type: integer
           description: Major CNPG/PostgreSQL version.
-          enum: ["14", "15", "16"]
-          example: "16"
+          enum: [14, 15, 16]
+          example: 16
         storage:
           type: string
           description: Kubernetes resource quantity for storage.
@@ -259,7 +260,9 @@ components:
         instances:
           type: integer
           description: >
-            Number of CNPG cluster instances. 1 = no HA, 3 = HA with replicas.
+            Accepted by the API but not yet wired to provisioning;
+            every instance is currently created as a single replica
+            regardless of this value.
           minimum: 1
           maximum: 5
           default: 1
@@ -269,13 +272,30 @@ components:
           description: Team or user identifier, used for filtering and RBAC.
           maxLength: 128
           example: team-checkout
-      additionalProperties: false
       example:
         name: my-app-db
-        version: "16"
+        version: 16
         storage: 10Gi
-        instances: 1
         username: team-checkout
+
+    UpdateInstanceRequest:
+      type: object
+      description: >
+        Partial update payload. At least one property must be provided.
+      minProperties: 1
+      properties:
+        version:
+          type: integer
+          description: Major CNPG/PostgreSQL version to upgrade to.
+          enum: [14, 15, 16]
+          example: 16
+        storage:
+          type: string
+          description: New Kubernetes resource quantity for storage. Must not shrink.
+          pattern: '^[0-9]+(Gi|Mi)$'
+          example: 20Gi
+      example:
+        storage: 20Gi
 
     Instance:
       type: object
@@ -286,45 +306,42 @@ components:
         name:
           type: string
           example: my-postgres-db
+        version:
+          type: integer
+          example: 16
+        storage:
+          type: string
+          example: 10Gi
         status:
           type: string
-          enum: [Pending, Provisioning, Running, Updating, Deleting, Failed]
+          description: >
+            `Pending` while the operator is provisioning/reconciling the
+            underlying resource, `Running` once ready, `Failed` if
+            reconciliation failed, `Deleted` once removed.
+          enum: [Pending, Running, Failed, Deleted]
           example: Pending
         createdAt:
           type: string
           format: date-time
           example: "2026-08-04T09:12:00Z"
-        _links:
-          type: object
-          properties:
-            self:
-              type: string
-              example: /v1/instances/inst-7f3a2b
-            connection:
-              type: string
-              example: /v1/instances/inst-7f3a2b/connection
-            credentials:
-              type: string
-              example: /v1/instances/inst-7f3a2b/credentials
 
-    ConnectionInfo:
+    ListInstancesResponse:
       type: object
       properties:
-        instanceId:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Instance'
+
+    DeleteAcceptedResponse:
+      type: object
+      properties:
+        message:
           type: string
-          example: inst-7f3a2b
-        host:
+          example: Deletion initiated
+        status:
           type: string
-          example: inst-7f3a2b-rw.svc.cluster.local
-        port:
-          type: integer
-          example: 5432
-        database:
-          type: string
-          example: appdb
-        sslMode:
-          type: string
-          example: require
+          example: Deleting
 
     ErrorResponse:
       type: object
