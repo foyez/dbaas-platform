@@ -2,29 +2,27 @@ name: DBAAS API Tests
 
 on:
   pull_request:
-  branches:
-    - main
-  paths:
-    - 'platform/**'
-    - '.forgejo/workflows/api-test.yaml'
+    branches:
+      - main
+    paths:
+      - 'platform/**'
+      - '.forgejo/workflows/api-test.yaml'
 
-  jobs:
-    test:
-      name: Test API
-      runs-on: stackit-ubuntu-22
-
+jobs:
+  test:
+    name: Test API
+    runs-on: stackit-ubuntu-22
     defaults:
       run:
         working-directory: platform
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check architecture
-        run: |
-          uname -m
-          docker version
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
 
       - name: Run tests
         run: make test
