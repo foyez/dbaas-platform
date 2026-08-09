@@ -30,6 +30,9 @@ jobs:
           uname -m
           docker version
 
+      - name: Run tests
+        run: make test
+
       - name: Log in to STACKIT Container Registry
         run: |
           echo "${{ secrets.STACKIT_CONTAINER_ROBOT_TOKEN }}" | \
@@ -50,11 +53,6 @@ jobs:
         run: |
           make build
           make push
-
-      # - name: Bump image tag in gitops overlay
-      #   run: |
-      #     sed -i "s#newTag: .*#newTag: ${{ steps.vars.outputs.tag }}#" \
-      #       ../gitops/api/overlays/prod/kustomization.yaml
 
       - name: Update GitOps image tag
         run: |
