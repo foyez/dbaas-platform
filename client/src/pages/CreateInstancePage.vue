@@ -15,7 +15,12 @@ async function createInstance(form: CreateInstanceForm) {
   try {
     const instance = await execute(form)
 
-    await router.push(`/instances/${instance.id}`)
+    await router.push({
+      name: 'instance-detail',
+      params: {
+        id: instance.id,
+      },
+    })
   } catch {
     // Error is already exposed by the composable.
   }

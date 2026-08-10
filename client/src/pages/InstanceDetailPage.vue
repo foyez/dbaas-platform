@@ -27,7 +27,9 @@ async function load() {
 }
 
 function goBack() {
-  router.push('/instances/new')
+  router.push({
+    name: 'instance-create',
+  })
 }
 
 onMounted(load)

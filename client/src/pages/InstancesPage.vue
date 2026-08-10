@@ -18,11 +18,18 @@ const router = useRouter()
 const { instances, isLoading, error, isEmpty, fetchInstances } = useInstances()
 
 function createInstance() {
-  router.push('/instances/new')
+  router.push({
+    name: 'instance-create',
+  })
 }
 
 function openInstance(id: string) {
-  router.push(`/instances/${encodeURIComponent(id)}`)
+  router.push({
+    name: 'instance-detail',
+    params: {
+      id: encodeURIComponent(id),
+    },
+  })
 }
 
 async function load() {

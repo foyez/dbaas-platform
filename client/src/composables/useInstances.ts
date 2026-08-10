@@ -1,7 +1,8 @@
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import { listInstances } from '@/api/instances'
 import { ApiError } from '@/api/errors'
+
 import type { Instance } from '@/types/instance'
 
 export function useInstances() {
