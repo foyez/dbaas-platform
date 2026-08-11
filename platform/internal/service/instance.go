@@ -65,17 +65,17 @@ func validateCreateInstance(
 }
 
 // GetInstance retrives a single instances by its ID.
-func (s *instanceService) GetInstance(ctx context.Context, id string) (*domain.Instance, error) {
+func (s *instanceService) GetInstance(ctx context.Context, id, userID string) (*domain.Instance, error) {
 	if id == "" {
 		return nil, ErrInvalidInput
 	}
 
-	return s.client.GetInstance(ctx, id)
+	return s.client.GetInstance(ctx, id, userID)
 }
 
 // ListInstances retrive list instances.
-func (s *instanceService) ListInstances(ctx context.Context) (*domain.ListInstancesResult, error) {
-	instances, err := s.client.ListInstances(ctx)
+func (s *instanceService) ListInstances(ctx context.Context, userID string) (*domain.ListInstancesResult, error) {
+	instances, err := s.client.ListInstances(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"log"
 	"strconv"
 
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
@@ -12,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const UserIDLabel = "app.example.com/user-id"
 
 type client struct {
 	k8sClient ctrlclient.Client
@@ -38,6 +41,9 @@ func (c *client) CreateInstance(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourceName,
 			Namespace: namespace,
+			Labels: map[string]string{
+				UserIDLabel: input.UserID,
+			},
 		},
 		Spec: databasev1.PostgreSQLSpec{
 			Version:  strconv.Itoa(input.Version),
@@ -83,13 +89,17 @@ func (c *client) GetInstanceByIdempotencyKey(
 	return nil, nil
 }
 
-func (c *client) GetInstance(ctx context.Context, id string) (*domain.Instance, error) {
+func (c *client) GetInstance(ctx context.Context, id, userID string) (*domain.Instance, error) {
 	pgList := &databasev1.PostgreSQLList{}
+	log.Println("======", userID)
 
 	if err := c.k8sClient.List(
 		ctx,
 		pgList,
 		ctrlclient.InNamespace(namespace),
+		ctrlclient.MatchingLabels{
+			UserIDLabel: userID,
+		},
 	); err != nil {
 		return nil, err
 	}
@@ -105,13 +115,16 @@ func (c *client) GetInstance(ctx context.Context, id string) (*domain.Instance, 
 	return nil, domain.ErrNotFound
 }
 
-func (c *client) ListInstances(ctx context.Context) ([]*domain.Instance, error) {
+func (c *client) ListInstances(ctx context.Context, userID string) ([]*domain.Instance, error) {
 	pgList := &databasev1.PostgreSQLList{}
 
 	if err := c.k8sClient.List(
 		ctx,
 		pgList,
 		ctrlclient.InNamespace(namespace),
+		ctrlclient.MatchingLabels{
+			UserIDLabel: userID,
+		},
 	); err != nil {
 		return nil, err
 	}

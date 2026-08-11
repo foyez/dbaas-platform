@@ -52,13 +52,14 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 		return
 	}
 
-	_ = h.authmw.UserID(c.Request.Context())
+	userID := h.authmw.UserID(c.Request.Context())
 
 	input := domain.CreateInstanceInput{
 		Name:     req.Name,
 		Version:  req.Version,
 		Storage:  req.Storage,
 		Username: req.Username,
+		UserID:   userID,
 	}
 
 	key := c.GetHeader("Idempotency-Key")
@@ -117,7 +118,8 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 }
 
 func (h *InstanceHandler) ListInstances(c *gin.Context) {
-	result, err := h.svc.ListInstances(c.Request.Context())
+	userID := h.authmw.UserID(c.Request.Context())
+	result, err := h.svc.ListInstances(c.Request.Context(), userID)
 	if err != nil {
 		h.logger.Error(
 			"failed to list instances",
@@ -156,7 +158,8 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 		return
 	}
 
-	instance, err := h.svc.GetInstance(c.Request.Context(), id)
+	userID := h.authmw.UserID(c.Request.Context())
+	instance, err := h.svc.GetInstance(c.Request.Context(), id, userID)
 	if err != nil {
 		h.logger.Error(
 			"failed to get instance",

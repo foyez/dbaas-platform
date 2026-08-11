@@ -17,8 +17,8 @@ type InstanceClient interface {
 		key string,
 	) (*Instance, error)
 
-	GetInstance(ctx context.Context, id string) (*Instance, error)
-	ListInstances(ctx context.Context) ([]*Instance, error)
+	GetInstance(ctx context.Context, id, userID string) (*Instance, error)
+	ListInstances(ctx context.Context, userID string) ([]*Instance, error)
 	UpdateInstance(
 		ctx context.Context,
 		input UpdateInstanceInput,

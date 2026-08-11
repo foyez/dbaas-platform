@@ -10,6 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+const UserIDLabel = "app.example.com/user-id"
+
 func (r *PostgreSQLReconciler) reconcileCNPGCluster(ctx context.Context, pg *databasev1.PostgreSQL) error {
 	cluster := &cnpgv1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -19,6 +21,14 @@ func (r *PostgreSQLReconciler) reconcileCNPGCluster(ctx context.Context, pg *dat
 	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, cluster, func() error {
+		if cluster.Labels == nil {
+			cluster.Labels = map[string]string{}
+		}
+
+		if userID, ok := pg.Labels[UserIDLabel]; ok {
+			cluster.Labels[UserIDLabel] = userID
+		}
+
 		cluster.Spec.Instances = int(pg.Spec.Instances)
 		cluster.Spec.ImageName = fmt.Sprintf("ghcr.io/cloudnative-pg/postgresql:%s", pg.Spec.Version)
 		cluster.Spec.StorageConfiguration = cnpgv1.StorageConfiguration{

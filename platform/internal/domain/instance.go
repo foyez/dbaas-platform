@@ -31,6 +31,7 @@ type CreateInstanceInput struct {
 	Storage        string
 	Username       string
 	IdempotencyKey string
+	UserID         string
 }
 
 type CreateInstanceResult struct {
