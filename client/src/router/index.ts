@@ -5,14 +5,18 @@ import InstanceDetailPage from '@/pages/InstanceDetailPage.vue'
 import InstancesPage from '@/pages/InstancesPage.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
+import { withAuthenticationRequired } from 'vue-oidc-context'
+import LandingPage from '@/pages/LandingPage.vue'
+import CallbackPage from '@/pages/auth/CallbackPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
 
   routes: [
+    // protected
     {
       path: '/',
-      component: AppLayout,
+      component: withAuthenticationRequired(AppLayout),
 
       children: [
         {
@@ -40,6 +44,10 @@ const router = createRouter({
         },
       ],
     },
+
+    // public routes - outside the protected layout
+    { path: '/landing', name: 'landing', component: LandingPage },
+    { path: '/auth/callback', name: 'callback', component: CallbackPage },
   ],
 })
 

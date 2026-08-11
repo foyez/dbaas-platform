@@ -4,7 +4,10 @@
 package router
 
 import (
+	"time"
+
 	"github.com/foyez/dbaas-platform/platform/internal/api/handler"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,6 +15,16 @@ import (
 // and middleware registered.
 func New(h *handler.InstanceHandler) *gin.Engine {
 	r := gin.New()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	r.Use(gin.Recovery(), gin.Logger())
 
 	v1 := r.Group("/api/v1")

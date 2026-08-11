@@ -16,6 +16,7 @@ require (
 // replace github.com/foyez/dbaas-platform/operator => ../operator
 
 require (
+	github.com/gin-contrib/cors v1.7.7
 	github.com/go-openapi/testify/v2 v2.4.2
 	github.com/stretchr/testify v1.11.1
 )
