@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/foyez/dbaas-platform/platform/internal/api/handler"
+	"github.com/foyez/dbaas-platform/platform/internal/auth"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 // New creates and configures a Gin HTTP server with all application routes
 // and middleware registered.
-func New(h *handler.InstanceHandler) *gin.Engine {
+func New(h *handler.InstanceHandler, authmw *auth.Middleware) *gin.Engine {
 	r := gin.New()
 
 	r.Use(cors.New(cors.Config{
@@ -28,13 +29,29 @@ func New(h *handler.InstanceHandler) *gin.Engine {
 	r.Use(gin.Recovery(), gin.Logger())
 
 	v1 := r.Group("/api/v1")
+
+	// Authentication boundary.
+	//
+	// Everything under `protected` requires a valid
+	// ZITADEL access token.
+	protected := v1.Group("")
+	protected.Use(auth.Gin(authmw.RequireAuth()))
+
+	// Authenticated users
 	{
-		v1.POST("/instances", h.CreateInstance)
-		v1.GET("/instances", h.ListInstances)
-		v1.GET("/instances/:id", h.GetInstance)
-		v1.PATCH("/instances/:id", h.UpdateInstance)
-		v1.DELETE("/instances/:id", h.DeleteInstance)
+		protected.POST("/instances", h.CreateInstance)
+		protected.GET("/instances", h.ListInstances)
+		protected.GET("/instances/:id", h.GetInstance)
+		protected.PATCH("/instances/:id", h.UpdateInstance)
+		// v1.DELETE("/instances/:id", h.DeleteInstance)
 	}
+
+	// Admin users
+	admin := protected.Group("")
+	admin.Use(auth.Gin(authmw.RequireRole("admin")))
+
+	// admin.GET("/instances/:id", h.GetInstance)
+	admin.DELETE("/instances/:id", h.DeleteInstance)
 
 	return r
 }

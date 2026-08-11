@@ -16,7 +16,7 @@ cmd = "go build -tags dev -o ./tmp/main ./cmd/server"
 entrypoint = "./tmp/main"
 
 # File extensions to watch
-include_ext = ["go", "yaml", "yml"]
+include_ext = ["go", "yaml", "yml", "env"]
 
 # Directories to ignore
 exclude_dir = ["tmp", "vendor"]

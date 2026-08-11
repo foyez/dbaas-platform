@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/foyez/dbaas-platform/platform/internal/api"
+	"github.com/foyez/dbaas-platform/platform/internal/auth"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/httpx"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
@@ -17,15 +18,18 @@ import (
 type InstanceHandler struct {
 	svc    domain.InstanceService
 	logger *slog.Logger
+	authmw *auth.Middleware
 }
 
 func NewInstanceHandler(
 	svc domain.InstanceService,
 	logger *slog.Logger,
+	authmw *auth.Middleware,
 ) *InstanceHandler {
 	return &InstanceHandler{
 		svc:    svc,
 		logger: logger,
+		authmw: authmw,
 	}
 }
 
@@ -47,6 +51,8 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 		)
 		return
 	}
+
+	_ = h.authmw.UserID(c.Request.Context())
 
 	input := domain.CreateInstanceInput{
 		Name:     req.Name,
