@@ -3,8 +3,9 @@ kind: Deployment
 metadata:
   name: dbaas-frontend
   namespace: dbaas-frontend
+
 spec:
-  replcias: 2
+  replicas: 2
 
   selector:
     matchLabels:
@@ -16,17 +17,21 @@ spec:
         app: dbaas-frontend
 
     spec:
+      imagePullSecrets:
+        - name: stackit-registry-secret
+
       securityContext:
         seccompProfile:
-          type: RuntimeDefaults
+          type: RuntimeDefault
 
       containers:
         - name: dbaas-frontend
-          image: registry.onstackit.cloud/dbaas-platform/dbaas-frontend:latest
+          image: registry.onstackit.cloud/dbaas-platform/dbaas-frontend:ab66235
 
           ports:
             - name: http
               containerPort: 3000
+              protocol: TCP
 
           securityContext:
             runAsNonRoot: true

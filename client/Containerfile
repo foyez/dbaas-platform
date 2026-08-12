@@ -20,11 +20,12 @@ FROM nginxinc/nginx-unprivileged:alpine AS runtime
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy only compiled Vue application
-COPY --chown=nginx:nginx --from=builder /app/dist /usr/share/nginx/html
+COPY --chown=101:101 --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 3000
 
-USER nginx
+# nginx-unprivileged UID 101
+USER 101
 
 # Keep nginx in the foreground
 ENTRYPOINT ["nginx"]
