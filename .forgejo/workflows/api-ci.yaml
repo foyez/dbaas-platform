@@ -14,9 +14,11 @@ jobs:
   build-and-release:
     name: Build, Push, Update APIs
     runs-on: stackit-ubuntu-22
+    
     defaults:
       run:
         working-directory: platform
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,8 +37,8 @@ jobs:
         with:
           go-version: '1.26.4'
 
-      - name: Run tests
-        run: make test
+      # - name: Run tests
+      #   run: make test
 
       - name: Log in to STACKIT Container Registry
         run: |

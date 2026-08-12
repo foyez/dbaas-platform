@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"strconv"
 
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
@@ -14,7 +13,10 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const UserIDLabel = "app.example.com/user-id"
+const (
+	UserIDLabel = "app.example.com/user-id"
+	Namespace   = "database-system"
+)
 
 type client struct {
 	k8sClient ctrlclient.Client
@@ -28,8 +30,6 @@ func NewClient(
 	}
 }
 
-const namespace = "database-system"
-
 func (c *client) CreateInstance(
 	ctx context.Context,
 	input domain.CreateInstanceInput,
@@ -40,7 +40,7 @@ func (c *client) CreateInstance(
 	pg := &databasev1.PostgreSQL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resourceName,
-			Namespace: namespace,
+			Namespace: Namespace,
 			Labels: map[string]string{
 				UserIDLabel: input.UserID,
 			},
@@ -91,12 +91,11 @@ func (c *client) GetInstanceByIdempotencyKey(
 
 func (c *client) GetInstance(ctx context.Context, id, userID string) (*domain.Instance, error) {
 	pgList := &databasev1.PostgreSQLList{}
-	log.Println("======", userID)
 
 	if err := c.k8sClient.List(
 		ctx,
 		pgList,
-		ctrlclient.InNamespace(namespace),
+		ctrlclient.InNamespace(Namespace),
 		ctrlclient.MatchingLabels{
 			UserIDLabel: userID,
 		},
@@ -121,7 +120,7 @@ func (c *client) ListInstances(ctx context.Context, userID string) ([]*domain.In
 	if err := c.k8sClient.List(
 		ctx,
 		pgList,
-		ctrlclient.InNamespace(namespace),
+		ctrlclient.InNamespace(Namespace),
 		ctrlclient.MatchingLabels{
 			UserIDLabel: userID,
 		},
@@ -146,7 +145,7 @@ func (c *client) UpdateInstance(
 	if err := c.k8sClient.List(
 		ctx,
 		pgList,
-		ctrlclient.InNamespace(namespace),
+		ctrlclient.InNamespace(Namespace),
 	); err != nil {
 		return nil, err
 	}
@@ -183,7 +182,7 @@ func (c *client) DeleteInstance(ctx context.Context, id string) error {
 	if err := c.k8sClient.List(
 		ctx,
 		pgList,
-		ctrlclient.InNamespace(namespace),
+		ctrlclient.InNamespace(Namespace),
 	); err != nil {
 		return err
 	}

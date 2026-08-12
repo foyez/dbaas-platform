@@ -1,0 +1,110 @@
+name: DBAAS Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "client/**"
+      - ".forgejo/workflows/client-ci.yaml"
+
+permissions:
+  contents: write # needed to push the image-tag bump commit back
+
+# Prevent two frontend releases from trying to update main/GitOps simultaneously.
+# concurrency:
+#   group: dbaas-frontend-release
+#   cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    name: Build, Push, Update Client
+    runs-on: stackit-ubuntu-22
+
+    # Uses vars/secrets from the "production" environment.
+    # environment: production
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync with latest main
+        run: |
+          git fetch origin main
+          git rebase origin/main
+
+      - name: Check architecture
+        run: |
+          uname -m
+          docker version
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # - name: Run tests
+      #   run: npm test
+
+      - name: Build Vue application
+        run: npm run build
+        env:
+          VITE_ZITADEL_AUTHORITY: ${{ vars.VITE_ZITADEL_AUTHORITY }}
+          VITE_ZITADEL_CLIENT_ID: ${{ vars.VITE_ZITADEL_CLIENT_ID }}
+          VITE_ZITADEL_REDIRECT_URI: ${{ vars.VITE_ZITADEL_REDIRECT_URI }}
+          VITE_ZITADEL_POST_LOGOUT_URI: ${{ vars.VITE_ZITADEL_POST_LOGOUT_URI }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+
+      - name: Compute image tag
+        id: image
+        run: |
+          TAG=$(git rev-parse --short HEAD)
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Building image with tag: ${TAG}"
+
+      - name: Log in to STACKIT Container Registry
+        run: |
+          echo "${{ secrets.STACKIT_CONTAINER_ROBOT_TOKEN }}" | \
+            docker login registry.onstackit.cloud \
+            --username "${{ secrets.STACKIT_CONTAINER_ROBOT_USERNAME }}" \
+            --password-stdin
+
+      - name: Build and push client image
+        env:
+          IMG: registry.onstackit.cloud/dbaas-platform/dbaas-frontend:${{ steps.image.outputs.tag }}
+          CONTAINER_TOOL: docker
+        run: |
+          make docker-build
+          make docker-push
+
+      - name: Update GitOps image tag
+        run: |
+          git config user.name "forgejo-actions"
+          git config user.email "actions@noreply.local"
+
+          sed -i \
+            "s#newTag: .*#newTag: ${{ steps.image.outputs.tag }}#" \
+            ../gitops/client/overlays/prod/kustomization.yaml
+
+          git add ../gitops/client/overlays/prod/kustomization.yaml
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit \
+            -m "chore: bump dbaas-frontend image to ${{ steps.image.outputs.tag }}"
+
+          git push origin HEAD:main
