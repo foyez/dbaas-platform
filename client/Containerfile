@@ -20,6 +20,22 @@ ENV VITE_ZITADEL_REDIRECT_URI=$VITE_ZITADEL_REDIRECT_URI
 ENV VITE_ZITADEL_POST_LOGOUT_URI=$VITE_ZITADEL_POST_LOGOUT_URI
 ENV VITE_API_URL=$VITE_API_URL
 
+RUN node -e '\
+const vars = [\
+  "VITE_ZITADEL_AUTHORITY",\
+  "VITE_ZITADEL_CLIENT_ID",\
+  "VITE_ZITADEL_REDIRECT_URI",\
+  "VITE_ZITADEL_POST_LOGOUT_URI",\
+  "VITE_API_URL"\
+]; \
+let failed = false; \
+for (const name of vars) { \
+  const value = process.env[name]; \
+  console.log(`${name}: ${value ? "SET" : "MISSING"}`); \
+  if (!value) failed = true; \
+} \
+if (failed) process.exit(1);'
+
 RUN npm run build
 
 
