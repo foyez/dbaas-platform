@@ -8,22 +8,25 @@ spec:
     matchLabels:
       app: dbaas
   replicas: 2
+
   template:
     metadata:
       labels:
         app: dbaas
+
     spec:
       serviceAccountName: dbaas-api
+
       imagePullSecrets:
         - name: stackit-registry-secret
 
       containers:
         - name: dbaas-api
-          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:latest
+          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:d927bde
+
           ports:
             - containerPort: 8080
 
-          
           env:
             - name: ZITADEL_DOMAIN
               value: "dbaas-jhuvx5.eu1.zitadel.cloud"
@@ -35,7 +38,7 @@ spec:
             - name: zitadel-key
               mountPath: /var/run/secrets/zitadel
               readOnly: true
-              
+
           resources:
             requests:
               memory: "64Mi"
@@ -48,11 +51,17 @@ spec:
           #   httpGet:
           #     path: /health
           #     port: 8080
-          #
+
           # livenessProbe:
           #   httpGet:
           #     path: /health
           #     port: 8080
+
+      volumes:
+        - name: zitadel-key
+          secret:
+            secretName: dbaas-zitadel-key
+            defaultMode: 0444
 
 ---
 apiVersion: v1

@@ -5,9 +5,9 @@ import InstanceDetailPage from '@/pages/InstanceDetailPage.vue'
 import InstancesPage from '@/pages/InstancesPage.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
-import { withAuthenticationRequired } from 'vue-oidc-context'
 import LandingPage from '@/pages/LandingPage.vue'
 import CallbackPage from '@/pages/auth/CallbackPage.vue'
+import { userManager } from '@/auth/oidc'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -50,6 +50,26 @@ const router = createRouter({
     { path: '/landing', name: 'landing', component: LandingPage },
     { path: '/auth/callback', name: 'callback', component: CallbackPage },
   ],
+})
+
+router.beforeEach(async (to) => {
+  if (!to.matched.some((record) => record.meta.requiresAuth)) {
+    return true
+  }
+
+  const user = await userManager.getUser()
+
+  if (user && !user.expired) {
+    return true
+  }
+
+  await userManager.signinRedirect({
+    state: {
+      returnUrl: to.fullPath,
+    },
+  })
+
+  return false
 })
 
 export default router
