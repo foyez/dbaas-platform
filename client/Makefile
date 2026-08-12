@@ -1,5 +1,5 @@
 CONTAINER_TOOL ?= podman
-IMG ?= frontend:latest
+IMG ?= registry.onstackit.cloud/dbaas-platform/dbaas-frontend:latest
 
 install:
 	npm install
@@ -23,7 +23,14 @@ format:
 	npm run format
 
 docker-build:
-	$(CONTAINER_TOOL) build -t ${IMG} \
+	$(CONTAINER_TOOL) build \
+		--platform linux/amd64 \
+		-t ${IMG} \
+		--build-arg VITE_ZITADEL_AUTHORITY="$(VITE_ZITADEL_AUTHORITY)" \
+		--build-arg VITE_ZITADEL_CLIENT_ID="$(VITE_ZITADEL_CLIENT_ID)" \
+		--build-arg VITE_ZITADEL_REDIRECT_URI="$(VITE_ZITADEL_REDIRECT_URI)" \
+		--build-arg VITE_ZITADEL_POST_LOGOUT_URI="$(VITE_ZITADEL_POST_LOGOUT_URI)" \
+		--build-arg VITE_API_URL="$(VITE_API_URL)" \
 		--target runtime \
 		-f Containerfile .
 

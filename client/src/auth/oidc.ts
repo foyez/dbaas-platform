@@ -5,10 +5,12 @@ export const oidcSettings: UserManagerSettings = {
   client_id: import.meta.env.VITE_ZITADEL_CLIENT_ID,
   redirect_uri: import.meta.env.VITE_ZITADEL_REDIRECT_URI,
   post_logout_redirect_uri: import.meta.env.VITE_ZITADEL_POST_LOGOUT_URI,
+
   response_type: 'code',
   scope: 'openid profile email offline_access',
+
   // Renew using the refresh token when available.
-  automaticSilentRenew: true,
+  // automaticSilentRenew: true,
   loadUserInfo: true,
 }
 

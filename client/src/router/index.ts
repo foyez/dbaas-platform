@@ -16,7 +16,8 @@ const router = createRouter({
     // protected
     {
       path: '/',
-      component: withAuthenticationRequired(AppLayout),
+      component: AppLayout,
+      meta: {requiresAuth: true},
 
       children: [
         {
