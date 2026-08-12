@@ -22,6 +22,20 @@ spec:
           image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:latest
           ports:
             - containerPort: 8080
+
+          
+          env:
+            - name: ZITADEL_DOMAIN
+              value: "dbaas-jhuvx5.eu1.zitadel.cloud"
+
+            - name: ZITADEL_KEY_PATH
+              value: "/var/run/secrets/zitadel/zitadel-key.json"
+
+          volumeMounts:
+            - name: zitadel-key
+              mountPath: /var/run/secrets/zitadel
+              readOnly: true
+              
           resources:
             requests:
               memory: "64Mi"
