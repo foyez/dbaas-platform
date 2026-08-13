@@ -22,11 +22,6 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   const body = contentType?.includes('application/json') ? await response.json() : null
 
   if (!response.ok) {
-    if (response.status === 401) {
-      await userManager.signinRedirect()
-      throw new ApiError(401, 'UNAUTHORIZED', 'Authentication required.')
-    }
-
     const error = body as {
       error?: {
         code?: string
