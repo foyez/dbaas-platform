@@ -1,0 +1,6 @@
+zitadel_domain = "https://<instance-name>.zitadel.cloud"
+zitadel_org_id = ""
+zitadel_jwt_profile_file = ""
+admin_user_id = ""
+frontend_url = "https://fe_url"
+dev_mode     = false
