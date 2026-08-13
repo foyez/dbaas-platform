@@ -23,7 +23,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   if (!response.ok) {
     if (response.status === 401) {
-      window.location.href = '/'
+      await userManager.signinRedirect()
+      throw new ApiError(401, 'UNAUTHORIZED', 'Authentication required.')
     }
 
     const error = body as {
