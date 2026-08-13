@@ -30,6 +30,7 @@ docker-build:
 		--build-arg VITE_ZITADEL_CLIENT_ID="$(VITE_ZITADEL_CLIENT_ID)" \
 		--build-arg VITE_ZITADEL_REDIRECT_URI="$(VITE_ZITADEL_REDIRECT_URI)" \
 		--build-arg VITE_ZITADEL_POST_LOGOUT_URI="$(VITE_ZITADEL_POST_LOGOUT_URI)" \
+		--build-arg VITE_ZITADEL_PROJECT_ID="$(VITE_ZITADEL_PROJECT_ID)" \
 		--build-arg VITE_API_URL="$(VITE_API_URL)" \
 		--target runtime \
 		-f Containerfile .
