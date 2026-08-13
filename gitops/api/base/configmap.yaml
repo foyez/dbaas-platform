@@ -8,5 +8,5 @@ data:
   APP_LOG_LEVEL: "info"
   SERVER_ADDRESS: ":8080"
   SERVER_ALLOW_ORIGINS: "https://app.foyez.runs.onstackit.cloud"
-  ZITADEL_DOMAIN: "dbaas-jhuvx5.eu1.zitadel.cloud"
+  ZITADEL_DOMAIN: "dbass-k4ho6i.eu1.zitadel.cloud"
   ZITADEL_KEY_PATH: "/var/run/secrets/zitadel/zitadel-key.json"
