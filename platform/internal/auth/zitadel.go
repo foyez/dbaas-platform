@@ -56,12 +56,18 @@ func (m *Middleware) IsGrantedRole(ctx context.Context, role string) bool {
 // Gin adapts standard net/http middleware to Gin middleware.
 func Gin(mw func(http.Handler) http.Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c.Request = r
+		nextCalled := false
 
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			nextCalled = true
+			c.Request = r
 			c.Next()
 		})
 
 		mw(next).ServeHTTP(c.Writer, c.Request)
+
+		if !nextCalled {
+			c.Abort()
+		}
 	}
 }
