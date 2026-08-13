@@ -57,7 +57,7 @@ func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middl
 
 	// Admin users
 	admin := protected.Group("")
-	admin.Use(auth.Gin(authmw.RequireRole("admin")))
+	admin.Use(auth.Gin(authmw.RequireRole(auth.RoleAdmin)))
 
 	// admin.GET("/instances/:id", h.GetInstance)
 	admin.DELETE("/instances/:id", h.DeleteInstance)
