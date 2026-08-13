@@ -5,4 +5,5 @@ resources:
   - apps/cnpg.yaml
   - apps/dbaas-operator.yaml
   - apps/dbaas-api.yaml
+  - apps/dbaas-client.yaml
   - apps/database-resource.yaml
