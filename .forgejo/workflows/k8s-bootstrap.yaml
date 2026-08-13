@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'infra/ske-cluster/**'
+      - 'gitops/**'
       - '.forgejo/workflows/k8s-bootstrap.yaml'
 
 jobs:
@@ -25,25 +26,25 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infra/terraform
+        working-directory: infra/ske-cluster/terraform
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: infra/terraform
+        working-directory: infra/ske-cluster/terraform
         env:
           TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
           TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
-        working-directory: infra/terraform
+        working-directory: infra/ske-cluster/terraform
         env:
           TF_VAR_project_id: ${{ secrets.STACKIT_PROJECT_ID }}
           TF_VAR_service_account_key: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
         run: terraform apply -auto-approve tfplan
 
       # - name: Export kubeconfig
-      #   working-directory: infra/terraform
+      #   working-directory: infra/ske-cluster/terraform
       #   run: terraform output -raw kubeconfig > kubeconfig.yaml
 
       # # GHES compatibility: upload-artifact@v4 is not supported.
@@ -68,14 +69,14 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infra/terraform
+        working-directory: infra/ske-cluster/terraform
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform init
 
       - name: Export kubeconfig
-        working-directory: infra/terraform
+        working-directory: infra/ske-cluster/terraform
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -85,7 +86,7 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p "$HOME/.kube"
-          install -m 600 infra/terraform/kubeconfig.yaml "$HOME/.kube/config"
+          install -m 600 infra/ske-cluster/terraform/kubeconfig.yaml "$HOME/.kube/config"
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
