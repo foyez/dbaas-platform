@@ -4,10 +4,11 @@ metadata:
   name: dbaas-deploy
   namespace: dbaas-api
 spec:
+  replicas: 2
+  
   selector:
     matchLabels:
       app: dbaas
-  replicas: 2
 
   template:
     metadata:
@@ -22,17 +23,23 @@ spec:
 
       containers:
         - name: dbaas-api
-          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:d927bde
+          image: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api:latest
 
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
+              protocol: TCP
 
-          env:
-            - name: ZITADEL_DOMAIN
-              value: "dbaas-jhuvx5.eu1.zitadel.cloud"
+          envFrom:
+            - configMapRef:
+                name: dbaas-api-config
 
-            - name: ZITADEL_KEY_PATH
-              value: "/var/run/secrets/zitadel/zitadel-key.json"
+          # env:
+          #   - name: ZITADEL_DOMAIN
+          #     value: "dbaas-jhuvx5.eu1.zitadel.cloud"
+
+          #   - name: ZITADEL_KEY_PATH
+          #     value: "/var/run/secrets/zitadel/zitadel-key.json"
 
           volumeMounts:
             - name: zitadel-key
@@ -47,15 +54,26 @@ spec:
               memory: "128Mi"
               cpu: "500m"
 
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
 
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
 
       volumes:
         - name: zitadel-key
@@ -71,9 +89,12 @@ metadata:
   namespace: dbaas-api
 spec:
   type: ClusterIP
+
   selector:
     app: dbaas
+
   ports:
-    - port: 8080
-      targetPort: 8080
+    - name: http
+      port: 8080
+      targetPort: http
       protocol: TCP

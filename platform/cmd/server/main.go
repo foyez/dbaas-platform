@@ -43,7 +43,7 @@ func main() {
 	svc := service.NewInstanceService(instanceClient, log)
 	handler := handler.NewInstanceHandler(svc, log, authmw)
 
-	r := router.New(handler, authmw)
+	r := router.New(handler, cfg.Server, authmw)
 
 	setupDocs(r)
 

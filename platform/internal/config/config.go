@@ -30,7 +30,8 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	Address string `envconfig:"SERVER_ADDRESS" default:":8080"`
+	Address      string   `envconfig:"SERVER_ADDRESS" default:":8080"`
+	AllowOrigins []string `envconfig:"SERVER_ALLOW_ORIGINS"`
 }
 
 type ZitadelConfig struct {

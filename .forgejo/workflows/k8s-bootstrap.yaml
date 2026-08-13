@@ -5,9 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'terraform/**'
-      - 'gitops/**'
-      - '.forgejo/workflows/platform-bootstrap.yaml'
+      - 'infra/ske-cluster/**'
+      - '.forgejo/workflows/k8s-bootstrap.yaml'
 
 jobs:
   ske-provision:

@@ -4,21 +4,23 @@
 package router
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/foyez/dbaas-platform/platform/internal/api/handler"
 	"github.com/foyez/dbaas-platform/platform/internal/auth"
+	"github.com/foyez/dbaas-platform/platform/internal/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 // New creates and configures a Gin HTTP server with all application routes
 // and middleware registered.
-func New(h *handler.InstanceHandler, authmw *auth.Middleware) *gin.Engine {
+func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middleware) *gin.Engine {
 	r := gin.New()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://app.foyez.runs.onstackit.cloud"},
+		AllowOrigins:     cfg.AllowOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Idempotency-Key"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -27,6 +29,13 @@ func New(h *handler.InstanceHandler, authmw *auth.Middleware) *gin.Engine {
 	}))
 
 	r.Use(gin.Recovery(), gin.Logger())
+
+	// Health check for Kubernetes probes.
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
+	})
 
 	v1 := r.Group("/api/v1")
 

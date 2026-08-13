@@ -5,6 +5,9 @@ resources:
 - namespace.yaml
 - serviceaccount.yaml
 - rbac.yaml
+- configmap.yaml
 - deployment.yaml
 - ingress.yaml
 - hpa.yaml
+- letsencrypt-prod.yaml
+- dbaas-api-certificate.yaml

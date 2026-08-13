@@ -5,6 +5,12 @@ metadata:
   namespace: dbaas-frontend
 spec:
   ingressClassName: nginx
+
+  tls:
+    - hosts:
+        - app.foyez.runs.onstackit.cloud
+      secretName: dbaas-wildcard-tls
+
   rules:
     - host: app.foyez.runs.onstackit.cloud
       http:

@@ -6,6 +6,11 @@ metadata:
 spec:
   ingressClassName: nginx
 
+  tls:
+    - hosts:
+        - api.foyez.runs.onstackit.cloud
+      secretName: dbaas-api-tls
+
   rules:
     - host: api.foyez.runs.onstackit.cloud
       http:

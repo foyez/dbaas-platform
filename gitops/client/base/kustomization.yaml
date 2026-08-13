@@ -5,3 +5,5 @@ resources:
 - namespace.yaml
 - deployment.yaml
 - ingress.yaml
+- letsencrypt-prod.yaml
+- dbaas-wildcard-certificate.yaml

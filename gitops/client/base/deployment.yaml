@@ -26,7 +26,7 @@ spec:
 
       containers:
         - name: dbaas-frontend
-          image: registry.onstackit.cloud/dbaas-platform/dbaas-frontend:latest
+          image: registry.onstackit.cloud/dbaas-platform/dbaas-frontend:0b76f32
 
           ports:
             - name: http

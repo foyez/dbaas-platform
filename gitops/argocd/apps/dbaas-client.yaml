@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: dbaas-client
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
+    targetRevision: main
+    path: gitops/client/overlays/prod
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dbaas-frontend
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
