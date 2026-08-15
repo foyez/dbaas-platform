@@ -7,26 +7,10 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - services
+  - secrets
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - statefulsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - database.example.com
