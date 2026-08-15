@@ -11,14 +11,13 @@ import (
 )
 
 const (
-	UserIDLabel     = "app.example.com/user-id"
-	AppSecretSuffix = "-app"
+	UserIDLabel = "app.example.com/user-id"
 )
 
 func (r *PostgreSQLReconciler) reconcileCNPGCluster(ctx context.Context, pg *databasev1.PostgreSQL) error {
 	cluster := &cnpgv1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pg.Name + AppSecretSuffix,
+			Name:      clusterName(pg.Name),
 			Namespace: pg.Namespace,
 		},
 	}
