@@ -29,7 +29,7 @@ const form = ref<CreateInstanceInput>({
   name: props.initialValue?.name ?? '',
   instances: props.initialValue?.instances ?? 1,
   version: props.initialValue?.version ?? 16,
-  storage: props.initialValue?.storage ?? '10Gi',
+  storage: props.initialValue?.storage ?? '2Gi',
 })
 
 const errors = ref<Partial<Record<keyof CreateInstanceInput, string>>>({})

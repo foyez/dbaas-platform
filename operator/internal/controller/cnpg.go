@@ -10,9 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const (
-	UserIDLabel = "app.example.com/user-id"
-)
+const UserIDLabel = "app.example.com/user-id"
 
 func (r *PostgreSQLReconciler) reconcileCNPGCluster(
 	ctx context.Context,
@@ -31,7 +29,7 @@ func (r *PostgreSQLReconciler) reconcileCNPGCluster(
 		cluster,
 		func() error {
 			if cluster.Labels == nil {
-				cluster.Labels = make(map[string]string)
+				cluster.Labels = map[string]string{}
 			}
 
 			if userID, ok := pg.Labels[UserIDLabel]; ok {
