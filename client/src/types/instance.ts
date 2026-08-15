@@ -25,6 +25,11 @@ export interface CreateInstanceRequest {
   storage: string
 }
 
+export interface UpdateInstanceRequest {
+  version?: number
+  storage?: string
+}
+
 export interface InstanceListResponse {
   items: Instance[]
 }

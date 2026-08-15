@@ -1,28 +1,45 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { createInstanceSchema } from '@/schemas/instance'
-import type { CreateInstanceForm } from '@/schemas/instance'
+
+import { createInstanceSchema, updateInstanceSchema } from '@/schemas/instance'
+
+import type { CreateInstanceForm, UpdateInstanceForm } from '@/schemas/instance'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+const props = withDefaults(
+  defineProps<{
+    mode?: 'create' | 'edit'
+    initialValue?: Partial<CreateInstanceForm>
+    loading?: boolean
+  }>(),
+  {
+    mode: 'create',
+    initialValue: undefined,
+    loading: false,
+  },
+)
+
 const emit = defineEmits<{
-  submit: [value: CreateInstanceForm]
+  submit: [value: CreateInstanceForm | UpdateInstanceForm]
 }>()
 
 const form = ref<CreateInstanceForm>({
-  name: '',
-  instances: 1,
-  version: 16,
-  storage: '10Gi',
+  name: props.initialValue?.name ?? '',
+  instances: props.initialValue?.instances ?? 1,
+  version: props.initialValue?.version ?? 16,
+  storage: props.initialValue?.storage ?? '10Gi',
 })
 
 const errors = ref<Partial<Record<keyof CreateInstanceForm, string>>>({})
 
 function submit() {
-  const result = createInstanceSchema.safeParse(form.value)
-
+  const schema = props.mode === 'edit' ? updateInstanceSchema : createInstanceSchema
+  
+  const result = schema.safeParse(form.value)
+  
   if (!result.success) {
     const fieldErrors: typeof errors.value = {}
 
@@ -46,44 +63,48 @@ function submit() {
 
 <template>
   <form class="space-y-6" @submit.prevent="submit">
-    <!-- Name -->
+    <!-- Create-only fields -->
 
-    <div class="space-y-2">
-      <Label for="name"> Instance name </Label>
+    <template v-if="mode === 'create'">
+      <!-- Name -->
 
-      <Input
-        id="name"
-        v-model="form.name"
-        name="name"
-        placeholder="my-postgres-db"
-        autocomplete="off"
-        :aria-invalid="!!errors.name"
-      />
+      <div class="space-y-2">
+        <Label for="name"> Instance name </Label>
 
-      <p v-if="errors.name" class="text-sm text-destructive">
-        {{ errors.name }}
-      </p>
-    </div>
+        <Input
+          id="name"
+          v-model="form.name"
+          name="name"
+          placeholder="my-postgres-db"
+          autocomplete="off"
+          :aria-invalid="!!errors.name"
+        />
 
-    <!-- Instances -->
+        <p v-if="errors.name" class="text-sm text-destructive">
+          {{ errors.name }}
+        </p>
+      </div>
 
-    <div class="space-y-2">
-      <Label for="instances"> PostgreSQL instances </Label>
+      <!-- Instances -->
 
-      <Input
-        id="instances"
-        v-model.number="form.instances"
-        name="instances"
-        type="number"
-        min="1"
-        max="20"
-        :aria-invalid="!!errors.instances"
-      />
+      <div class="space-y-2">
+        <Label for="instances"> PostgreSQL instances </Label>
 
-      <p v-if="errors.instances" class="text-sm text-destructive">
-        {{ errors.instances }}
-      </p>
-    </div>
+        <Input
+          id="instances"
+          v-model.number="form.instances"
+          name="instances"
+          type="number"
+          min="1"
+          max="20"
+          :aria-invalid="!!errors.instances"
+        />
+
+        <p v-if="errors.instances" class="text-sm text-destructive">
+          {{ errors.instances }}
+        </p>
+      </div>
+    </template>
 
     <!-- Version -->
 
@@ -95,8 +116,8 @@ function submit() {
         v-model.number="form.version"
         name="version"
         type="number"
-        min="12"
-        max="18"
+        min="14"
+        max="16"
         :aria-invalid="!!errors.version"
       />
 
@@ -123,6 +144,8 @@ function submit() {
       </p>
     </div>
 
-    <Button type="submit" class="w-full"> Create instance </Button>
+    <Button type="submit" class="w-full" :disabled="loading">
+      {{ loading ? 'Saving...' : mode === 'edit' ? 'Save changes' : 'Create instance' }}
+    </Button>
   </form>
 </template>

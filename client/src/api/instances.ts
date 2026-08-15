@@ -1,6 +1,11 @@
 import { apiFetch } from './client'
 
-import type { CreateInstanceRequest, Instance, InstanceListResponse } from '@/types/instance'
+import type {
+  CreateInstanceRequest,
+  Instance,
+  InstanceListResponse,
+  UpdateInstanceRequest,
+} from '@/types/instance'
 
 export async function createInstance(
   request: CreateInstanceRequest,
@@ -24,4 +29,17 @@ export async function getInstance(id: string): Promise<Instance> {
 
 export async function listInstances(): Promise<InstanceListResponse> {
   return apiFetch<InstanceListResponse>('/instances')
+}
+
+export async function updateInstance(id: string, data: UpdateInstanceRequest): Promise<Instance> {
+  return apiFetch<Instance>(`/instances/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteInstance(id: string): Promise<void> {
+  await apiFetch<void>(`/instances/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
 }

@@ -1,22 +1,40 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Pencil, Trash2 } from 'lucide-vue-next'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 import { Button } from '@/components/ui/button'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+
 import InstanceStatus from '@/components/instances/InstanceStatus.vue'
+import InstanceForm from '@/components/instances/InstanceForm.vue'
 
 import { useInstance } from '@/composables/useInstance'
+import type { UpdateInstanceForm } from '@/schemas/instance'
 import { formatDate } from '@/lib/date'
 
 const route = useRoute()
 const router = useRouter()
 
-const { instance, isLoading, error, fetchInstance } = useInstance()
+const { instance, isLoading, error, fetchInstance, updateInstance, deleteInstance } = useInstance()
 
 const instanceId = String(route.params.id)
+
+const isEditing = ref(false)
+const isDeleting = ref(false)
 
 async function load() {
   try {
@@ -26,9 +44,35 @@ async function load() {
   }
 }
 
+async function saveChanges(data: UpdateInstanceForm) {
+  try {
+    await updateInstance(instanceId, data)
+
+    isEditing.value = false
+  } catch {
+    // Error is exposed by useInstance().
+  }
+}
+
+async function removeInstance() {
+  isDeleting.value = true
+
+  try {
+    await deleteInstance(instanceId)
+
+    await router.push({
+      name: 'instances',
+    })
+  } catch {
+    // Error is exposed by useInstance().
+  } finally {
+    isDeleting.value = false
+  }
+}
+
 function goBack() {
   router.push({
-    name: 'instance-create',
+    name: 'instances',
   })
 }
 
@@ -44,7 +88,7 @@ onMounted(load)
 
       <!-- Loading -->
 
-      <Card v-if="isLoading">
+      <Card v-if="isLoading && !instance">
         <CardContent class="py-12">
           <div class="flex items-center justify-center text-sm text-muted-foreground">
             Loading instance...
@@ -54,7 +98,7 @@ onMounted(load)
 
       <!-- Error -->
 
-      <Card v-else-if="error">
+      <Card v-else-if="error && !instance">
         <CardHeader>
           <CardTitle> Unable to load instance </CardTitle>
 
@@ -87,7 +131,88 @@ onMounted(load)
               {{ instance.id }}
             </p>
           </div>
+
+          <div class="flex gap-2">
+            <!-- Edit -->
+
+            <Button variant="outline" :disabled="isDeleting" @click="isEditing = !isEditing">
+              <Pencil class="mr-2 h-4 w-4" />
+
+              {{ isEditing ? 'Cancel' : 'Edit' }}
+            </Button>
+
+            <!-- Delete -->
+
+            <AlertDialog>
+              <AlertDialogTrigger as-child>
+                <Button variant="destructive" :disabled="isDeleting">
+                  <Trash2 class="mr-2 h-4 w-4" />
+
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle> Delete {{ instance.name }}? </AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    This action cannot be undone. The PostgreSQL instance and its associated
+                    resources will be deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel> Cancel </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    :disabled="isDeleting"
+                    @click="removeInstance"
+                  >
+                    {{ isDeleting ? 'Deleting...' : 'Delete instance' }}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
+
+        <!-- Update error -->
+
+        <Card v-if="error">
+          <CardHeader>
+            <CardTitle> Unable to update instance </CardTitle>
+
+            <CardDescription>
+              {{ error.message }}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+        <!-- Edit -->
+
+        <Card v-if="isEditing">
+          <CardHeader>
+            <CardTitle> Edit instance </CardTitle>
+
+            <CardDescription>
+              Update the PostgreSQL version or storage configuration.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <InstanceForm
+              mode="edit"
+              :initial-value="{
+                version: instance.version,
+                storage: instance.storage,
+              }"
+              :loading="isLoading"
+              @submit="saveChanges"
+            />
+          </CardContent>
+        </Card>
 
         <!-- Configuration -->
 

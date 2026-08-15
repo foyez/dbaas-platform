@@ -53,4 +53,10 @@ export const createInstanceSchema = z.object({
     .regex(/^\d+(Mi|Gi|Ti)$/, 'Storage must look like 512Mi, 7Gi, or 1Ti'),
 })
 
+export const updateInstanceSchema = createInstanceSchema.pick({
+  version: true,
+  storage: true,
+})
+
 export type CreateInstanceForm = z.infer<typeof createInstanceSchema>
+export type UpdateInstanceForm = z.infer<typeof updateInstanceSchema>
