@@ -4,25 +4,27 @@ import (
 	"context"
 	"fmt"
 
+	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
+	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
-	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // +kubebuilder:rbac:groups=database.example.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=database.example.com,resources=postgresqls/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=database.example.com,resources=postgresqls/finalizers,verbs=update
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 
 const (
-	clusterNameSuffix = "-app"
+	PostgreSQLConditionReady databasev1.PostgreSQLConditionType = "Ready"
 )
 
 type PostgreSQLReconciler struct {
@@ -50,22 +52,15 @@ func (r *PostgreSQLReconciler) Reconcile(
 	)
 
 	if err := r.reconcileCNPGCluster(ctx, &pg); err != nil {
-		return ctrl.Result{}, fmt.Errorf("reconciling CNPG cluster: %w", err)
-	}
-
-	// Ensure the desired CNPG cluster exists and matches the
-	// PostgreSQL custom resource.
-	if err := r.reconcileCNPGCluster(ctx, &pg); err != nil {
 		return ctrl.Result{}, fmt.Errorf(
 			"reconciling CNPG cluster: %w",
 			err,
 		)
 	}
 
-	// Reflect the observed CNPG state into our CR status.
-	if err := r.reconcileStatus(ctx, &pg); err != nil {
+	if err := r.updateStatus(ctx, &pg); err != nil {
 		return ctrl.Result{}, fmt.Errorf(
-			"reconciling PostgreSQL status: %w",
+			"updating PostgreSQL status: %w",
 			err,
 		)
 	}
@@ -73,7 +68,7 @@ func (r *PostgreSQLReconciler) Reconcile(
 	return ctrl.Result{}, nil
 }
 
-func (r *PostgreSQLReconciler) reconcileStatus(
+func (r *PostgreSQLReconciler) updateStatus(
 	ctx context.Context,
 	pg *databasev1.PostgreSQL,
 ) error {
@@ -82,19 +77,20 @@ func (r *PostgreSQLReconciler) reconcileStatus(
 	err := r.Get(
 		ctx,
 		client.ObjectKey{
-			Name:      clusterName(pg.Name),
+			Name:      pg.Name,
 			Namespace: pg.Namespace,
 		},
 		&cluster,
 	)
-
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return r.updateStatus(
+			return r.setStatus(
 				ctx,
 				pg,
 				databasev1.PostgreSQLPhaseCreating,
 				0,
+				"ClusterNotReady",
+				"CNPG cluster has not been created yet",
 			)
 		}
 
@@ -102,40 +98,98 @@ func (r *PostgreSQLReconciler) reconcileStatus(
 	}
 
 	readyInstances := int32(cluster.Status.ReadyInstances)
+	desiredInstances := pg.Spec.Instances
 
-	phase := databasev1.PostgreSQLPhaseCreating
-
-	if readyInstances >= pg.Spec.Instances {
-		phase = databasev1.PostgreSQLPhaseReady
+	if desiredInstances <= 0 {
+		return r.setStatus(
+			ctx,
+			pg,
+			databasev1.PostgreSQLPhaseFailed,
+			readyInstances,
+			"InvalidInstances",
+			"desired instance count must be greater than zero",
+		)
 	}
 
-	return r.updateStatus(
+	if readyInstances < desiredInstances {
+		return r.setStatus(
+			ctx,
+			pg,
+			databasev1.PostgreSQLPhaseCreating,
+			readyInstances,
+			"ClusterNotReady",
+			fmt.Sprintf(
+				"waiting for PostgreSQL cluster: %d/%d instances ready",
+				readyInstances,
+				desiredInstances,
+			),
+		)
+	}
+
+	if !isClusterHealthy(&cluster) {
+		return r.setStatus(
+			ctx,
+			pg,
+			databasev1.PostgreSQLPhaseCreating,
+			readyInstances,
+			"ClusterNotHealthy",
+			"PostgreSQL cluster has the expected number of ready instances but is not healthy",
+		)
+	}
+
+	return r.setStatus(
 		ctx,
 		pg,
-		phase,
+		databasev1.PostgreSQLPhaseReady,
 		readyInstances,
+		"ClusterReady",
+		"PostgreSQL cluster is healthy and all requested instances are ready",
 	)
 }
 
-func (r *PostgreSQLReconciler) updateStatus(
+func (r *PostgreSQLReconciler) setStatus(
 	ctx context.Context,
 	pg *databasev1.PostgreSQL,
 	phase databasev1.PostgreSQLPhase,
 	readyInstances int32,
+	reason string,
+	message string,
 ) error {
-	if pg.Status.Phase == phase &&
-		pg.Status.ReadyInstances == readyInstances {
-		return nil
-	}
-
 	pg.Status.Phase = phase
 	pg.Status.ReadyInstances = readyInstances
+
+	meta.SetStatusCondition(
+		&pg.Status.Conditions,
+		metav1.Condition{
+			Type:               string(PostgreSQLConditionReady),
+			Status:             conditionStatus(phase),
+			Reason:             reason,
+			Message:            message,
+			ObservedGeneration: pg.Generation,
+		},
+	)
 
 	return r.Status().Update(ctx, pg)
 }
 
-func clusterName(pgName string) string {
-	return pgName + clusterNameSuffix
+func isClusterHealthy(cluster *cnpgv1.Cluster) bool {
+	for _, condition := range cluster.Status.Conditions {
+		if condition.Type == string(cnpgv1.ConditionClusterReady) {
+			return condition.Status == metav1.ConditionTrue
+		}
+	}
+
+	return false
+}
+
+func conditionStatus(
+	phase databasev1.PostgreSQLPhase,
+) metav1.ConditionStatus {
+	if phase == databasev1.PostgreSQLPhaseReady {
+		return metav1.ConditionTrue
+	}
+
+	return metav1.ConditionFalse
 }
 
 func (r *PostgreSQLReconciler) SetupWithManager(
