@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -14,6 +13,7 @@ import (
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // +kubebuilder:rbac:groups=database.example.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete
@@ -60,16 +60,34 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *PostgreSQLReconciler) updateStatus(ctx context.Context, pg *databasev1.PostgreSQL) error {
+func (r *PostgreSQLReconciler) updateStatus(
+	ctx context.Context,
+	pg *databasev1.PostgreSQL,
+) error {
 	var cluster cnpgv1.Cluster
 
-	if err := r.Get(ctx, types.NamespacedName{Name: pg.Name, Namespace: pg.Namespace}, &cluster); err != nil {
-		return client.IgnoreNotFound(err)
+	err := r.Get(
+		ctx,
+		client.ObjectKey{
+			Name:      pg.Name,
+			Namespace: pg.Namespace,
+		},
+		&cluster,
+	)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			pg.Status.Phase = databasev1.PostgreSQLPhaseCreating
+			pg.Status.ReadyInstances = 0
+
+			return r.Status().Update(ctx, pg)
+		}
+
+		return err
 	}
 
 	pg.Status.ReadyInstances = int32(cluster.Status.ReadyInstances)
 
-	if cluster.Status.ReadyInstances == int(pg.Spec.Instances) {
+	if cluster.Status.ReadyInstances >= int(pg.Spec.Instances) {
 		pg.Status.Phase = databasev1.PostgreSQLPhaseReady
 	} else {
 		pg.Status.Phase = databasev1.PostgreSQLPhaseCreating
