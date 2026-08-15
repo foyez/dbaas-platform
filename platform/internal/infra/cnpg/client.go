@@ -178,6 +178,7 @@ func (c *client) GetInstanceCredentials(
 	if err != nil {
 		return nil, err
 	}
+
 	port, err := parsePort([]byte(portRaw))
 	if err != nil {
 		return nil, err
@@ -198,12 +199,18 @@ func (c *client) GetInstanceCredentials(
 		return nil, err
 	}
 
+	uri, err := getSecretValue(secret.Data, "uri")
+	if err != nil {
+		return nil, err
+	}
+
 	return &domain.InstanceCredentials{
 		Host:     host,
 		Port:     port,
 		Database: database,
 		Username: username,
 		Password: password,
+		URI:      uri,
 	}, nil
 }
 

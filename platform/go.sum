@@ -31,8 +31,8 @@ github.com/evanphx/json-patch v0.5.2 h1:xVCHIVMUu1wtM/VkR9jVZ45N3FhZfYMMYGorLCR8
 github.com/evanphx/json-patch v0.5.2/go.mod h1:ZWS5hhDbVDyob71nXKNL0+PWn6ToqBHMikGIFbs31qQ=
 github.com/evanphx/json-patch/v5 v5.9.11 h1:/8HVnzMq13/3x9TPvjG08wUGqBTmZBsCWzjTM0wiaDU=
 github.com/evanphx/json-patch/v5 v5.9.11/go.mod h1:3j+LviiESTElxA4p3EMKAB9HXj3/XEtnUf6OZxqIQTM=
-github.com/foyez/dbaas-platform/operator v0.1.3 h1:17XE1YF9GcLpQBNb/Y/F4gK9+S23N/RxVF5G56iofJ0=
-github.com/foyez/dbaas-platform/operator v0.1.3/go.mod h1:0BNjy2/rhsKz4l82z3ib4FuJElIeqY4YEuClmqgPMe4=
+github.com/foyez/dbaas-platform/operator v0.1.4 h1:aimFtq2nd2P2sjynKZLp7piF8ca49wOIMCE67lBtYAk=
+github.com/foyez/dbaas-platform/operator v0.1.4/go.mod h1:0BNjy2/rhsKz4l82z3ib4FuJElIeqY4YEuClmqgPMe4=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/fxamacker/cbor/v2 v2.9.2 h1:X4Ksno9+x3cz0TZv69ec1hxP/+tymuR8PXQJyDwfh78=

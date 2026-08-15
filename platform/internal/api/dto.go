@@ -46,6 +46,7 @@ type InstanceCredentialsResponse struct {
 	Database string `json:"database"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	URI      string `json:"uri"`
 }
 
 type DeleteInstanceResponse struct {

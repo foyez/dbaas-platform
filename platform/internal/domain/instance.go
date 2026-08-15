@@ -33,6 +33,7 @@ type InstanceCredentials struct {
 	Database string
 	Username string
 	Password string
+	URI      string
 }
 
 type CreateInstanceInput struct {
