@@ -11,8 +11,6 @@ import (
 
 	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -23,21 +21,29 @@ import (
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 
-// PostgreSQLReconciler reconciles a PostgreSQL object
+const (
+	clusterNameSuffix = "-app"
+)
+
 type PostgreSQLReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *PostgreSQLReconciler) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
 	var pg databasev1.PostgreSQL
+
 	if err := r.Get(ctx, req.NamespacedName, &pg); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Info("reconciling PostgreSQL",
+	log.Info(
+		"reconciling PostgreSQL",
 		"name", pg.Name,
 		"version", pg.Spec.Version,
 		"instances", pg.Spec.Instances,
@@ -47,20 +53,27 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, fmt.Errorf("reconciling CNPG cluster: %w", err)
 	}
 
-	// if pg.Spec.ConnectionPooler.Enabled {
-	// 	if err := r.reconcilePgBouncer(ctx, &pg); err != nil {
-	// 		return ctrl.Result{}, fmt.Errorf("reconciling pgbouncer: %w", err)
-	// 	}
-	// }
+	// Ensure the desired CNPG cluster exists and matches the
+	// PostgreSQL custom resource.
+	if err := r.reconcileCNPGCluster(ctx, &pg); err != nil {
+		return ctrl.Result{}, fmt.Errorf(
+			"reconciling CNPG cluster: %w",
+			err,
+		)
+	}
 
-	if err := r.updateStatus(ctx, &pg); err != nil {
-		return ctrl.Result{}, err
+	// Reflect the observed CNPG state into our CR status.
+	if err := r.reconcileStatus(ctx, &pg); err != nil {
+		return ctrl.Result{}, fmt.Errorf(
+			"reconciling PostgreSQL status: %w",
+			err,
+		)
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *PostgreSQLReconciler) updateStatus(
+func (r *PostgreSQLReconciler) reconcileStatus(
 	ctx context.Context,
 	pg *databasev1.PostgreSQL,
 ) error {
@@ -69,40 +82,68 @@ func (r *PostgreSQLReconciler) updateStatus(
 	err := r.Get(
 		ctx,
 		client.ObjectKey{
-			Name:      pg.Name,
+			Name:      clusterName(pg.Name),
 			Namespace: pg.Namespace,
 		},
 		&cluster,
 	)
+
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			pg.Status.Phase = databasev1.PostgreSQLPhaseCreating
-			pg.Status.ReadyInstances = 0
-
-			return r.Status().Update(ctx, pg)
+			return r.updateStatus(
+				ctx,
+				pg,
+				databasev1.PostgreSQLPhaseCreating,
+				0,
+			)
 		}
 
 		return err
 	}
 
-	pg.Status.ReadyInstances = int32(cluster.Status.ReadyInstances)
+	readyInstances := int32(cluster.Status.ReadyInstances)
 
-	if cluster.Status.ReadyInstances >= int(pg.Spec.Instances) {
-		pg.Status.Phase = databasev1.PostgreSQLPhaseReady
-	} else {
-		pg.Status.Phase = databasev1.PostgreSQLPhaseCreating
+	phase := databasev1.PostgreSQLPhaseCreating
+
+	if readyInstances >= pg.Spec.Instances {
+		phase = databasev1.PostgreSQLPhaseReady
 	}
+
+	return r.updateStatus(
+		ctx,
+		pg,
+		phase,
+		readyInstances,
+	)
+}
+
+func (r *PostgreSQLReconciler) updateStatus(
+	ctx context.Context,
+	pg *databasev1.PostgreSQL,
+	phase databasev1.PostgreSQLPhase,
+	readyInstances int32,
+) error {
+	if pg.Status.Phase == phase &&
+		pg.Status.ReadyInstances == readyInstances {
+		return nil
+	}
+
+	pg.Status.Phase = phase
+	pg.Status.ReadyInstances = readyInstances
 
 	return r.Status().Update(ctx, pg)
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *PostgreSQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func clusterName(pgName string) string {
+	return pgName + clusterNameSuffix
+}
+
+func (r *PostgreSQLReconciler) SetupWithManager(
+	mgr ctrl.Manager,
+) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&databasev1.PostgreSQL{}).
 		Named("postgresql").
 		Owns(&cnpgv1.Cluster{}).
-		Owns(&appsv1.StatefulSet{}).
-		Owns(&corev1.Service{}).
 		Complete(r)
 }
