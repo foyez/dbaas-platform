@@ -20,11 +20,11 @@ import {
 } from '@/components/ui/alert-dialog'
 
 import InstanceStatus from '@/components/instances/InstanceStatus.vue'
-import InstanceForm from '@/components/instances/InstanceForm.vue'
+import UpdateInstanceForm from '@/components/instances/UpdateInstanceForm.vue'
 import InstanceCredentials from '@/components/instances/InstanceCredentials.vue'
 
 import { useInstance } from '@/composables/useInstance'
-import type { UpdateInstanceForm } from '@/schemas/instance'
+import type { UpdateInstanceInput } from '@/schemas/instance'
 import { formatDate } from '@/lib/date'
 
 const route = useRoute()
@@ -64,7 +64,7 @@ async function revealCredentials() {
   }
 }
 
-async function saveChanges(data: UpdateInstanceForm) {
+async function saveChanges(data: UpdateInstanceInput) {
   try {
     await updateInstance(instanceId, data)
 
@@ -222,8 +222,7 @@ onMounted(load)
           </CardHeader>
 
           <CardContent>
-            <InstanceForm
-              mode="edit"
+            <UpdateInstanceForm
               :initial-value="{
                 version: instance.version,
                 storage: instance.storage,

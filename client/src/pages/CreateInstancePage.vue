@@ -3,15 +3,15 @@ import { useRouter } from 'vue-router'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-import InstanceForm from '@/components/instances/InstanceForm.vue'
+import CreateInstanceForm from '@/components/instances/CreateInstanceForm.vue'
 import { useCreateInstance } from '@/composables/useCreateInstance'
-import type { CreateInstanceForm } from '@/schemas/instance'
+import type { CreateInstanceInput } from '@/schemas/instance'
 
 const router = useRouter()
 
 const { execute, isLoading, error } = useCreateInstance()
 
-async function createInstance(form: CreateInstanceForm) {
+async function createInstance(form: CreateInstanceInput) {
   try {
     const instance = await execute(form)
 
@@ -51,7 +51,7 @@ async function createInstance(form: CreateInstanceForm) {
             </p>
           </div>
 
-          <InstanceForm @submit="createInstance" />
+          <CreateInstanceForm :loading="isLoading" @submit="createInstance" />
 
           <p v-if="isLoading" class="mt-4 text-sm text-muted-foreground">
             Creating your PostgreSQL instance...

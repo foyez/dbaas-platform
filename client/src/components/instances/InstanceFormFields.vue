@@ -1,45 +1,61 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
-import { createInstanceSchema, updateInstanceSchema } from '@/schemas/instance'
-
-import type { CreateInstanceForm, UpdateInstanceForm } from '@/schemas/instance'
+import { ref, watch } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+import { createInstanceSchema, updateInstanceSchema } from '@/schemas/instance'
+
+import type { CreateInstanceInput, UpdateInstanceInput } from '@/schemas/instance'
+
 const props = withDefaults(
   defineProps<{
-    mode?: 'create' | 'edit'
-    initialValue?: Partial<CreateInstanceForm>
+    mode: 'create' | 'edit'
+    initialValue?: Partial<CreateInstanceInput>
     loading?: boolean
   }>(),
   {
-    mode: 'create',
     initialValue: undefined,
     loading: false,
   },
 )
 
 const emit = defineEmits<{
-  submit: [value: CreateInstanceForm | UpdateInstanceForm]
+  submit: [value: CreateInstanceInput | UpdateInstanceInput]
 }>()
 
-const form = ref<CreateInstanceForm>({
+const form = ref<CreateInstanceInput>({
   name: props.initialValue?.name ?? '',
   instances: props.initialValue?.instances ?? 1,
   version: props.initialValue?.version ?? 16,
   storage: props.initialValue?.storage ?? '10Gi',
 })
 
-const errors = ref<Partial<Record<keyof CreateInstanceForm, string>>>({})
+const errors = ref<Partial<Record<keyof CreateInstanceInput, string>>>({})
+
+watch(
+  () => props.initialValue,
+  (value) => {
+    if (!value) {
+      return
+    }
+
+    form.value = {
+      name: value.name ?? '',
+      instances: value.instances ?? 1,
+      version: value.version ?? 16,
+      storage: value.storage ?? '10Gi',
+    }
+  },
+  { deep: true },
+)
 
 function submit() {
   const schema = props.mode === 'edit' ? updateInstanceSchema : createInstanceSchema
-  
+
   const result = schema.safeParse(form.value)
-  
+
   if (!result.success) {
     const fieldErrors: typeof errors.value = {}
 
@@ -47,7 +63,7 @@ function submit() {
       const field = issue.path[0]
 
       if (typeof field === 'string' && field in form.value) {
-        fieldErrors[field as keyof CreateInstanceForm] = issue.message
+        fieldErrors[field as keyof CreateInstanceInput] = issue.message
       }
     }
 

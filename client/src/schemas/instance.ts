@@ -58,5 +58,5 @@ export const updateInstanceSchema = createInstanceSchema.pick({
   storage: true,
 })
 
-export type CreateInstanceForm = z.infer<typeof createInstanceSchema>
-export type UpdateInstanceForm = z.infer<typeof updateInstanceSchema>
+export type CreateInstanceInput = z.infer<typeof createInstanceSchema>
+export type UpdateInstanceInput = z.infer<typeof updateInstanceSchema>
