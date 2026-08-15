@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -13,21 +14,32 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/infra/k8s"
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func main() {
+	if err := run(); err != nil {
+		slog.Error("application failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("failed to load configuration", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("load configuration: %w", err)
 	}
 
 	log := logger.New(cfg.App.LogLevel, cfg.App.Env)
 
-	k8sClient, err := k8s.NewClient()
+	k8sCfg, err := ctrl.GetConfig()
 	if err != nil {
-		log.Error("failed creating kubernetes client", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("load kubernetes config: %w", err)
+	}
+
+	k8sClient, err := k8s.NewClient(k8sCfg)
+	if err != nil {
+		return fmt.Errorf("create kubernetes client: %w", err)
 	}
 
 	instanceClient := cnpg.NewClient(k8sClient)
@@ -36,8 +48,7 @@ func main() {
 
 	authmw, err := auth.New(ctx, cfg.Zitadel)
 	if err != nil {
-		log.Error("failed to initialize auth", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("initialize auth: %w", err)
 	}
 
 	svc := service.NewInstanceService(instanceClient, log)
@@ -48,6 +59,8 @@ func main() {
 	setupDocs(r)
 
 	if err := r.Run(cfg.Server.Address); err != nil {
-		log.Error("failded to start API server", "error", err)
+		return fmt.Errorf("start API server: %w", err)
 	}
+
+	return nil
 }

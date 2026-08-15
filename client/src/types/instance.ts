@@ -14,8 +14,18 @@ export interface Instance {
   name: string
   version: number
   storage: string
+  instances: number
+  readyInstances: number
   status: InstanceStatus
   createdAt: string
+}
+
+export interface InstanceCredentials {
+  host: string
+  port: number
+  database: string
+  username: string
+  password: string
 }
 
 export interface CreateInstanceRequest {

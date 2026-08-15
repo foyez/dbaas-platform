@@ -39,7 +39,7 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
 		h.logger.Warn(
-			"invalid create isntance request",
+			"invalid create instance request",
 			"error", err,
 		)
 
@@ -55,11 +55,12 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 	userID := h.authmw.UserID(c.Request.Context())
 
 	input := domain.CreateInstanceInput{
-		Name:     req.Name,
-		Version:  req.Version,
-		Storage:  req.Storage,
-		Username: req.Username,
-		UserID:   userID,
+		Name:      req.Name,
+		Instances: req.Instances,
+		Version:   req.Version,
+		Storage:   req.Storage,
+		Username:  req.Username,
+		UserID:    userID,
 	}
 
 	key := c.GetHeader("Idempotency-Key")
@@ -87,30 +88,22 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 
 	instance := result.Instance
 
-	// if result.Replayed {
-	// 	h.logger.Info(
-	// 		"idemptent replayed detected",
-	// 		"id", instance.ID,
-	// 		"name", instance.Name,
-	// 	)
-	//
-	// 	httpx.JSON(c, http.StatusOK, result.Instance)
-	// 	return
-	// }
-
 	resp := api.InstanceResponse{
-		ID:        instance.ID,
-		Name:      instance.Name,
-		Version:   input.Version,
-		Storage:   input.Storage,
-		Status:    instance.Status,
-		CreatedAt: instance.CreatedAt,
+		ID:             instance.ID,
+		Name:           instance.Name,
+		Version:        instance.Version,
+		Storage:        instance.Storage,
+		Instances:      instance.Instances,
+		ReadyInstances: instance.ReadyInstances,
+		Status:         instance.Status,
+		CreatedAt:      instance.CreatedAt,
 	}
 
 	h.logger.Info(
 		"instance created",
 		"id", instance.ID,
 		"name", instance.Name,
+		"instances", instance.Instances,
 		"replayed", result.Replayed,
 	)
 
@@ -134,14 +127,16 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 		Items: make([]api.InstanceResponse, 0, len(result.Instances)),
 	}
 
-	for _, inst := range result.Instances {
+	for _, instance := range result.Instances {
 		resp.Items = append(resp.Items, api.InstanceResponse{
-			ID:        inst.ID,
-			Name:      inst.Name,
-			Version:   inst.Version,
-			Storage:   inst.Storage,
-			Status:    inst.Status,
-			CreatedAt: inst.CreatedAt,
+			ID:             instance.ID,
+			Name:           instance.Name,
+			Version:        instance.Version,
+			Storage:        instance.Storage,
+			Instances:      instance.Instances,
+			ReadyInstances: instance.ReadyInstances,
+			Status:         instance.Status,
+			CreatedAt:      instance.CreatedAt,
 		})
 	}
 
@@ -172,12 +167,53 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 	}
 
 	resp := api.InstanceResponse{
-		ID:        instance.ID,
-		Name:      instance.Name,
-		Version:   instance.Version,
-		Storage:   instance.Storage,
-		Status:    instance.Status,
-		CreatedAt: instance.CreatedAt,
+		ID:             instance.ID,
+		Name:           instance.Name,
+		Version:        instance.Version,
+		Storage:        instance.Storage,
+		Instances:      instance.Instances,
+		ReadyInstances: instance.ReadyInstances,
+		Status:         instance.Status,
+		CreatedAt:      instance.CreatedAt,
+	}
+
+	httpx.JSON(c, http.StatusOK, resp)
+}
+
+// GetCredentials handles GET /v1/instances/:id/credentials requests.
+func (h *InstanceHandler) GetCredentials(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		h.logger.Warn("invalid instance id")
+
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	userID := h.authmw.UserID(c.Request.Context())
+
+	credentials, err := h.svc.GetCredentials(
+		c.Request.Context(),
+		id,
+		userID,
+	)
+	if err != nil {
+		h.logger.Error(
+			"failed to get instance credentials",
+			"error", err,
+			"id", id,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	resp := api.InstanceCredentialsResponse{
+		Host:     credentials.Host,
+		Port:     credentials.Port,
+		Database: credentials.Database,
+		Username: credentials.Username,
+		Password: credentials.Password,
 	}
 
 	httpx.JSON(c, http.StatusOK, resp)
@@ -229,12 +265,14 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 	}
 
 	resp := api.InstanceResponse{
-		ID:        instance.ID,
-		Name:      instance.Name,
-		Version:   instance.Version,
-		Storage:   instance.Storage,
-		Status:    instance.Status,
-		CreatedAt: instance.CreatedAt,
+		ID:             instance.ID,
+		Name:           instance.Name,
+		Version:        instance.Version,
+		Storage:        instance.Storage,
+		Instances:      instance.Instances,
+		ReadyInstances: instance.ReadyInstances,
+		Status:         instance.Status,
+		CreatedAt:      instance.CreatedAt,
 	}
 
 	h.logger.Info(

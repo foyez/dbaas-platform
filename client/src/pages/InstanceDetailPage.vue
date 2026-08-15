@@ -21,6 +21,7 @@ import {
 
 import InstanceStatus from '@/components/instances/InstanceStatus.vue'
 import InstanceForm from '@/components/instances/InstanceForm.vue'
+import InstanceCredentials from '@/components/instances/InstanceCredentials.vue'
 
 import { useInstance } from '@/composables/useInstance'
 import type { UpdateInstanceForm } from '@/schemas/instance'
@@ -29,7 +30,18 @@ import { formatDate } from '@/lib/date'
 const route = useRoute()
 const router = useRouter()
 
-const { instance, isLoading, error, fetchInstance, updateInstance, deleteInstance } = useInstance()
+const {
+  instance,
+  instanceCredentials,
+  isLoading,
+  isLoadingCredentials,
+  error,
+  credentialsError,
+  fetchInstance,
+  fetchCredentials,
+  updateInstance,
+  deleteInstance,
+} = useInstance()
 
 const instanceId = String(route.params.id)
 
@@ -39,6 +51,14 @@ const isDeleting = ref(false)
 async function load() {
   try {
     await fetchInstance(instanceId)
+  } catch {
+    // Error is exposed by useInstance().
+  }
+}
+
+async function revealCredentials() {
+  try {
+    await fetchCredentials(instanceId)
   } catch {
     // Error is exposed by useInstance().
   }
@@ -218,13 +238,15 @@ onMounted(load)
 
         <Card>
           <CardHeader>
-            <CardTitle> Configuration </CardTitle>
+            <CardTitle>Configuration</CardTitle>
 
             <CardDescription> PostgreSQL instance configuration. </CardDescription>
           </CardHeader>
 
           <CardContent>
-            <dl class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <dl class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <!-- PostgreSQL version -->
+
               <div>
                 <dt class="text-sm text-muted-foreground">PostgreSQL version</dt>
 
@@ -233,6 +255,8 @@ onMounted(load)
                 </dd>
               </div>
 
+              <!-- Storage -->
+
               <div>
                 <dt class="text-sm text-muted-foreground">Storage</dt>
 
@@ -240,6 +264,18 @@ onMounted(load)
                   {{ instance.storage }}
                 </dd>
               </div>
+
+              <!-- Instances -->
+
+              <div>
+                <dt class="text-sm text-muted-foreground">Instances</dt>
+
+                <dd class="mt-1 text-lg font-medium">
+                  {{ instance.readyInstances }}/{{ instance.instances }}
+                </dd>
+              </div>
+
+              <!-- Status -->
 
               <div>
                 <dt class="text-sm text-muted-foreground">Status</dt>
@@ -251,6 +287,13 @@ onMounted(load)
             </dl>
           </CardContent>
         </Card>
+
+        <InstanceCredentials
+          :credentials="instanceCredentials"
+          :loading="isLoadingCredentials"
+          :error="credentialsError"
+          @reveal="revealCredentials"
+        />
 
         <!-- Metadata -->
 

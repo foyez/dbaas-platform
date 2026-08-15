@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	ErrNotFound      = domain.ErrNotFound
-	ErrAlreadyExists = domain.ErrAlreadyExists
+	ErrNotFound         = domain.ErrNotFound
+	ErrAlreadyExists    = domain.ErrAlreadyExists
+	ErrInstanceNotReady = domain.ErrInstanceNotReady
 
 	ErrInvalidInput          = errors.New("invalid input")
 	ErrMissingIdempotencyKey = errors.New("missing idempotency key")

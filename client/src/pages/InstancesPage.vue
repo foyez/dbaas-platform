@@ -135,6 +135,8 @@ onMounted(load)
 
                   <th class="px-6 py-3 font-medium">Status</th>
 
+                  <th>Instances</th>
+
                   <th class="hidden px-6 py-3 font-medium sm:table-cell">PostgreSQL</th>
 
                   <th class="hidden px-6 py-3 font-medium md:table-cell">Storage</th>
@@ -170,6 +172,12 @@ onMounted(load)
 
                   <td class="px-6 py-4">
                     <InstanceStatus :status="instance.status" />
+                  </td>
+
+                  <td class="px-6 py-4">
+                    <span class="font-medium">
+                      {{ instance.readyInstances }}/{{ instance.instances }}
+                    </span>
                   </td>
 
                   <td class="hidden px-6 py-4 text-sm sm:table-cell">

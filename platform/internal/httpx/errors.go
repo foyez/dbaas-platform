@@ -38,6 +38,11 @@ var errorMappings = []errorMapping{
 		status: http.StatusBadRequest,
 		code:   CodeNoUpdateFields,
 	},
+	{
+		err:    service.ErrInstanceNotReady,
+		status: http.StatusConflict,
+		code:   CodeInstanceNotReady,
+	},
 }
 
 // RespondError converts application errors into standardized HTTP responses.

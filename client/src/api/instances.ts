@@ -3,6 +3,7 @@ import { apiFetch } from './client'
 import type {
   CreateInstanceRequest,
   Instance,
+  InstanceCredentials,
   InstanceListResponse,
   UpdateInstanceRequest,
 } from '@/types/instance'
@@ -27,12 +28,16 @@ export async function getInstance(id: string): Promise<Instance> {
   return apiFetch<Instance>(`/instances/${encodeURIComponent(id)}`)
 }
 
+export async function getInstanceCredentials(id: string): Promise<InstanceCredentials> {
+  return apiFetch<InstanceCredentials>(`/instances/${encodeURIComponent(id)}/credentials`)
+}
+
 export async function listInstances(): Promise<InstanceListResponse> {
   return apiFetch<InstanceListResponse>('/instances')
 }
 
 export async function updateInstance(id: string, data: UpdateInstanceRequest): Promise<Instance> {
-  return apiFetch<Instance>(`/instances/${encodeURIComponent(id)}`, {
+  return apiFetch<Instance>(`/instances/${encodeURIComponent(id)}/credentials`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })

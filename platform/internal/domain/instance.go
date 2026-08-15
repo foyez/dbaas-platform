@@ -17,21 +17,32 @@ const (
 // Instance represents a provisioned PostgreSQL instance
 // and its current lifecycle state.
 type Instance struct {
-	ID        string
-	Name      string
-	Version   int
-	Storage   string
-	Status    InstanceStatus
-	CreatedAt time.Time
+	ID             string
+	Name           string
+	Version        int
+	Storage        string
+	Instances      int
+	ReadyInstances int
+	Status         InstanceStatus
+	CreatedAt      time.Time
+}
+
+type InstanceCredentials struct {
+	Host     string
+	Port     int
+	Database string
+	Username string
+	Password string
 }
 
 type CreateInstanceInput struct {
 	Name           string
+	Instances      int
 	Version        int
 	Storage        string
 	Username       string
-	IdempotencyKey string
 	UserID         string
+	IdempotencyKey string
 }
 
 type CreateInstanceResult struct {

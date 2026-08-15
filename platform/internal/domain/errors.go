@@ -8,6 +8,7 @@ package domain
 import "errors"
 
 var (
-	ErrNotFound      = errors.New("instance not found")
-	ErrAlreadyExists = errors.New("instance name already exists")
+	ErrNotFound         = errors.New("instance not found")
+	ErrAlreadyExists    = errors.New("instance name already exists")
+	ErrInstanceNotReady = errors.New("instance not ready")
 )

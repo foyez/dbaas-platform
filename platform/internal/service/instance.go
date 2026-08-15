@@ -9,16 +9,17 @@ import (
 	"strings"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
+	"github.com/foyez/dbaas-platform/platform/internal/ports"
 )
 
 // instanceService implements domain.InstanceService.
 type instanceService struct {
-	client domain.InstanceClient
+	client ports.InstanceClient
 	logger *slog.Logger
 }
 
 func NewInstanceService(
-	client domain.InstanceClient,
+	client ports.InstanceClient,
 	logger *slog.Logger,
 ) *instanceService {
 	return &instanceService{
@@ -71,6 +72,18 @@ func (s *instanceService) GetInstance(ctx context.Context, id, userID string) (*
 	}
 
 	return s.client.GetInstance(ctx, id, userID)
+}
+
+// GetCredentials retrieves the credentials for an instance.
+func (s *instanceService) GetCredentials(
+	ctx context.Context,
+	id, userID string,
+) (*domain.InstanceCredentials, error) {
+	if id == "" {
+		return nil, ErrInvalidInput
+	}
+
+	return s.client.GetInstanceCredentials(ctx, id, userID)
 }
 
 // ListInstances retrive list instances.

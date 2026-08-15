@@ -51,8 +51,9 @@ func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middl
 		protected.POST("/instances", h.CreateInstance)
 		protected.GET("/instances", h.ListInstances)
 		protected.GET("/instances/:id", h.GetInstance)
+		protected.GET("/instances/:id/credentials", h.GetCredentials)
 		protected.PATCH("/instances/:id", h.UpdateInstance)
-		// v1.DELETE("/instances/:id", h.DeleteInstance)
+		protected.DELETE("/instances/:id", h.DeleteInstance)
 	}
 
 	// Admin users
@@ -60,7 +61,7 @@ func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middl
 	admin.Use(auth.Gin(authmw.RequireRole(auth.RoleAdmin)))
 
 	// admin.GET("/instances/:id", h.GetInstance)
-	admin.DELETE("/instances/:id", h.DeleteInstance)
+	// admin.DELETE("/instances/:id", h.DeleteInstance)
 
 	return r
 }

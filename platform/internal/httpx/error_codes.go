@@ -6,13 +6,15 @@ package httpx
 type ErrorCode string
 
 const (
-	CodeInvalidRequest        ErrorCode = "INVALID_REQUEST"
-	CodeUnauthorized          ErrorCode = "UNAUTHORIZED"
-	CodeForbidden             ErrorCode = "FORBIDDEN"
-	CodeNotFound              ErrorCode = "NOT_FOUND"
-	CodeInternalError         ErrorCode = "INTERNAL_ERROR"
+	CodeInvalidRequest ErrorCode = "INVALID_REQUEST"
+	CodeUnauthorized   ErrorCode = "UNAUTHORIZED"
+	CodeForbidden      ErrorCode = "FORBIDDEN"
+	CodeNotFound       ErrorCode = "NOT_FOUND"
+	CodeInternalError  ErrorCode = "INTERNAL_ERROR"
+
 	CodeInstanceNotFound      ErrorCode = "INSTANCE_NOT_FOUND"
 	CodeInstanceAlreadyExists ErrorCode = "INSTANCE_ALREADY_EXISTS"
+	CodeInstanceNotReady      ErrorCode = "INSTANCE_NOT_READY"
 	CodeMissingIdempotencyKey ErrorCode = "MISSING_IDEMPOTENCY_KEY"
 	CodeNoUpdateFields        ErrorCode = "NO_UPDATE_FIELDS"
 )

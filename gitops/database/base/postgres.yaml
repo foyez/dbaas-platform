@@ -7,7 +7,7 @@ metadata:
 
 spec:
   version: "16"
-  instances: 3
-  storage: 5Gi
+  instances: 1
+  storage: 2Gi
   database: customerdb
   username: customer-admin

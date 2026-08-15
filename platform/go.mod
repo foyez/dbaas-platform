@@ -3,13 +3,13 @@ module github.com/foyez/dbaas-platform/platform
 go 1.26.5
 
 require (
-	github.com/foyez/dbaas-platform/operator v0.1.0
+	github.com/foyez/dbaas-platform/operator v0.1.3
 	// github.com/foyez/dbaas-platform/operator v0.0.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
-	k8s.io/apimachinery v0.36.2
+	k8s.io/apimachinery v0.36.3
 	sigs.k8s.io/controller-runtime v0.24.1
 )
 
@@ -21,6 +21,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.11.1
 	github.com/zitadel/zitadel-go/v3 v3.29.2
+	k8s.io/api v0.36.2
+	k8s.io/client-go v0.36.2
 )
 
 require (
@@ -121,9 +123,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.36.2 // indirect
 	k8s.io/apiextensions-apiserver v0.36.2 // indirect
-	k8s.io/client-go v0.36.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260603220949-865597e52e25 // indirect
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
