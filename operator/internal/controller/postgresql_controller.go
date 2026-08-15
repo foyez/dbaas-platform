@@ -70,9 +70,9 @@ func (r *PostgreSQLReconciler) updateStatus(ctx context.Context, pg *databasev1.
 	pg.Status.ReadyInstances = int32(cluster.Status.ReadyInstances)
 
 	if cluster.Status.ReadyInstances == int(pg.Spec.Instances) {
-		pg.Status.Phase = "Ready"
+		pg.Status.Phase = databasev1.PostgreSQLPhaseReady
 	} else {
-		pg.Status.Phase = "Provisioning"
+		pg.Status.Phase = databasev1.PostgreSQLPhaseCreating
 	}
 
 	return r.Status().Update(ctx, pg)

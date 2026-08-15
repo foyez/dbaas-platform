@@ -10,12 +10,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const UserIDLabel = "app.example.com/user-id"
+const (
+	UserIDLabel     = "app.example.com/user-id"
+	AppSecretSuffix = "-app"
+)
 
 func (r *PostgreSQLReconciler) reconcileCNPGCluster(ctx context.Context, pg *databasev1.PostgreSQL) error {
 	cluster := &cnpgv1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pg.Name,
+			Name:      pg.Name + AppSecretSuffix,
 			Namespace: pg.Namespace,
 		},
 	}

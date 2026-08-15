@@ -8,6 +8,15 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type PostgreSQLPhase string
+
+const (
+	PostgreSQLPhasePending  PostgreSQLPhase = "Pending"
+	PostgreSQLPhaseCreating PostgreSQLPhase = "Creating"
+	PostgreSQLPhaseReady    PostgreSQLPhase = "Ready"
+	PostgreSQLPhaseFailed   PostgreSQLPhase = "Failed"
+)
+
 // PostgreSQLSpec defines the desired state of PostgreSQL
 type PostgreSQLSpec struct {
 	// Version specifies the PostgreSQL major version (for example, 16 or 17).
@@ -54,8 +63,8 @@ type ConnectionPoolerSpec struct {
 
 // PostgreSQLStatus defines the observed state of PostgreSQL.
 type PostgreSQLStatus struct {
-	Phase          string `json:"phase,omitempty"`
-	ReadyInstances int32  `json:"readyInstances,omitempty"`
+	Phase          PostgreSQLPhase `json:"phase,omitempty"`
+	ReadyInstances int32           `json:"readyInstances,omitempty"`
 	// ConnectionEndpoint string `json:"connectionEndpoint,omitempty"`
 	// PgBouncerStatus    string `json:"pgBouncerStatus,omitempty"`
 }
