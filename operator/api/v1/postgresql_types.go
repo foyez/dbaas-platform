@@ -49,16 +49,16 @@ type PostgreSQLStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="integer",JSONPath=".status.readyInstances"
 type PostgreSQL struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitzero"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   PostgreSQLSpec   `json:"spec"`
-	Status PostgreSQLStatus `json:"status,omitzero"`
+	Status PostgreSQLStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 type PostgreSQLList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitzero"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []PostgreSQL `json:"items"`
 }
 

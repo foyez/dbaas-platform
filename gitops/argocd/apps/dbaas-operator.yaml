@@ -18,9 +18,9 @@ spec:
     namespace: dbaas-operator
 
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    # automated:
+    #   prune: true
+    #   selfHeal: true
 
     syncOptions:
       # Needed because CRDs are installed
