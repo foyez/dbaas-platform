@@ -6,4 +6,4 @@ resources:
   - apps/dbaas-operator.yaml
   - apps/dbaas-api.yaml
   - apps/dbaas-client.yaml
-  - apps/database-resource.yaml
+  # - apps/database-resource.yaml

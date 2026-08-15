@@ -3,7 +3,7 @@ module github.com/foyez/dbaas-platform/platform
 go 1.26.5
 
 require (
-	github.com/foyez/dbaas-platform/operator v0.1.4
+	github.com/foyez/dbaas-platform/operator v0.1.5
 	// github.com/foyez/dbaas-platform/operator v0.0.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/kelseyhightower/envconfig v1.4.0
