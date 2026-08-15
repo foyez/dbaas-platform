@@ -6,4 +6,4 @@ resources:
 
 images:
   - name: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api
-    newTag: b35c58d
+    newTag: 5e19768
