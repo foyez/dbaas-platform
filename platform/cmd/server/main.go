@@ -13,6 +13,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/infra/cnpg"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/k8s"
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
+	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -53,6 +54,8 @@ func run() error {
 
 	svc := service.NewInstanceService(instanceClient, log)
 	handler := handler.NewInstanceHandler(svc, log, authmw)
+
+	observability.RegisterMetrics()
 
 	r := router.New(handler, cfg.Server, authmw)
 
