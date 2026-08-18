@@ -19,6 +19,7 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/go-openapi/testify/v2 v2.4.2
 	github.com/joho/godotenv v1.5.1
+	github.com/prometheus/client_golang v1.24.1
 	github.com/stretchr/testify v1.11.1
 	github.com/zitadel/zitadel-go/v3 v3.29.2
 	k8s.io/api v0.36.2
@@ -81,7 +82,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.24.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect

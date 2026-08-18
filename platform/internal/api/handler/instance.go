@@ -11,7 +11,6 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/auth"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/httpx"
-	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -83,17 +82,9 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 			"name", req.Name,
 		)
 
-		observability.InstanceOperationTotal.
-			WithLabelValues("create", "error").
-			Inc()
-
 		httpx.RespondError(c, err)
 		return
 	}
-
-	observability.InstanceOperationTotal.
-		WithLabelValues("create", "success").
-		Inc()
 
 	instance := result.Instance
 

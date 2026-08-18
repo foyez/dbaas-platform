@@ -1,0 +1,16 @@
+grafana:
+  enabled: false        # wired deliberately in Phase 2
+
+alertmanager:
+  enabled: false         # add once you have real alerts to send
+  
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    serviceMonitorSelectorNilUsesHelmValues: false   # let it pick up ServiceMonitors outside its own release
+    resources:
+      requests:
+        cpu: 200m
+        memory: 400Mi
+      limits:
+        memory: 800Mi

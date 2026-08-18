@@ -84,9 +84,14 @@ spec:
 ---
 apiVersion: v1
 kind: Service
+
 metadata:
   name: dbaas-svc
   namespace: dbaas-api
+
+  labels:
+    app.kubernetes.io/name: dbaas-api
+
 spec:
   type: ClusterIP
 

@@ -15,6 +15,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
 	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
+	"github.com/prometheus/client_golang/prometheus"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -32,6 +33,12 @@ func run() error {
 	}
 
 	log := logger.New(cfg.App.LogLevel, cfg.App.Env)
+
+	metrics := observability.NewMetrics()
+	registry := prometheus.NewRegistry()
+	if err := metrics.Register(registry); err != nil {
+		return fmt.Errorf("register metrics: %w", err)
+	}
 
 	k8sCfg, err := ctrl.GetConfig()
 	if err != nil {
@@ -55,9 +62,13 @@ func run() error {
 	svc := service.NewInstanceService(instanceClient, log)
 	handler := handler.NewInstanceHandler(svc, log, authmw)
 
-	observability.RegisterMetrics()
-
-	r := router.New(handler, cfg.Server, authmw)
+	r := router.New(
+		handler,
+		cfg.Server,
+		authmw,
+		metrics,
+		registry,
+	)
 
 	setupDocs(r)
 

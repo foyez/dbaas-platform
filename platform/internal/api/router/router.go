@@ -13,13 +13,22 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // New creates and configures a Gin HTTP server with all application routes
 // and middleware registered.
-func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middleware) *gin.Engine {
+func New(
+	h *handler.InstanceHandler,
+	cfg config.ServerConfig,
+	authmw *auth.Middleware,
+	metrics *observability.Metrics,
+	registry *prometheus.Registry,
+) *gin.Engine {
 	r := gin.New()
+
+	r.Use(observability.MetricsMiddleware(metrics))
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowOrigins,
@@ -30,8 +39,6 @@ func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middl
 		MaxAge:           12 * time.Hour,
 	}))
 
-	r.Use(observability.Middleware())
-
 	r.Use(gin.Recovery(), gin.Logger())
 
 	// Health check for Kubernetes probes.
@@ -41,8 +48,13 @@ func New(h *handler.InstanceHandler, cfg config.ServerConfig, authmw *auth.Middl
 		})
 	})
 
-	// Prometheus /metrics
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	// Prometheus scrape target
+	r.GET("/metrics", gin.WrapH(
+		promhttp.HandlerFor(
+			registry,
+			promhttp.HandlerOpts{},
+		),
+	))
 
 	v1 := r.Group("/api/v1")
 
