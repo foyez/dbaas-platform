@@ -1,0 +1,38 @@
+adminUser: admin
+adminPassword: admin
+# admin:
+#   existingSecret: "grafana-admin-credentials"   # wire via external-secrets before real traffic
+#   userKey: admin-user
+#   passwordKey: admin-password
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        # points at the Prometheus Service from kube-prometheus-stack release
+        url: http://kube-prometheus-stack-prometheus:9090
+        access: proxy
+        isDefault: true
+
+# Sidecar watches for ConfigMaps labeled grafana_dashboard=1
+# and loads them automatically - this is how dashboards-as-code works
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    folder: /tmp/dashboards
+    provider:
+      foldersFromFilesStructure: false
+    # dashboards live in the same 'observability' namespace as Grafana,
+    # so default namespace-scoped RBAC (a Role, not ClusterRole) is enough -
+    # no extra config needed unless you later want dashboards from other namespaces
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
