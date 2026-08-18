@@ -3,13 +3,10 @@ kind: Kustomization
 
 namespace: observability
 
-resources:
-  - dashboard-api-overview.yaml
-
 helmCharts:
-  - name: grafana
+  - name: loki
     repo: https://grafana-community.github.io/helm-charts
-    version: 12.10.0
-    releaseName: dbaas-grafana
+    version: 18.9.0
+    releaseName: dbaas-loki
     namespace: observability
     valuesFile: values.yaml
