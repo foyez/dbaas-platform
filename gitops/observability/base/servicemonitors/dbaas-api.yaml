@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: dbaas-api
+  namespace: dbaas-api
+
+  labels:
+    monitoring: dbaas
+
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dbaas-api
+
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

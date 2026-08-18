@@ -1,3 +1,4 @@
 .DS_Store
 stackit-sa-cert-key.json
 dbaas-api-zitadel-sa-key.json
+**/charts/

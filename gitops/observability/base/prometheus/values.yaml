@@ -1,0 +1,61 @@
+grafana:
+  enabled: false
+
+alertmanager:
+  enabled: true
+
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    retention: 15d
+    retentionSize: "8GB"
+
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    serviceMonitorSelector:
+      matchLabels:
+        monitoring: dbaas
+
+    serviceMonitorNamespaceSelector:
+      matchNames:
+        - dbaas-api
+
+    podMonitorSelector:
+      matchLabels:
+        monitoring: dbaas
+
+    podMonitorNamespaceSelector:
+      matchNames:
+        - dbaas-api
+
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+defaultRules:
+  create: true

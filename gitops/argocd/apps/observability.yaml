@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dbaas-observability
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
+    targetRevision: HEAD
+    path: gitops/observability
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+
+  syncPolicy:
+    # automated:
+    #   prune: true
+    #   selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
