@@ -6,3 +6,5 @@ resources:
   - prometheus
   - servicemonitors
   - grafana
+  - loki
+  - alloy

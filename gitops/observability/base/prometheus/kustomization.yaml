@@ -1,10 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: observability
+
 helmCharts:
   - name: kube-prometheus-stack
     repo: https://prometheus-community.github.io/helm-charts
     version: 87.21.0
-    releaseName: dbaas-monitoring
+    releaseName: dbaas-prometheus
     namespace: observability
     valuesFile: values.yaml

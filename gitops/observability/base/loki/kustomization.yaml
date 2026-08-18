@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: observability
+
+helmCharts:
+  - name: loki
+    repo: https://grafana-community.github.io/helm-charts
+    version: 18.9.0
+    releaseName: dbaas-loki
+    namespace: observability
+    valuesFile: values.yaml
