@@ -12,6 +12,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/config"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/cnpg"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/k8s"
+	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
 	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
@@ -51,6 +52,7 @@ func run() error {
 	}
 
 	instanceClient := cnpg.NewClient(k8sClient)
+	lokiClient := loki.NewClient(cfg.Server.LokiURL)
 
 	ctx := context.Background()
 
@@ -59,7 +61,7 @@ func run() error {
 		return fmt.Errorf("initialize auth: %w", err)
 	}
 
-	svc := service.NewInstanceService(instanceClient, log)
+	svc := service.NewInstanceService(instanceClient, lokiClient, log)
 	handler := handler.NewInstanceHandler(svc, log, authmw)
 
 	r := router.New(

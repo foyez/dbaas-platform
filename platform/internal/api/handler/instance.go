@@ -180,6 +180,37 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 	httpx.JSON(c, http.StatusOK, resp)
 }
 
+// GetInstanceLogs handles GET /v1/instances/:id/logs requests.
+func (h *InstanceHandler) GetInstanceLogs(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		h.logger.Warn("invalid instance id")
+
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	userID := h.authmw.UserID(c.Request.Context())
+	logs, err := h.svc.GetInstanceLogs(c.Request.Context(), id, userID)
+	if err != nil {
+		h.logger.Error(
+			"failed to get instance logs",
+			"error", err,
+			"id", id,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	resp := api.InstanceLogsResponse{
+		InstanceID: id,
+		Logs:       logs,
+	}
+
+	httpx.JSON(c, http.StatusOK, resp)
+}
+
 // GetCredentials handles GET /v1/instances/:id/credentials requests.
 func (h *InstanceHandler) GetCredentials(c *gin.Context) {
 	id := c.Param("id")

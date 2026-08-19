@@ -5,25 +5,30 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
+	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 	"github.com/foyez/dbaas-platform/platform/internal/ports"
 )
 
 // instanceService implements domain.InstanceService.
 type instanceService struct {
 	client ports.InstanceClient
+	loki   *loki.Client
 	logger *slog.Logger
 }
 
 func NewInstanceService(
 	client ports.InstanceClient,
+	loki *loki.Client,
 	logger *slog.Logger,
 ) *instanceService {
 	return &instanceService{
 		client: client,
+		loki:   loki,
 		logger: logger,
 	}
 }
@@ -72,6 +77,16 @@ func (s *instanceService) GetInstance(ctx context.Context, id, userID string) (*
 	}
 
 	return s.client.GetInstance(ctx, id, userID)
+}
+
+// GetInstanceLogs retrives logs of a instance by its ID.
+func (s *instanceService) GetInstanceLogs(ctx context.Context, id, userID string) ([]loki.LogLine, error) {
+	if _, err := s.client.GetInstance(ctx, id, userID); err != nil {
+		return nil, err
+	}
+
+	logql := fmt.Sprintf(`{instance_id=%q}`, id)
+	return s.loki.Query(ctx, logql, 200)
 }
 
 // GetCredentials retrieves the credentials for an instance.
