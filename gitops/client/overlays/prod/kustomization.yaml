@@ -6,4 +6,4 @@ resources:
 
 images:
   - name: registry.onstackit.cloud/dbaas-platform/dbaas-frontend
-    newTag: eadb9cf
+    newTag: a3e32b9
