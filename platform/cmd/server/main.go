@@ -68,6 +68,7 @@ func run() error {
 
 	r := router.New(
 		handler,
+		log,
 		cfg.Server,
 		authmw,
 		metrics,
