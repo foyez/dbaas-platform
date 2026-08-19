@@ -67,7 +67,6 @@ router.beforeEach(async (to) => {
   }
 
   const user = await userManager.getUser()
-  console.log(user?.profile)
 
   if (!user || user.expired) {
     await userManager.signinRedirect({ state: { returnUrl: to.fullPath } })

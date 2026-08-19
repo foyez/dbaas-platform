@@ -20,6 +20,7 @@ import {
 import InstanceStatus from '@/components/instances/InstanceStatus.vue'
 import UpdateInstanceForm from '@/components/instances/UpdateInstanceForm.vue'
 import InstanceCredentials from '@/components/instances/InstanceCredentials.vue'
+import InstanceLogs from '@/components/instances/InstanceLogs.vue'
 
 import { useInstance } from '@/composables/useInstance'
 import type { UpdateInstanceInput } from '@/schemas/instance'
@@ -62,10 +63,6 @@ async function revealLogs() {
   } catch {
     // Error is exposed by useInstanceLogs().
   }
-}
-
-function viewAuditTrail() {
-  router.push({ name: 'audit-logs', query: { resourceId: instanceId } })
 }
 
 async function revealCredentials() {
@@ -207,12 +204,6 @@ onMounted(load)
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
-            <!-- Audit -->
-
-            <Button variant="outline" :disabled="isDeleting" @click="viewAuditTrail">
-              Audit trail
-            </Button>
           </div>
         </div>
 

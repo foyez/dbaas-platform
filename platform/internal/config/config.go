@@ -32,7 +32,7 @@ type AppConfig struct {
 type ServerConfig struct {
 	Address      string   `envconfig:"SERVER_ADDRESS" default:":8080"`
 	AllowOrigins []string `envconfig:"SERVER_ALLOW_ORIGINS"`
-	LokiURL      string   `envconfig:"LOKI_URL" default:"http://dbaas-loki:3100"`
+	LokiURL      string   `envconfig:"LOKI_URL" default:"http://dbaas-loki.observability.svc.cluster.local:3100"`
 }
 
 type ZitadelConfig struct {
