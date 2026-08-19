@@ -4,6 +4,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/config"
 	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/foyez/dbaas-platform/platform/internal/observability/audit"
+	"github.com/foyez/dbaas-platform/platform/internal/observability/requestlog"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,6 +24,7 @@ import (
 // and middleware registered.
 func New(
 	h *handler.InstanceHandler,
+	log *slog.Logger,
 	cfg config.ServerConfig,
 	authmw *auth.Middleware,
 	metrics *observability.Metrics,
@@ -39,7 +42,8 @@ func New(
 		MaxAge:           12 * time.Hour,
 	}))
 
-	r.Use(gin.Recovery(), gin.Logger())
+	r.Use(gin.Recovery())
+	r.Use(requestlog.Middleware(log))
 	r.Use(observability.MetricsMiddleware(metrics))
 	r.Use(audit.Middleware(auditLogger, authmw.UserID))
 
