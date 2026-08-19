@@ -5,11 +5,14 @@ package domain
 
 import (
 	"context"
+
+	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 )
 
 // InstanceService defines business operations for managing PostgreSQL instances.
 type InstanceService interface {
 	CreateInstance(ctx context.Context, input CreateInstanceInput) (*CreateInstanceResult, error)
+	GetInstanceLogs(ctx context.Context, id, userID string) ([]loki.LogLine, error)
 	GetCredentials(ctx context.Context, id, userID string) (*InstanceCredentials, error)
 	GetInstance(ctx context.Context, id, userID string) (*Instance, error)
 	ListInstances(ctx context.Context, userID string) (*ListInstancesResult, error)

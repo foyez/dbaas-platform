@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
+	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 )
 
 type CreateInstanceRequest struct {
@@ -52,4 +53,9 @@ type InstanceCredentialsResponse struct {
 type DeleteInstanceResponse struct {
 	Message string `json:"message"`
 	Status  string `json:"status"`
+}
+
+type InstanceLogsResponse struct {
+	InstanceID string         `json:"instanceId"`
+	Logs       []loki.LogLine `json:"logs"`
 }

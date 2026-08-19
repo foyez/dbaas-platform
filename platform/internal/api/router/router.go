@@ -71,6 +71,7 @@ func New(
 		protected.GET("/instances", h.ListInstances)
 		protected.GET("/instances/:id", h.GetInstance)
 		protected.GET("/instances/:id/credentials", h.GetCredentials)
+		protected.GET("/instances/:id/logs", h.GetInstanceLogs)
 		protected.PATCH("/instances/:id", h.UpdateInstance)
 		protected.DELETE("/instances/:id", h.DeleteInstance)
 	}
