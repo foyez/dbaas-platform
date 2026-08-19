@@ -16,6 +16,12 @@ datasources:
         access: proxy
         isDefault: true
 
+      - name: Loki
+        type: loki
+        url: http://dbaas-loki:3100
+        # url: http://dbaas-loki-gateway.observability.svc.cluster.local
+        access: proxy
+
 # Sidecar watches for ConfigMaps labeled grafana_dashboard=1
 # and loads them automatically - this is how dashboards-as-code works
 sidecar:
