@@ -95,59 +95,47 @@ func (c *client) GetInstanceByIdempotencyKey(
 	return nil, nil
 }
 
-func (c *client) GetInstance(ctx context.Context, id, userID string) (*domain.Instance, error) {
-	pgList := &databasev1.PostgreSQLList{}
+// getOwnedInstance fetches a PostgreSQL CR by name and verifies it belongs
+// to userID.
+func (c *client) getOwnedInstance(
+	ctx context.Context,
+	id, userID string,
+) (*databasev1.PostgreSQL, error) {
+	pg := &databasev1.PostgreSQL{}
 
-	if err := c.k8sClient.List(
-		ctx,
-		pgList,
-		ctrlclient.InNamespace(Namespace),
-		ctrlclient.MatchingLabels{
-			UserIDLabel: userID,
-		},
-	); err != nil {
+	if err := c.k8sClient.Get(ctx, ctrlclient.ObjectKey{
+		Namespace: Namespace,
+		Name:      id,
+	}, pg); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, domain.ErrNotFound
+		}
 		return nil, err
 	}
 
-	for i := range pgList.Items {
-		pg := &pgList.Items[i]
-
-		if string(pg.UID) == id {
-			return toDomainInstance(pg), nil
-		}
+	if pg.Labels[UserIDLabel] != userID {
+		return nil, domain.ErrNotFound
 	}
 
-	return nil, domain.ErrNotFound
+	return pg, nil
+}
+
+func (c *client) GetInstance(ctx context.Context, id, userID string) (*domain.Instance, error) {
+	pg, err := c.getOwnedInstance(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDomainInstance(pg), nil
 }
 
 func (c *client) GetInstanceCredentials(
 	ctx context.Context,
 	id, userID string,
 ) (*domain.InstanceCredentials, error) {
-	pgList := &databasev1.PostgreSQLList{}
-
-	if err := c.k8sClient.List(
-		ctx,
-		pgList,
-		ctrlclient.InNamespace(Namespace),
-		ctrlclient.MatchingLabels{
-			UserIDLabel: userID,
-		},
-	); err != nil {
+	pg, err := c.getOwnedInstance(ctx, id, userID)
+	if err != nil {
 		return nil, err
-	}
-
-	var pg *databasev1.PostgreSQL
-
-	for i := range pgList.Items {
-		if string(pgList.Items[i].UID) == id {
-			pg = &pgList.Items[i]
-			break
-		}
-	}
-
-	if pg == nil {
-		return nil, domain.ErrNotFound
 	}
 
 	if pg.Status.Phase != databasev1.PostgreSQLPhaseReady {
@@ -240,26 +228,9 @@ func (c *client) UpdateInstance(
 	ctx context.Context,
 	input domain.UpdateInstanceInput,
 ) (*domain.Instance, error) {
-	pgList := &databasev1.PostgreSQLList{}
-
-	if err := c.k8sClient.List(
-		ctx,
-		pgList,
-		ctrlclient.InNamespace(Namespace),
-	); err != nil {
+	pg, err := c.getOwnedInstance(ctx, input.ID, input.UserID)
+	if err != nil {
 		return nil, err
-	}
-
-	var pg *databasev1.PostgreSQL
-	for i := range pgList.Items {
-		if string(pgList.Items[i].UID) == input.ID {
-			pg = &pgList.Items[i]
-			break
-		}
-	}
-
-	if pg == nil {
-		return nil, domain.ErrNotFound
 	}
 
 	if input.Version != nil {
@@ -276,26 +247,33 @@ func (c *client) UpdateInstance(
 	return toDomainInstance(pg), nil
 }
 
-func (c *client) DeleteInstance(ctx context.Context, id string) error {
-	pgList := &databasev1.PostgreSQLList{}
+func (c *client) DeleteInstance(ctx context.Context, id, userID string) error {
+	// pgList := &databasev1.PostgreSQLList{}
 
-	if err := c.k8sClient.List(
-		ctx,
-		pgList,
-		ctrlclient.InNamespace(Namespace),
-	); err != nil {
+	// if err := c.k8sClient.List(
+	// 	ctx,
+	// 	pgList,
+	// 	ctrlclient.InNamespace(Namespace),
+	// ); err != nil {
+	// 	return err
+	// }
+
+	// for i := range pgList.Items {
+	// 	pg := &pgList.Items[i]
+
+	// 	if string(pg.UID) == id {
+	// 		return c.k8sClient.Delete(ctx, pg)
+	// 	}
+	// }
+
+	// return domain.ErrNotFound
+
+	pg, err := c.getOwnedInstance(ctx, id, userID)
+	if err != nil {
 		return err
 	}
 
-	for i := range pgList.Items {
-		pg := &pgList.Items[i]
-
-		if string(pg.UID) == id {
-			return c.k8sClient.Delete(ctx, pg)
-		}
-	}
-
-	return domain.ErrNotFound
+	return c.k8sClient.Delete(ctx, pg)
 }
 
 func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
@@ -315,7 +293,7 @@ func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
 	}
 
 	return &domain.Instance{
-		ID:             string(pg.UID),
+		ID:             pg.Name,
 		Name:           pg.Name,
 		Version:        version,
 		Storage:        pg.Spec.Storage,

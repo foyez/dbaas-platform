@@ -14,7 +14,7 @@ type InstanceService interface {
 	GetInstance(ctx context.Context, id, userID string) (*Instance, error)
 	ListInstances(ctx context.Context, userID string) (*ListInstancesResult, error)
 	UpdateInstance(ctx context.Context, input UpdateInstanceInput) (*Instance, error)
-	DeleteInstance(ctx context.Context, id string) error
+	DeleteInstance(ctx context.Context, id, userID string) error
 
 	// Future APIs:
 	// GetInstance(...)

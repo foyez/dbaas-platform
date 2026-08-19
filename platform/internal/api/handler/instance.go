@@ -229,6 +229,8 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 		return
 	}
 
+	userID := h.authmw.UserID(c.Request.Context())
+
 	var req api.UpdateInstanceRequest
 
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
@@ -250,6 +252,7 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 		ID:      id,
 		Version: req.Version,
 		Storage: req.Storage,
+		UserID:  userID,
 	}
 
 	instance, err := h.svc.UpdateInstance(c.Request.Context(), input)
@@ -293,7 +296,9 @@ func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.DeleteInstance(c, id); err != nil {
+	userID := h.authmw.UserID(c.Request.Context())
+
+	if err := h.svc.DeleteInstance(c, id, userID); err != nil {
 		h.logger.Error(
 			"failed to delete instance",
 			"error", err,

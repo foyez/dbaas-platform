@@ -59,4 +59,5 @@ type UpdateInstanceInput struct {
 	ID      string
 	Version *int
 	Storage *string
+	UserID  string
 }
