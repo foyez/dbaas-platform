@@ -33,7 +33,16 @@ func (r *PostgreSQLReconciler) reconcileCNPGCluster(
 			}
 
 			if userID, ok := pg.Labels[UserIDLabel]; ok {
+				// For consistency/queryability of the Cluster object itself
+				// (e.g. `kubectl get clusters -l app.example.com/user-id=...`).
 				cluster.Labels[UserIDLabel] = userID
+
+				// It reaches the pods, services,
+				// and secrets CNPG creates - required for Alloy/Loki scoping.
+				if cluster.Spec.InheritedMetadata == nil {
+					cluster.Spec.InheritedMetadata = &cnpgv1.EmbeddedObjectMetadata{}
+				}
+				cluster.Spec.InheritedMetadata.Labels[userID] = userID
 			}
 
 			cluster.Spec.Instances = int(pg.Spec.Instances)
