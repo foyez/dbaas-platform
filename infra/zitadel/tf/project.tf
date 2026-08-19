@@ -3,7 +3,7 @@ resource "zitadel_project" "paas" {
 
   name = "DBAAS Platform"
 
-  # true - zitadel can assert the project's roles in tokens
-  project_role_assertion = true
+  project_role_assertion = true # adds roles claim to the token
   project_role_check     = true
+  has_project_check      = true
 }

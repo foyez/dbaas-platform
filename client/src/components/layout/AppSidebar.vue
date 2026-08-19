@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { Database, Home, BookOpen } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { Database, Home, BookOpen, ScrollText } from 'lucide-vue-next'
 
 import { RouterLink } from 'vue-router'
+import { userManager } from '@/auth/oidc'
+import { hasRole } from '@/auth/roles'
+
+const isAdmin = ref(false)
+
+onMounted(async () => {
+  const user = await userManager.getUser()
+  isAdmin.value = hasRole(user, 'dbaas.admin')
+})
 </script>
 
 <template>
@@ -39,6 +49,20 @@ import { RouterLink } from 'vue-router'
         <Database class="h-4 w-4" />
 
         Instances
+      </RouterLink>
+
+      <RouterLink
+        v-if="isAdmin"
+        to="/audit-logs"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        active-class="
+          bg-muted
+          text-foreground
+        "
+      >
+        <ScrollText class="h-4 w-4" />
+
+        Audit log
       </RouterLink>
     </nav>
 

@@ -6,6 +6,7 @@ import type {
   InstanceCredentials,
   InstanceListResponse,
   UpdateInstanceRequest,
+  InstanceLogsRespose,
 } from '@/types/instance'
 
 export async function createInstance(
@@ -47,4 +48,8 @@ export async function deleteInstance(id: string): Promise<void> {
   await apiFetch<void>(`/instances/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
+}
+
+export async function getInstanceLogs(id: string): Promise<InstanceLogsRespose> {
+  return apiFetch<InstanceLogsRespose>(`/instances/${id}/logs`)
 }

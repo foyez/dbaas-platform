@@ -8,6 +8,8 @@ import DashboardPage from '@/pages/DashboardPage.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import CallbackPage from '@/pages/auth/CallbackPage.vue'
 import { userManager } from '@/auth/oidc'
+import AuditLogsPage from '@/pages/AuditLogsPage.vue'
+import { hasRole } from '@/auth/roles'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,7 +19,7 @@ const router = createRouter({
     {
       path: '/',
       component: AppLayout,
-      meta: {requiresAuth: true},
+      meta: { requiresAuth: true },
 
       children: [
         {
@@ -43,6 +45,13 @@ const router = createRouter({
           name: 'instance-detail',
           component: InstanceDetailPage,
         },
+
+        {
+          path: 'audit-logs',
+          name: 'audit-logs',
+          component: AuditLogsPage,
+          meta: { requiresAuth: true, requiresAdmin: true }, // guard not yet enforced - see note above
+        },
       ],
     },
 
@@ -58,18 +67,18 @@ router.beforeEach(async (to) => {
   }
 
   const user = await userManager.getUser()
+  console.log(user?.profile)
 
-  if (user && !user.expired) {
-    return true
+  if (!user || user.expired) {
+    await userManager.signinRedirect({ state: { returnUrl: to.fullPath } })
+    return false
   }
 
-  await userManager.signinRedirect({
-    state: {
-      returnUrl: to.fullPath,
-    },
-  })
+  if (to.meta.requiresAdmin && !hasRole(user, 'dbaas.admin')) {
+    return { name: 'dashboard' } // or a dedicated 403 page, if you have one
+  }
 
-  return false
+  return true
 })
 
 export default router
