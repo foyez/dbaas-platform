@@ -129,10 +129,10 @@ func validateUpdateInstance(
 	return nil
 }
 
-func (s *instanceService) DeleteInstance(ctx context.Context, id string) error {
+func (s *instanceService) DeleteInstance(ctx context.Context, id, userID string) error {
 	if strings.TrimSpace(id) == "" {
 		return ErrInvalidInput
 	}
 
-	return s.client.DeleteInstance(ctx, id)
+	return s.client.DeleteInstance(ctx, id, userID)
 }

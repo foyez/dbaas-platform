@@ -33,7 +33,7 @@ type InstanceClient interface {
 		ctx context.Context,
 		input domain.UpdateInstanceInput,
 	) (*domain.Instance, error)
-	DeleteInstance(ctx context.Context, id string) error
+	DeleteInstance(ctx context.Context, id, userID string) error
 
 	// Future operations:
 	// GetInstance(...)
