@@ -151,3 +151,20 @@ func (s *instanceService) DeleteInstance(ctx context.Context, id, userID string)
 
 	return s.client.DeleteInstance(ctx, id, userID)
 }
+
+func (s *instanceService) GetAuditLogs(
+	ctx context.Context,
+	resourceID string,
+	limit int,
+) ([]loki.LogLine, error) {
+	if limit <= 0 {
+		limit = 200
+	}
+
+	logql := `{namespace="dbaas-api"} | json | component="audit"`
+	if resourceID != "" {
+		logql = fmt.Sprintf(`{namespace="dbaas-api"} | json | component="audit" | resouce_id=%q`, resourceID)
+	}
+
+	return s.loki.Query(ctx, logql, limit)
+}

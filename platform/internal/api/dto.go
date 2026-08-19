@@ -59,3 +59,7 @@ type InstanceLogsResponse struct {
 	InstanceID string         `json:"instanceId"`
 	Logs       []loki.LogLine `json:"logs"`
 }
+
+type AuditLogsResponse struct {
+	Logs []loki.LogLine `json:"logs"`
+}

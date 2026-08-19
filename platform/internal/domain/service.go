@@ -19,6 +19,8 @@ type InstanceService interface {
 	UpdateInstance(ctx context.Context, input UpdateInstanceInput) (*Instance, error)
 	DeleteInstance(ctx context.Context, id, userID string) error
 
+	GetAuditLogs(ctx context.Context, resourceID string, limit int) ([]loki.LogLine, error)
+
 	// Future APIs:
 	// GetInstance(...)
 	// ListInstances(...)

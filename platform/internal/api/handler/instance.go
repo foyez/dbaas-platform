@@ -344,3 +344,18 @@ func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 		Status:  "Deleting",
 	})
 }
+
+// GetAuditLogs handles GET /v1/audit-logs requests (admin only).
+func (h *InstanceHandler) GetAuditLogs(c *gin.Context) {
+	resourceID := c.Query("resourceId")
+
+	logs, err := h.svc.GetAuditLogs(c.Request.Context(), resourceID, 200)
+	if err != nil {
+		h.logger.Error("failed to get audit logs", "error", err)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	httpx.JSON(c, http.StatusOK, api.AuditLogsResponse{Logs: logs})
+}
