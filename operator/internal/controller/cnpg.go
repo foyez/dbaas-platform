@@ -42,7 +42,10 @@ func (r *PostgreSQLReconciler) reconcileCNPGCluster(
 				if cluster.Spec.InheritedMetadata == nil {
 					cluster.Spec.InheritedMetadata = &cnpgv1.EmbeddedObjectMetadata{}
 				}
-				cluster.Spec.InheritedMetadata.Labels[userID] = userID
+				if cluster.Spec.InheritedMetadata.Labels == nil {
+					cluster.Spec.InheritedMetadata.Labels = map[string]string{}
+				}
+				cluster.Spec.InheritedMetadata.Labels[UserIDLabel] = userID
 			}
 
 			cluster.Spec.Instances = int(pg.Spec.Instances)
