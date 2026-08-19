@@ -15,6 +15,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 	"github.com/foyez/dbaas-platform/platform/internal/logger"
 	"github.com/foyez/dbaas-platform/platform/internal/observability"
+	"github.com/foyez/dbaas-platform/platform/internal/observability/audit"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/prometheus/client_golang/prometheus"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -63,6 +64,7 @@ func run() error {
 
 	svc := service.NewInstanceService(instanceClient, lokiClient, log)
 	handler := handler.NewInstanceHandler(svc, log, authmw)
+	auditLogger := audit.NewLogger(log)
 
 	r := router.New(
 		handler,
@@ -70,6 +72,7 @@ func run() error {
 		authmw,
 		metrics,
 		registry,
+		auditLogger,
 	)
 
 	setupDocs(r)

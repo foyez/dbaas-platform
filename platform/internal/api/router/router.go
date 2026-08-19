@@ -11,6 +11,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/auth"
 	"github.com/foyez/dbaas-platform/platform/internal/config"
 	"github.com/foyez/dbaas-platform/platform/internal/observability"
+	"github.com/foyez/dbaas-platform/platform/internal/observability/audit"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,10 +26,9 @@ func New(
 	authmw *auth.Middleware,
 	metrics *observability.Metrics,
 	registry *prometheus.Registry,
+	auditLogger *audit.AuditLogger,
 ) *gin.Engine {
 	r := gin.New()
-
-	r.Use(observability.MetricsMiddleware(metrics))
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowOrigins,
@@ -40,6 +40,8 @@ func New(
 	}))
 
 	r.Use(gin.Recovery(), gin.Logger())
+	r.Use(observability.MetricsMiddleware(metrics))
+	r.Use(audit.Middleware(auditLogger, authmw.UserID))
 
 	// Health check for Kubernetes probes.
 	r.GET("/health", func(c *gin.Context) {
@@ -80,6 +82,7 @@ func New(
 	admin := protected.Group("")
 	admin.Use(auth.Gin(authmw.RequireRole(auth.RoleAdmin)))
 
+	admin.GET("/audit-logs", h.GetAuditLogs)
 	// admin.GET("/instances/:id", h.GetInstance)
 	// admin.DELETE("/instances/:id", h.DeleteInstance)
 
