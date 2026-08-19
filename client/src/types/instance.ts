@@ -43,3 +43,13 @@ export interface UpdateInstanceRequest {
 export interface InstanceListResponse {
   items: Instance[]
 }
+
+export interface LogLine {
+  timestamp: string
+  line: string
+}
+
+export interface InstanceLogsRespose {
+  instanceId: string
+  logs: LogLine[]
+}

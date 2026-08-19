@@ -4,9 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Trash2 } from 'lucide-vue-next'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
 import { Button } from '@/components/ui/button'
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +24,7 @@ import InstanceCredentials from '@/components/instances/InstanceCredentials.vue'
 import { useInstance } from '@/composables/useInstance'
 import type { UpdateInstanceInput } from '@/schemas/instance'
 import { formatDate } from '@/lib/date'
+import { useInstanceLogs } from '@/composables/useInstanceLogs'
 
 const route = useRoute()
 const router = useRouter()
@@ -42,6 +41,7 @@ const {
   updateInstance,
   deleteInstance,
 } = useInstance()
+const { logs, isLoading: isLoadingLogs, error: logsError, fetchLogs } = useInstanceLogs()
 
 const instanceId = String(route.params.id)
 
@@ -54,6 +54,18 @@ async function load() {
   } catch {
     // Error is exposed by useInstance().
   }
+}
+
+async function revealLogs() {
+  try {
+    await fetchLogs(instanceId)
+  } catch {
+    // Error is exposed by useInstanceLogs().
+  }
+}
+
+function viewAuditTrail() {
+  router.push({ name: 'audit-logs', query: { resourceId: instanceId } })
 }
 
 async function revealCredentials() {
@@ -195,6 +207,12 @@ onMounted(load)
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+
+            <!-- Audit -->
+
+            <Button variant="outline" :disabled="isDeleting" @click="viewAuditTrail">
+              Audit trail
+            </Button>
           </div>
         </div>
 
@@ -292,6 +310,13 @@ onMounted(load)
           :loading="isLoadingCredentials"
           :error="credentialsError"
           @reveal="revealCredentials"
+        />
+
+        <InstanceLogs
+          :logs="logs"
+          :loading="isLoadingLogs"
+          :error="logsError"
+          @reveal="revealLogs"
         />
 
         <!-- Metadata -->
