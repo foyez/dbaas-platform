@@ -10,7 +10,7 @@ type HealthStatus struct {
 func (c *Client) Health(ctx context.Context) (*HealthStatus, error) {
 	var status HealthStatus
 
-	if err := c.do(ctx, "GET", "/health", nil, &status); err != nil {
+	if err := c.do(ctx, "GET", "/health", nil, &status, nil); err != nil {
 		return nil, err
 	}
 

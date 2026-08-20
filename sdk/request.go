@@ -9,7 +9,12 @@ import (
 	"net/http"
 )
 
-func (c *Client) do(ctx context.Context, method, path string, body, out any) error {
+func (c *Client) do(
+	ctx context.Context,
+	method, path string,
+	body, out any,
+	headers map[string]string,
+) error {
 	var reqBody io.Reader
 
 	if body != nil {
@@ -28,8 +33,8 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	if c.token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.token)
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 
 	resp, err := c.httpClient.Do(req)
@@ -39,7 +44,8 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("unexpected status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
 	}
 
 	if out != nil {
