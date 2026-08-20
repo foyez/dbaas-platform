@@ -11,6 +11,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/auth"
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/httpx"
+	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -201,6 +202,10 @@ func (h *InstanceHandler) GetInstanceLogs(c *gin.Context) {
 
 		httpx.RespondError(c, err)
 		return
+	}
+
+	if logs == nil {
+		logs = []loki.LogLine{}
 	}
 
 	resp := api.InstanceLogsResponse{
