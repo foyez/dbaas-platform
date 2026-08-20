@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Client struct {
@@ -23,11 +24,16 @@ type LogLine struct {
 }
 
 // Query runs a LogQL query against Loki's range endpoint.
-func (c *Client) Query(ctx context.Context, logql string, limit int) ([]LogLine, error) {
+func (c *Client) Query(ctx context.Context, logql string, limit int, lookback time.Duration) ([]LogLine, error) {
+	end := time.Now()
+	start := end.Add(-lookback)
+
 	params := url.Values{}
 	params.Set("query", logql)
 	params.Set("limit", fmt.Sprintf("%d", limit))
 	params.Set("direction", "backward")
+	params.Set("start", fmt.Sprintf("%d", start.UnixNano()))
+	params.Set("end", fmt.Sprintf("%d", end.UnixNano()))
 
 	req, err := http.NewRequestWithContext(
 		ctx,

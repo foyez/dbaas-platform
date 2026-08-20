@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
@@ -86,7 +87,7 @@ func (s *instanceService) GetInstanceLogs(ctx context.Context, id, userID string
 	}
 
 	logql := fmt.Sprintf(`{instance_id=%q}`, id)
-	return s.loki.Query(ctx, logql, 200)
+	return s.loki.Query(ctx, logql, 200, 24*time.Hour)
 }
 
 // GetCredentials retrieves the credentials for an instance.
@@ -163,8 +164,7 @@ func (s *instanceService) GetAuditLogs(
 
 	logql := `{namespace="dbaas-api"} | json | component="audit"`
 	if resourceID != "" {
-		logql = fmt.Sprintf(`{namespace="dbaas-api"} | json | component="audit" | resouce_id=%q`, resourceID)
+		logql = fmt.Sprintf(`{namespace="dbaas-api"} | json | component="audit" | resource_id=%q`, resourceID)
 	}
-
-	return s.loki.Query(ctx, logql, limit)
+	return s.loki.Query(ctx, logql, limit, 168*time.Hour) // 7 days, matches your Loki retention_period
 }
