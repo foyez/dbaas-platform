@@ -14,8 +14,8 @@ func WithHTTPClient(hc *http.Client) Option {
 }
 
 // WithToken sets a static bearer token.
-func WithToken(token string) Option {
-	return func(c *Client) {
-		c.token = token
-	}
-}
+// func WithToken(token string) Option {
+// 	return func(c *Client) {
+// 		c.token = token
+// 	}
+// }

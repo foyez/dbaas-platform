@@ -9,7 +9,8 @@ import (
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
-	token      string
+
+	Instances *InstancesService
 }
 
 // New creates a Client. baseURL is required; everything else has sane
@@ -25,6 +26,8 @@ func New(baseURL string, opts ...Option) *Client {
 	for _, opt := range opts {
 		opt(c)
 	}
+
+	c.Instances = &InstancesService{client: c}
 
 	return c
 }
