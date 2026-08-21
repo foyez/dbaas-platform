@@ -12,7 +12,7 @@ datasources:
       - name: Prometheus
         type: prometheus
         # points at the Prometheus Service from kube-prometheus-stack release
-        url: http://kube-prometheus-stack-prometheus:9090
+        url: http://dbaas-prometheus-kube-prom-prometheus:9090
         access: proxy
         isDefault: true
 

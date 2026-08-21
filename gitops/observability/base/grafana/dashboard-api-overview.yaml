@@ -13,48 +13,180 @@ data:
       "tags": ["dbaas"],
       "timezone": "browser",
       "schemaVersion": 39,
+      "time": { "from": "now-6h", "to": "now" },
+      "refresh": "30s",
       "panels": [
+        {
+          "id": 10,
+          "title": "Total Request Rate",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "sum(rate(dbaas_http_requests_total{job=\"dbaas-svc\"}[5m]))",
+              "legendFormat": "req/s"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "reqps" } }
+        },
+        {
+          "id": 11,
+          "title": "Error Rate (5xx)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "100 * sum(rate(dbaas_http_requests_total{job=\"dbaas-svc\", status=~\"5..\"}[5m])) / sum(rate(dbaas_http_requests_total{job=\"dbaas-svc\"}[5m]))",
+              "legendFormat": "error %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 12,
+          "title": "P95 Latency",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "histogram_quantile(0.95, sum(rate(dbaas_http_request_duration_seconds_bucket{job=\"dbaas-svc\"}[5m])) by (le))",
+              "legendFormat": "p95"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" } }
+        },
+        {
+          "id": 13,
+          "title": "Goroutines",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "go_goroutines{job=\"dbaas-svc\"}"
+            }
+          ]
+        },
         {
           "id": 1,
           "title": "Request Rate by Route",
           "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "targets": [
             {
-              "expr": "sum(rate(dbaas_http_requests_total[5m])) by (route, status)",
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "sum(rate(dbaas_http_requests_total{job=\"dbaas-svc\"}[5m])) by (route, status)",
               "legendFormat": "{{route}} - {{status}}"
             }
           ]
         },
         {
           "id": 2,
-          "title": "P95 Latency by Route",
+          "title": "Latency Percentiles (p50 / p95 / p99)",
           "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum(rate(dbaas_http_request_duration_seconds_bucket[5m])) by (le, route))",
-              "legendFormat": "{{route}}"
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "histogram_quantile(0.50, sum(rate(dbaas_http_request_duration_seconds_bucket{job=\"dbaas-svc\"}[5m])) by (le, route))",
+              "legendFormat": "p50 {{route}}"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "histogram_quantile(0.95, sum(rate(dbaas_http_request_duration_seconds_bucket{job=\"dbaas-svc\"}[5m])) by (le, route))",
+              "legendFormat": "p95 {{route}}"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "histogram_quantile(0.99, sum(rate(dbaas_http_request_duration_seconds_bucket{job=\"dbaas-svc\"}[5m])) by (le, route))",
+              "legendFormat": "p99 {{route}}"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "title": "Requests by Status Code",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "sum(rate(dbaas_http_requests_total{job=\"dbaas-svc\"}[5m])) by (status)",
+              "legendFormat": "{{status}}"
             }
           ]
         },
         {
           "id": 3,
-          "title": "Goroutines",
+          "title": "Goroutines Over Time",
           "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "gridPos": { "h": 8, "w": 6, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "targets": [
-            { "expr": "go_goroutines{job=\"dbaas-svc\"}" }
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "go_goroutines{job=\"dbaas-svc\"}"
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "title": "CPU Usage",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 6, "x": 18, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(process_cpu_seconds_total{job=\"dbaas-svc\"}[5m])",
+              "legendFormat": "cpu"
+            }
           ]
         },
         {
           "id": 4,
           "title": "Memory (RSS)",
           "type": "timeseries",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "targets": [
-            { "expr": "process_resident_memory_bytes{job=\"dbaas-svc\"}" }
-          ]
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "process_resident_memory_bytes{job=\"dbaas-svc\"}"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "bytes" } }
         }
-      ]
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "DS_PROMETHEUS",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {}
+          }
+        ]
+      }
     }
