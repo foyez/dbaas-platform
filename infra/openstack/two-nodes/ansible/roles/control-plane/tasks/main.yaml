@@ -1,0 +1,36 @@
+- name: Initialize Kubernetes control plane
+  shell: |
+    kubeadm init \
+    --pod-network-cidr={{ pod_network_cidr }} \
+    --apiserver-advertise-address={{ private_ip }} \
+    --apiserver-bind-port={{ apiserver_port }} \
+    --kubernetes-version={{ k8s_version }}
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Create kube directory
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+
+- name: Copy admin.conf
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+
+# This makes the join command available to worker nodes via
+# hostvars[groups['control_plane'][0]]['kubeadm_join_command']
+# in the SAME playbook run (facts persist across plays once gathered).
+- name: Generate kubeadm join command for worker nodes
+  shell: kubeadm token create --print-join-command
+  register: _kubeadm_join_command
+
+- name: Store join command as a fact
+  set_fact:
+    kubeadm_join_command: "{{ _kubeadm_join_command.stdout }}"
+

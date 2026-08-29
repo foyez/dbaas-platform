@@ -1,0 +1,20 @@
+- hosts: kubernetes
+  become: yes
+  roles:
+    - containerd
+    - kubernetes
+
+- hosts: control_plane
+  become: yes
+  roles:
+    - control-plane
+
+- hosts: workers
+  become: yes
+  roles:
+    - worker
+
+- hosts: control_plane
+  become: yes
+  roles:
+    - flannel

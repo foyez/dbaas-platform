@@ -1,0 +1,34 @@
+# ==============================================================================
+# WARNING: DO NOT COMMIT THIS FILE TO PRODUCTION GIT REPOSITORIES.
+# For production, add 'clouds.yaml' to .gitignore. Pass sensitive secrets like 
+# passwords securely using the OS_PASSWORD environment variable in your CI/CD pipeline.
+#
+# OpenStack clients (including the Terraform OpenStack provider) look for
+# 'clouds.yaml' in standard locations, such as:
+#
+#   Linux/macOS:
+#     ~/.config/openstack/clouds.yaml
+#
+#   System-wide:
+#     /etc/openstack/clouds.yaml
+#
+# Alternatively, you can keep this file anywhere (for example, in your project
+# root) and point to it using the OS_CLIENT_CONFIG_FILE environment variable:
+#
+#   export OS_CLIENT_CONFIG_FILE=/path/to/clouds.yaml
+#
+# Example (project root):
+#   export OS_CLIENT_CONFIG_FILE=$(pwd)/clouds.yaml
+# ==============================================================================
+clouds:
+  openstack_local:
+    auth:
+      auth_url: "http://10.0.0.112/identity/v3"
+      username: "admin"
+      password: "secret"
+      project_name: "demo"
+      user_domain_name: "Default"
+      project_domain_name: "Default"
+    region_name: "RegionOne"
+    insecure: true # for self-signed certificates
+    interface: "internal"  # Use 'public' if accessing via a public IP

@@ -1,0 +1,2 @@
+[kubernetes]
+${floating_ip}

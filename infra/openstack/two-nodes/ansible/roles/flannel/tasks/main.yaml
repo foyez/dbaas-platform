@@ -1,0 +1,6 @@
+  - name: Install Flannel
+    become: false
+    shell: |
+      kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+    environment:
+      KUBECONFIG: /home/ubuntu/.kube/config
