@@ -1,0 +1,6 @@
+# Never commit these
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+*.tfvars        # contains passwords/credentials
+.terraform.lock.hcl  # optionally commit this for reproducible provider versions

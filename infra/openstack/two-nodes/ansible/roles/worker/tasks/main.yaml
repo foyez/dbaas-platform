@@ -1,0 +1,4 @@
+- name: Join the Kubernetes cluster
+  shell: "{{ hostvars[groups['control_plane'][0]]['kubeadm_join_command'] }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
