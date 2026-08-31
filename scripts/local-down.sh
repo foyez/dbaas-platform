@@ -3,6 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+./scripts/local-forward-stop.sh 2>/dev/null || true
+
 kubectl delete -k gitops/database/overlays/dev --ignore-not-found
 kubectl delete -k gitops/client/overlays/dev --ignore-not-found
 kubectl delete -k gitops/api/overlays/dev --ignore-not-found
