@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: database-system
+
+resources:
+  - ../../base
+
+patches:
+  # Smaller footprint for a laptop.
+  - target:
+      kind: PostgreSQL
+      name: internal-db
+    patch: |-
+      - op: replace
+        path: /spec/storage
+        value: 1Gi
