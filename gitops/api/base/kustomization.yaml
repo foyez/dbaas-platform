@@ -9,5 +9,4 @@ resources:
 - deployment.yaml
 - ingress.yaml
 - hpa.yaml
-- letsencrypt-prod.yaml
 - dbaas-api-certificate.yaml

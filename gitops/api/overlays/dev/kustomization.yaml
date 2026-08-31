@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Build locally with: docker build -t dbaas-platform-api:dev ./platform
+# OrbStack's Kubernetes shares Docker's image store, so no push/registry needed.
+images:
+  - name: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api
+    newName: dbaas-platform-api
+    newTag: dev
+
+patches:
+  # Drop the private-registry pull secret and force IfNotPresent so the
+  # kubelet never tries to actually pull ":dev" from a registry.
+  - target:
+      kind: Deployment
+      name: dbaas-deploy
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/imagePullSecrets
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+
+  # Local host + local CA-backed issuer instead of the STACKIT ACME issuer.
+  - target:
+      kind: Ingress
+      name: dbaas-api
+    patch: |-
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api.dbaas.k8s.orb.local
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.dbaas.k8s.orb.local
+
+  - target:
+      kind: Certificate
+      name: dbaas-api-tls
+    patch: |-
+      - op: replace
+        path: /spec/issuerRef
+        value:
+          name: dev-ca
+          kind: ClusterIssuer
+      - op: replace
+        path: /spec/commonName
+        value: api.dbaas.k8s.orb.local
+      - op: replace
+        path: /spec/dnsNames/0
+        value: api.dbaas.k8s.orb.local
+
+  - target:
+      kind: ConfigMap
+      name: dbaas-api-config
+    patch: |-
+      - op: replace
+        path: /data/APP_ENV
+        value: development
+      - op: replace
+        path: /data/SERVER_ALLOW_ORIGINS
+        value: https://dbaas.k8s.orb.local

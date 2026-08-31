@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://level3.git.onstackit.cloud/LEVEL3/foyez-inra.git
+    targetRevision: main
+    path: gitops/cert-manager/base
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+
+  syncPolicy:
+    # automated:
+    #   prune: true
+    #   selfHeal: true
+
+    syncOptions:
+      # Needed because CRDs are installed
+      - CreateNamespace=true
+      - ServerSideApply=true

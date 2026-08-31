@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dbaas-operator
+
+resources:
+  - ../../base
+
+# Build locally with:
+#   docker build -t postgres-platform-operator:dev ./operator
+images:
+  - name: controller
+    newName: postgres-platform-operator
+    newTag: dev

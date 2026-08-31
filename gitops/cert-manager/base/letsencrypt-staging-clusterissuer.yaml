@@ -1,0 +1,21 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+
+spec:
+  acme:
+    email: foyez.lifestyle@gmail.com
+
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    privateKeySecretRef:
+      name: letsencrypt-staging
+
+    solvers:
+      - dns01:
+          webhook:
+            solverName: stackit
+            groupName: acme.stackit.de
+            config:
+              projectId: e7990770-226d-4f75-b9a7-e2269a8d2194

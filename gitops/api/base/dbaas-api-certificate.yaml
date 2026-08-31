@@ -9,7 +9,7 @@ spec:
 
   issuerRef:
     name: letsencrypt-prod
-    kind: Issuer
+    kind: ClusterIssuer
 
   commonName: "api.foyez.runs.onstackit.cloud"
   duration: 8760h0m0s

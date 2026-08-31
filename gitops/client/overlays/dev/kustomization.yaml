@@ -1,0 +1,50 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Build locally with: docker build -t dbaas-frontend:dev ./client
+images:
+  - name: registry.onstackit.cloud/dbaas-platform/dbaas-frontend
+    newName: dbaas-frontend
+    newTag: dev
+
+patches:
+  - target:
+      kind: Deployment
+      name: dbaas-frontend
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/imagePullSecrets
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+
+  - target:
+      kind: Ingress
+      name: dbaas-frontend
+    patch: |-
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: dbaas.k8s.orb.local
+      - op: replace
+        path: /spec/rules/0/host
+        value: dbaas.k8s.orb.local
+
+  - target:
+      kind: Certificate
+      name: dbaas-wildcard
+    patch: |-
+      - op: replace
+        path: /spec/issuerRef
+        value:
+          name: dev-ca
+          kind: ClusterIssuer
+      - op: replace
+        path: /spec/commonName
+        value: dbaas.k8s.orb.local
+      - op: replace
+        path: /spec/dnsNames
+        value:
+          - dbaas.k8s.orb.local
