@@ -23,9 +23,16 @@ import (
 // +kubebuilder:rbac:groups=database.example.com,resources=postgresqls/finalizers,verbs=update
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch,namespace=dbaas-operator
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;update;patch,namespace=ingress-nginx
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;update;patch,namespace=ingress-nginx
+//
+// Deliberately NOT using +kubebuilder:rbac markers with namespace= for the
+// port-allocator ConfigMap (dbaas-operator ns) or the ingress-nginx TCP
+// wiring (ingress-nginx ns): controller-gen picks those up and regenerates
+// config/rbac/role.yaml with per-namespace Role objects that config/default's
+// blanket namespace transform then collides into a single namespace. Those
+// two permission sets are hand-maintained instead - see
+// config/rbac/port_allocator_role.yaml and
+// gitops/ingress-nginx-tcp-access/base/rbac.yaml (kept outside this
+// kustomize tree specifically to avoid the same collision).
 
 const (
 	PostgreSQLConditionReady databasev1.PostgreSQLConditionType = "Ready"
