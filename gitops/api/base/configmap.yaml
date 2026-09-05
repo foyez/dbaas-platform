@@ -10,3 +10,7 @@ data:
   SERVER_ALLOW_ORIGINS: "https://app.foyez.runs.onstackit.cloud"
   ZITADEL_DOMAIN: "dbass-k4ho6i.eu1.zitadel.cloud"
   ZITADEL_KEY_PATH: "/var/run/secrets/zitadel/zitadel-key.json"
+  # A record pointing at the ingress-nginx LoadBalancer's external IP -
+  # same IP as app.foyez.runs.onstackit.cloud, different DNS name since
+  # this is reached by raw TCP:<allocated-port>, not HTTP/SNI routing.
+  PUBLIC_DB_HOST: "db.foyez.runs.onstackit.cloud"

@@ -1,0 +1,34 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dbaas-operator-tcp-expose
+  namespace: ingress-nginx
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["tcp-services"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    resourceNames: ["ingress-nginx-controller"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dbaas-operator-tcp-expose
+  namespace: ingress-nginx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dbaas-operator-tcp-expose
+subjects:
+  # Final name/namespace of the operator's ServiceAccount, after
+  # operator/config/default's "postgresql-dbpaas-platform-" namePrefix and
+  # the gitops overlay's "dbaas-operator" namespace. Hardcoded because this
+  # kustomization is intentionally outside that build, so kustomize's
+  # automatic name-reference updates don't reach it - if either of those
+  # ever changes, update this subject to match.
+  - kind: ServiceAccount
+    name: postgresql-dbpaas-platform-controller-manager
+    namespace: dbaas-operator
