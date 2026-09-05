@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - apps/cert-manager.yaml
+  - apps/ingress-nginx-tcp-access.yaml
   - apps/cnpg.yaml
   - apps/dbaas-operator.yaml
   - apps/dbaas-api.yaml
