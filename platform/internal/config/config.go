@@ -33,6 +33,12 @@ type ServerConfig struct {
 	Address      string   `envconfig:"SERVER_ADDRESS" default:":8080"`
 	AllowOrigins []string `envconfig:"SERVER_ALLOW_ORIGINS"`
 	LokiURL      string   `envconfig:"LOKI_URL" default:"http://dbaas-loki.observability.svc.cluster.local:3100"`
+
+	// PublicDBHost is the externally-reachable hostname clients use to
+	// connect directly to a PostgreSQL instance (see gitops/ingress-nginx-tcp-access).
+	// It resolves to the shared ingress-nginx LoadBalancer; each instance
+	// is distinguished by its allocated port, not by hostname.
+	PublicDBHost string `envconfig:"PUBLIC_DB_HOST"`
 }
 
 type ZitadelConfig struct {

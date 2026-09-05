@@ -39,6 +39,8 @@ type InstanceResponse struct {
 	ReadyInstances int                   `json:"readyInstances"`
 	Status         domain.InstanceStatus `json:"status"`
 	CreatedAt      time.Time             `json:"createdAt"`
+	// ExternalPort is 0 until the instance is externally reachable.
+	ExternalPort int `json:"externalPort"`
 }
 
 type InstanceCredentialsResponse struct {

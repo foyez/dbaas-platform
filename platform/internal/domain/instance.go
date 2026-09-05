@@ -25,6 +25,10 @@ type Instance struct {
 	ReadyInstances int
 	Status         InstanceStatus
 	CreatedAt      time.Time
+
+	// ExternalPort is 0 until the operator has allocated and wired up
+	// external reachability for this instance (see GetInstanceCredentials).
+	ExternalPort int
 }
 
 type InstanceCredentials struct {
