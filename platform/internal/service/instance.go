@@ -166,5 +166,10 @@ func (s *instanceService) GetAuditLogs(
 	if resourceID != "" {
 		logql = fmt.Sprintf(`{namespace="dbaas-api"} | json | component="audit" | resource_id=%q`, resourceID)
 	}
-	return s.loki.Query(ctx, logql, limit, 168*time.Hour) // 7 days, matches your Loki retention_period
+	return s.loki.Query(
+		ctx,
+		logql,
+		limit,
+		168*time.Hour, // 7 days, matches your Loki retention_period
+	)
 }
