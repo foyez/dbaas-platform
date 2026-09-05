@@ -61,7 +61,7 @@ const polling = usePolling(async () => {
   if (instance.value && isTerminalStatus(instance.value.status)) {
     polling.stop()
   }
-}, 3000)
+}, 15000)
 
 async function load() {
   try {

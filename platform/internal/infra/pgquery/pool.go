@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
@@ -73,7 +74,12 @@ func (p *Pool) ExecuteQuery(
 
 	start := time.Now()
 
-	rows, err := pool.Query(ctx, sql)
+	// SimpleProtocol forces text format for results (same as psql),
+	// instead of pgx's default binary format - which decodes types like
+	// uuid into raw [16]byte arrays that JSON-marshal as arrays of
+	// numbers rather than readable strings. Safe here since this is a
+	// single ad-hoc statement with no bind parameters.
+	rows, err := pool.Query(ctx, sql, pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
 		return nil, fmt.Errorf("executing query: %w", err)
 	}
@@ -98,6 +104,10 @@ func (p *Pool) ExecuteQuery(
 		values, err := rows.Values()
 		if err != nil {
 			return nil, fmt.Errorf("reading row: %w", err)
+		}
+
+		for i, v := range values {
+			values[i] = normalizeValue(v)
 		}
 
 		resultRows = append(resultRows, values)
@@ -198,5 +208,26 @@ func (p *Pool) Close() {
 	for id, pc := range p.pools {
 		pc.pool.Close()
 		delete(p.pools, id)
+	}
+}
+
+// normalizeValue converts pgx-decoded Go values that don't have a sane
+// JSON representation into ones that do. [16]byte (a fixed-size array, used
+// for uuid columns) is the concrete case that surfaced this: encoding/json
+// has a special case that marshals a *slice* of bytes as a base64 string,
+// but that special case only applies to []byte - a fixed-size *array* like
+// [16]byte falls through to the generic array path and marshals as a JSON
+// array of 16 numbers instead of a UUID string. Deliberately a switch, not
+// a generic reflection-based fallback, so any future case added here is a
+// conscious decision rather than silently-different behavior.
+func normalizeValue(v any) any {
+	switch val := v.(type) {
+	case [16]byte:
+		return fmt.Sprintf(
+			"%x-%x-%x-%x-%x",
+			val[0:4], val[4:6], val[6:8], val[8:10], val[10:16],
+		)
+	default:
+		return v
 	}
 }

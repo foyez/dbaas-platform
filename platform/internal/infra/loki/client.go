@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
+	"strconv"
 	"time"
 )
 
@@ -68,5 +70,23 @@ func (c *Client) Query(ctx context.Context, logql string, limit int, lookback ti
 			lines = append(lines, LogLine{Timestamp: v[0], Line: v[1]})
 		}
 	}
+
+	// direction=backward only sorts entries within each stream. Loki
+	// groups results by distinct label set (stream), so a query spanning
+	// more than one stream - e.g. audit events for different resource
+	// IDs - comes back as several separately-sorted runs concatenated
+	// together, not one globally-sorted list. Loki's timestamps are
+	// nanoseconds-since-epoch as a string, so they sort correctly as
+	// integers.
+	sort.Slice(lines, func(i, j int) bool {
+		ti, _ := strconv.ParseInt(lines[i].Timestamp, 10, 64)
+		tj, _ := strconv.ParseInt(lines[j].Timestamp, 10, 64)
+		return ti > tj // descending: now -> old
+	})
+
+	if len(lines) > limit {
+		lines = lines[:limit]
+	}
+
 	return lines, nil
 }
