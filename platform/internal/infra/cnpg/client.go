@@ -208,10 +208,15 @@ func (c *client) getInternalCredentials(
 		return nil, nil, err
 	}
 
-	host, err := getSecretValue(secret.Data, "host")
-	if err != nil {
-		return nil, nil, err
-	}
+	// CNPG's secret stores a bare short name (e.g. "<name>-rw") for
+	// "host", which only resolves via Kubernetes' default DNS search path
+	// for pods in the *same* namespace as the cluster (database-system).
+	// The API runs in a different namespace (dbaas-api), so it needs the
+	// fully-qualified in-cluster name instead - same naming convention
+	// tcpexpose.go's backend string already uses, just as an FQDN here
+	// since this is a real client-side connection, not a kube-proxy
+	// Service reference.
+	host := fmt.Sprintf("%s-rw.%s.svc.cluster.local", pg.Name, pg.Namespace)
 
 	portRaw, err := getSecretValue(secret.Data, "port")
 	if err != nil {
@@ -238,10 +243,10 @@ func (c *client) getInternalCredentials(
 		return nil, nil, err
 	}
 
-	uri, err := getSecretValue(secret.Data, "uri")
-	if err != nil {
-		return nil, nil, err
-	}
+	uri := fmt.Sprintf(
+		"postgresql://%s:%s@%s:%d/%s",
+		username, password, host, port, database,
+	)
 
 	return pg, &domain.InstanceCredentials{
 		Host:     host,
