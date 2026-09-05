@@ -53,3 +53,11 @@ export interface InstanceLogsRespose {
   instanceId: string
   logs: LogLine[]
 }
+
+export interface QueryResult {
+  columns: string[]
+  rows: unknown[][]
+  rowCount: number
+  truncated: boolean
+  durationMs: number
+}

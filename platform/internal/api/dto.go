@@ -65,3 +65,15 @@ type InstanceLogsResponse struct {
 type AuditLogsResponse struct {
 	Logs []loki.LogLine `json:"logs"`
 }
+
+type QueryRequest struct {
+	SQL string `json:"sql" binding:"required"`
+}
+
+type QueryResponse struct {
+	Columns    []string `json:"columns"`
+	Rows       [][]any  `json:"rows"`
+	RowCount   int      `json:"rowCount"`
+	Truncated  bool     `json:"truncated"`
+	DurationMs int64    `json:"durationMs"`
+}

@@ -368,3 +368,42 @@ func (h *InstanceHandler) GetAuditLogs(c *gin.Context) {
 
 	httpx.JSON(c, http.StatusOK, api.AuditLogsResponse{Logs: logs})
 }
+
+// ExecuteQuery handles POST /v1/instances/:id/query requests.
+func (h *InstanceHandler) ExecuteQuery(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		h.logger.Warn("invalid instance id")
+
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	var req api.QueryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.RespondError(c, service.ErrInvalidInput)
+		return
+	}
+
+	userID := h.authmw.UserID(c.Request.Context())
+
+	result, err := h.svc.ExecuteQuery(c.Request.Context(), id, userID, req.SQL)
+	if err != nil {
+		h.logger.Error(
+			"failed to execute query",
+			"error", err,
+			"id", id,
+		)
+
+		httpx.RespondError(c, err)
+		return
+	}
+
+	httpx.JSON(c, http.StatusOK, api.QueryResponse{
+		Columns:    result.Columns,
+		Rows:       result.Rows,
+		RowCount:   result.RowCount,
+		Truncated:  result.Truncated,
+		DurationMs: result.DurationMs,
+	})
+}

@@ -7,6 +7,7 @@ import type {
   InstanceListResponse,
   UpdateInstanceRequest,
   InstanceLogsRespose,
+  QueryResult,
 } from '@/types/instance'
 
 export async function createInstance(
@@ -52,4 +53,14 @@ export async function deleteInstance(id: string): Promise<void> {
 
 export async function getInstanceLogs(id: string): Promise<InstanceLogsRespose> {
   return apiFetch<InstanceLogsRespose>(`/instances/${id}/logs`)
+}
+
+export async function executeQuery(id: string, sql: string): Promise<QueryResult> {
+  return apiFetch<QueryResult>(`/instances/${encodeURIComponent(id)}/query`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sql }),
+  })
 }
