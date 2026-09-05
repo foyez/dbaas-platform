@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, RefreshCw } from 'lucide-vue-next'
 
@@ -10,12 +10,29 @@ import { Button } from '@/components/ui/button'
 import InstanceStatus from '@/components/instances/InstanceStatus.vue'
 
 import { useInstances } from '@/composables/useInstances'
+import { usePolling } from '@/composables/usePolling'
 
 import { formatDate } from '@/lib/date'
+import { isTerminalStatus } from '@/types/instance'
 
 const router = useRouter()
 
 const { instances, isLoading, error, isEmpty, fetchInstances } = useInstances()
+
+const hasActiveInstances = computed(() =>
+  instances.value.some((instance) => !isTerminalStatus(instance.status)),
+)
+
+const polling = usePolling(async () => {
+  await fetchInstances().catch(() => {
+    // Error is exposed by useInstances(); don't let a transient failure
+    // stop the poll loop.
+  })
+
+  if (!hasActiveInstances.value) {
+    polling.stop()
+  }
+}, 3000)
 
 function createInstance() {
   router.push({
@@ -35,6 +52,10 @@ function openInstance(id: string) {
 async function load() {
   try {
     await fetchInstances()
+
+    if (hasActiveInstances.value) {
+      polling.start()
+    }
   } catch {
     // Error is exposed by useInstances().
   }

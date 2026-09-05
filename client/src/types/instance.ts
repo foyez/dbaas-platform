@@ -9,6 +9,14 @@ export const INSTANCE_STATUSES = [
 
 export type InstanceStatus = (typeof INSTANCE_STATUSES)[number]
 
+// Statuses that will never change on their own without user action - once
+// an instance reaches one of these, there's nothing left to poll for.
+const TERMINAL_STATUSES: readonly InstanceStatus[] = ['Running', 'Failed', 'Deleted']
+
+export function isTerminalStatus(status: InstanceStatus): boolean {
+  return TERMINAL_STATUSES.includes(status)
+}
+
 export interface Instance {
   id: string
   name: string
