@@ -76,13 +76,18 @@ func (m *MockInstanceClient) GetInstanceInternalCredentials(
 
 func (m *MockInstanceClient) ListInstances(
 	ctx context.Context,
-) ([]*domain.Instance, error) {
-	args := m.Called(ctx)
+	userID string,
+	limit int,
+	cursor string,
+) ([]*domain.Instance, string, error) {
+	args := m.Called(ctx, userID, limit, cursor)
 
+	var instances []*domain.Instance
 	if result := args.Get(0); result != nil {
-		return result.([]*domain.Instance), args.Error(1)
+		instances = result.([]*domain.Instance)
 	}
-	return nil, args.Error(1)
+
+	return instances, args.String(1), args.Error(2)
 }
 
 func (m *MockInstanceClient) UpdateInstance(

@@ -17,17 +17,15 @@ import { isTerminalStatus } from '@/types/instance'
 
 const router = useRouter()
 
-const { instances, isLoading, error, isEmpty, fetchInstances } = useInstances()
+const { instances, isLoading, isLoadingMore, error, isEmpty, hasMore, fetchInstances, loadMore, refresh } =
+  useInstances()
 
 const hasActiveInstances = computed(() =>
   instances.value.some((instance) => !isTerminalStatus(instance.status)),
 )
 
 const polling = usePolling(async () => {
-  await fetchInstances().catch(() => {
-    // Error is exposed by useInstances(); don't let a transient failure
-    // stop the poll loop.
-  })
+  await refresh()
 
   if (!hasActiveInstances.value) {
     polling.stop()
@@ -217,6 +215,17 @@ onMounted(load)
               </tbody>
             </table>
           </div>
+        </CardContent>
+
+        <CardContent v-if="hasMore" class="border-t pt-4">
+          <Button
+            variant="outline"
+            class="w-full"
+            :disabled="isLoadingMore"
+            @click="loadMore"
+          >
+            {{ isLoadingMore ? 'Loading...' : 'Load more' }}
+          </Button>
         </CardContent>
       </Card>
     </div>

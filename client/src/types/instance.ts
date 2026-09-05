@@ -50,6 +50,7 @@ export interface UpdateInstanceRequest {
 
 export interface InstanceListResponse {
   items: Instance[]
+  nextCursor?: string
 }
 
 export interface LogLine {

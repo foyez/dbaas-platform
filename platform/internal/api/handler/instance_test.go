@@ -251,7 +251,7 @@ package handler_test
 // 		{
 // 			name: "success with items",
 // 			mockSetup: func(svc *mocks.MockInstanceService) {
-// 				svc.On("ListInstances", mock.Anything).Return(&domain.ListInstancesResult{
+// 				svc.On("ListInstances", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&domain.ListInstancesResult{
 // 					Instances: []*domain.Instance{
 // 						{ID: "1", Name: "demo-1"},
 // 						{ID: "2", Name: "demo-2"},
@@ -264,7 +264,7 @@ package handler_test
 // 		{
 // 			name: "success with no items",
 // 			mockSetup: func(svc *mocks.MockInstanceService) {
-// 				svc.On("ListInstances", mock.Anything).
+// 				svc.On("ListInstances", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 // 					Return(&domain.ListInstancesResult{Instances: nil}, nil)
 // 			},
 // 			wantStatus: http.StatusOK,
@@ -273,7 +273,7 @@ package handler_test
 // 		{
 // 			name: "unexpected service error",
 // 			mockSetup: func(svc *mocks.MockInstanceService) {
-// 				svc.On("ListInstances", mock.Anything).
+// 				svc.On("ListInstances", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 // 					Return(nil, errors.New("boom"))
 // 			},
 // 			wantStatus: http.StatusInternalServerError,

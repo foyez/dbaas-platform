@@ -6,6 +6,7 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/foyez/dbaas-platform/platform/internal/api"
 	"github.com/foyez/dbaas-platform/platform/internal/auth"
@@ -114,7 +115,11 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 
 func (h *InstanceHandler) ListInstances(c *gin.Context) {
 	userID := h.authmw.UserID(c.Request.Context())
-	result, err := h.svc.ListInstances(c.Request.Context(), userID)
+
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	cursor := c.Query("cursor")
+
+	result, err := h.svc.ListInstances(c.Request.Context(), userID, limit, cursor)
 	if err != nil {
 		h.logger.Error(
 			"failed to list instances",
@@ -126,7 +131,8 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 	}
 
 	resp := api.ListInstancesResponse{
-		Items: make([]api.InstanceResponse, 0, len(result.Instances)),
+		Items:      make([]api.InstanceResponse, 0, len(result.Instances)),
+		NextCursor: result.NextCursor,
 	}
 
 	for _, instance := range result.Instances {

@@ -23,6 +23,8 @@ type CreateInstanceRequest struct {
 
 type ListInstancesResponse struct {
 	Items []InstanceResponse `json:"items"`
+	// NextCursor is empty when there are no more pages.
+	NextCursor string `json:"nextCursor,omitempty"`
 }
 
 type UpdateInstanceRequest struct {

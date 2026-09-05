@@ -140,15 +140,37 @@ func (s *instanceService) ExecuteQuery(
 	return result, nil
 }
 
-// ListInstances retrive list instances.
-func (s *instanceService) ListInstances(ctx context.Context, userID string) (*domain.ListInstancesResult, error) {
-	instances, err := s.client.ListInstances(ctx, userID)
+const (
+	defaultListLimit = 20
+	maxListLimit     = 100
+)
+
+// ListInstances retrieves a page of instances belonging to userID.
+// Pagination is cursor-based (see ports.InstanceClient.ListInstances) since
+// that's the only pagination primitive the underlying Kubernetes List API
+// supports - there's no "skip N" offset available to build page numbers on
+// top of.
+func (s *instanceService) ListInstances(
+	ctx context.Context,
+	userID string,
+	limit int,
+	cursor string,
+) (*domain.ListInstancesResult, error) {
+	switch {
+	case limit <= 0:
+		limit = defaultListLimit
+	case limit > maxListLimit:
+		limit = maxListLimit
+	}
+
+	instances, nextCursor, err := s.client.ListInstances(ctx, userID, limit, cursor)
 	if err != nil {
 		return nil, err
 	}
 
 	return &domain.ListInstancesResult{
-		Instances: instances,
+		Instances:  instances,
+		NextCursor: nextCursor,
 	}, nil
 }
 
