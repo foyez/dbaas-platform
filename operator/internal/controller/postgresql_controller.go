@@ -14,6 +14,7 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -22,9 +23,18 @@ import (
 // +kubebuilder:rbac:groups=database.example.com,resources=postgresqls/finalizers,verbs=update
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch,namespace=dbaas-operator
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;update;patch,namespace=ingress-nginx
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;update;patch,namespace=ingress-nginx
 
 const (
 	PostgreSQLConditionReady databasev1.PostgreSQLConditionType = "Ready"
+
+	// tcpExposeFinalizer ensures the allocated port and the ingress-nginx
+	// ConfigMap/Service entries it created are cleaned up before the CR is
+	// actually removed - garbage collection alone won't do this, since
+	// those objects aren't owned by the PostgreSQL CR.
+	tcpExposeFinalizer = "postgresql.database.example.com/tcp-expose"
 )
 
 type PostgreSQLReconciler struct {
@@ -51,9 +61,42 @@ func (r *PostgreSQLReconciler) Reconcile(
 		"instances", pg.Spec.Instances,
 	)
 
+	if !pg.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(&pg, tcpExposeFinalizer) {
+			if err := r.cleanupExternalExposure(ctx, &pg); err != nil {
+				return ctrl.Result{}, fmt.Errorf(
+					"cleaning up external exposure: %w", err,
+				)
+			}
+
+			controllerutil.RemoveFinalizer(&pg, tcpExposeFinalizer)
+
+			if err := r.Update(ctx, &pg); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	if !controllerutil.ContainsFinalizer(&pg, tcpExposeFinalizer) {
+		controllerutil.AddFinalizer(&pg, tcpExposeFinalizer)
+
+		if err := r.Update(ctx, &pg); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	if err := r.reconcileCNPGCluster(ctx, &pg); err != nil {
 		return ctrl.Result{}, fmt.Errorf(
 			"reconciling CNPG cluster: %w",
+			err,
+		)
+	}
+
+	if err := r.reconcileExternalExposure(ctx, &pg); err != nil {
+		return ctrl.Result{}, fmt.Errorf(
+			"reconciling external exposure: %w",
 			err,
 		)
 	}
@@ -66,6 +109,69 @@ func (r *PostgreSQLReconciler) Reconcile(
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// reconcileExternalExposure ensures pg has a stable external port and that
+// the port is actually wired up through ingress-nginx. Sets
+// pg.Status.ExternalPort in-memory; the write to the API server happens
+// together with the rest of the status in updateStatus.
+//
+// External exposure is treated as best-effort: environments that don't run
+// ingress-nginx (e.g. local dev, which deliberately skips it - see
+// scripts/local-forward.sh) shouldn't have every PostgreSQL CR stuck
+// permanently failing because of it. A missing ingress-nginx ConfigMap/
+// Service is logged and skipped rather than returned as an error; anything
+// else (a real RBAC problem, a conflict that won't resolve, etc.) still
+// fails the reconcile so it isn't silently swallowed.
+func (r *PostgreSQLReconciler) reconcileExternalExposure(
+	ctx context.Context,
+	pg *databasev1.PostgreSQL,
+) error {
+	log := logf.FromContext(ctx)
+	owner := ownerKey(pg)
+
+	port, err := r.allocatePort(ctx, owner)
+	if err != nil {
+		return err
+	}
+
+	if err := r.exposeTCP(ctx, pg, port); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Info(
+				"skipping external TCP exposure: ingress-nginx not found "+
+					"in this cluster",
+				"port", port,
+			)
+
+			return nil
+		}
+
+		return err
+	}
+
+	pg.Status.ExternalPort = port
+
+	return nil
+}
+
+// cleanupExternalExposure releases everything reconcileExternalExposure set
+// up, in the reverse order, so a partially-provisioned instance can never
+// leak a claimed port.
+func (r *PostgreSQLReconciler) cleanupExternalExposure(
+	ctx context.Context,
+	pg *databasev1.PostgreSQL,
+) error {
+	if pg.Status.ExternalPort != 0 {
+		if err := r.unexposeTCP(ctx, pg.Status.ExternalPort); err != nil {
+			return err
+		}
+	}
+
+	return r.releasePort(ctx, ownerKey(pg))
+}
+
+func ownerKey(pg *databasev1.PostgreSQL) string {
+	return pg.Namespace + "/" + pg.Name
 }
 
 func (r *PostgreSQLReconciler) updateStatus(

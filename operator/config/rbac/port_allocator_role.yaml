@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dbaas-operator-port-allocator
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["dbaas-port-allocations"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create"] # needed once, to create dbaas-port-allocations itself
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dbaas-operator-port-allocator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dbaas-operator-port-allocator
+subjects:
+  - kind: ServiceAccount
+    name: controller-manager
+    # namespace intentionally omitted: kustomize's namespace transform on
+    # this overlay rewrites it to match the ServiceAccount's actual
+    # deployed namespace, same as every other resource in operator/base.

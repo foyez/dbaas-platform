@@ -25,4 +25,4 @@ resources:
 - postgresql_admin_role.yaml
 - postgresql_editor_role.yaml
 - postgresql_viewer_role.yaml
-
+- port_allocator_role.yaml

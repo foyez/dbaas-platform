@@ -41,12 +41,18 @@ type PostgreSQLStatus struct {
 	Phase          PostgreSQLPhase    `json:"phase,omitempty"`
 	ReadyInstances int32              `json:"readyInstances,omitempty"`
 	Conditions     []metav1.Condition `json:"conditions,omitempty"`
+
+	// ExternalPort is the port on the shared ingress-nginx LoadBalancer
+	// that TCP-proxies to this instance's CNPG -rw service, allocated
+	// once by the controller and stable for the CR's lifetime.
+	ExternalPort int32 `json:"externalPort,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="PHASE",type="string",JSONPath=".status.phase"
 // +kubebuilder:printcolumn:name="READY",type="integer",JSONPath=".status.readyInstances"
+// +kubebuilder:printcolumn:name="EXTERNAL-PORT",type="integer",JSONPath=".status.externalPort"
 type PostgreSQL struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

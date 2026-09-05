@@ -21,6 +21,9 @@ spec:
     - jsonPath: .status.readyInstances
       name: READY
       type: integer
+    - jsonPath: .status.externalPort
+      name: EXTERNAL-PORT
+      type: integer
     name: v1
     schema:
       openAPIV3Schema:
@@ -121,6 +124,13 @@ spec:
                   - type
                   type: object
                 type: array
+              externalPort:
+                description: |-
+                  ExternalPort is the port on the shared ingress-nginx LoadBalancer
+                  that TCP-proxies to this instance's CNPG -rw service, allocated
+                  once by the controller and stable for the CR's lifetime.
+                format: int32
+                type: integer
               phase:
                 type: string
               readyInstances:
