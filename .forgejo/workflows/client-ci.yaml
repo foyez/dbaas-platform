@@ -108,7 +108,7 @@ jobs:
           KUSTOMIZATION="gitops/client/overlays/prod/kustomization.yaml"
 
           sed -i \
-            "s/^\([[:space:]]*newTag:[[:space:]]*\).*/\1${IMAGE_TAG}/" \
+            "s/^\([[:space:]]*newTag:[[:space:]]*\).*/\1\"${IMAGE_TAG}\"/" \
             "$KUSTOMIZATION"
 
           git add "$KUSTOMIZATION"
