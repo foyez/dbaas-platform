@@ -71,7 +71,7 @@ jobs:
           git rebase origin/main
 
           # Now modify the file
-          sed -i "s#newTag: .*#newTag: ${{ steps.vars.outputs.tag }}#" \
+          sed -i "s#newTag: .*#newTag: \"${{ steps.vars.outputs.tag }}\"#" \
             ../gitops/api/overlays/prod/kustomization.yaml
 
           git add ../gitops/api/overlays/prod/kustomization.yaml

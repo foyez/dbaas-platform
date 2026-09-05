@@ -3,7 +3,7 @@ module github.com/foyez/dbaas-platform/platform
 go 1.26.5
 
 require (
-	github.com/foyez/dbaas-platform/operator v0.1.8
+	github.com/foyez/dbaas-platform/operator v0.1.10
 	// github.com/foyez/dbaas-platform/operator v0.0.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -17,7 +17,6 @@ require (
 
 require (
 	github.com/gin-contrib/cors v1.7.7
-	github.com/go-openapi/testify/v2 v2.4.2
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/stretchr/testify v1.11.1
