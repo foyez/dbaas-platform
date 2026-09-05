@@ -92,7 +92,7 @@ function onKeydown(e: KeyboardEvent) {
 
       <!-- No result set (INSERT/UPDATE/DELETE/DDL) -->
       <div
-        v-else-if="result && result.columns.length === 0"
+        v-else-if="result && (result.columns ?? []).length === 0"
         class="rounded-lg border bg-muted/50 p-4 text-sm"
       >
         Query OK. {{ result.rowCount }} row{{ result.rowCount === 1 ? '' : 's' }}
@@ -112,7 +112,7 @@ function onKeydown(e: KeyboardEvent) {
             <thead class="sticky top-0 bg-muted/80 backdrop-blur">
               <tr>
                 <th
-                  v-for="col in result.columns"
+                  v-for="col in result.columns ?? []"
                   :key="col"
                   class="whitespace-nowrap px-3 py-2 font-medium"
                 >
@@ -123,7 +123,7 @@ function onKeydown(e: KeyboardEvent) {
 
             <tbody>
               <tr
-                v-for="(row, i) in result.rows"
+                v-for="(row, i) in result.rows ?? []"
                 :key="i"
                 class="border-t hover:bg-muted/40"
               >
@@ -139,7 +139,7 @@ function onKeydown(e: KeyboardEvent) {
           </table>
 
           <div
-            v-if="result.rows.length === 0"
+            v-if="(result.rows ?? []).length === 0"
             class="py-6 text-center text-sm text-muted-foreground"
           >
             No rows returned.

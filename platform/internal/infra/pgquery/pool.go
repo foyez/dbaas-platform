@@ -85,7 +85,7 @@ func (p *Pool) ExecuteQuery(
 		columns[i] = fd.Name
 	}
 
-	var resultRows [][]any
+	resultRows := [][]any{}
 
 	truncated := false
 
