@@ -47,6 +47,19 @@ const (
 type PostgreSQLReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	// RawClient is a direct (uncached) client used only for the port
+	// allocator's ConfigMap and the ingress-nginx ConfigMap/Service.
+	// The default cached client (embedded above) starts a cluster-wide
+	// List+Watch the first time it Gets any object of a type - which
+	// requires cluster-wide "list"/"watch" RBAC, since Kubernetes can't
+	// scope those verbs by resourceName. That's incompatible with the
+	// deliberately narrow, resourceNames-scoped Roles those two touch
+	// points use (see config/rbac/port_allocator_role.yaml and
+	// gitops/ingress-nginx-tcp-access/base/rbac.yaml), so those calls use
+	// this direct client instead - single-object API calls, no caching,
+	// no need for list/watch permissions at all.
+	RawClient client.Client
 }
 
 func (r *PostgreSQLReconciler) Reconcile(

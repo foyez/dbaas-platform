@@ -61,7 +61,7 @@ func (r *PostgreSQLReconciler) allocatePort(
 
 		cm.Data[strconv.Itoa(port)] = owner
 
-		if err := r.Update(ctx, cm); err != nil {
+		if err := r.RawClient.Update(ctx, cm); err != nil {
 			if apierrors.IsConflict(err) {
 				// Another reconcile updated the map concurrently - retry
 				// against the latest version.
@@ -99,7 +99,7 @@ func (r *PostgreSQLReconciler) releasePort(
 			return nil
 		}
 
-		if err := r.Update(ctx, cm); err != nil {
+		if err := r.RawClient.Update(ctx, cm); err != nil {
 			if apierrors.IsConflict(err) {
 				continue
 			}
@@ -134,7 +134,7 @@ func (r *PostgreSQLReconciler) getOrCreateAllocatorConfigMap(
 		Name:      allocatorConfigMap,
 	}
 
-	if err := r.Get(ctx, key, &cm); err != nil {
+	if err := r.RawClient.Get(ctx, key, &cm); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return nil, err
 		}
@@ -147,14 +147,14 @@ func (r *PostgreSQLReconciler) getOrCreateAllocatorConfigMap(
 			Data: map[string]string{},
 		}
 
-		if err := r.Create(ctx, &cm); err != nil &&
+		if err := r.RawClient.Create(ctx, &cm); err != nil &&
 			!apierrors.IsAlreadyExists(err) {
 			return nil, err
 		}
 
 		// Re-get so we have a clean resourceVersion for the caller to
 		// build its update on top of.
-		if err := r.Get(ctx, key, &cm); err != nil {
+		if err := r.RawClient.Get(ctx, key, &cm); err != nil {
 			return nil, err
 		}
 	}
