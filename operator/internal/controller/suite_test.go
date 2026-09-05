@@ -33,6 +33,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	cnpgv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
 	databasev1 "github.com/foyez/dbaas-platform/operator/api/v1"
 	// +kubebuilder:scaffold:imports
@@ -88,6 +91,18 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	// The port allocator's ConfigMap lives in the operator's own
+	// namespace. In a real cluster this exists because it's where the
+	// operator Deployment itself runs (see gitops/operator/base); envtest
+	// starts from a bare cluster, so create it explicitly. Deliberately
+	// NOT creating "ingress-nginx" here - reconcileExternalExposure is
+	// designed to degrade gracefully when that's absent (e.g. local dev),
+	// so its absence in tests exercises that exact path.
+	By("creating the operator's own namespace")
+	Expect(k8sClient.Create(ctx, &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: "dbaas-operator"},
+	})).To(Succeed())
 })
 
 var _ = AfterSuite(func() {
