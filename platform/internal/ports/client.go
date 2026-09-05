@@ -28,6 +28,15 @@ type InstanceClient interface {
 		userID string,
 	) (*domain.InstanceCredentials, error)
 
+	// GetInstanceInternalCredentials always returns the CNPG -rw service's
+	// cluster-internal host/port, never the externally-reachable one
+	// GetInstanceCredentials prefers.
+	GetInstanceInternalCredentials(
+		ctx context.Context,
+		id string,
+		userID string,
+	) (*domain.InstanceCredentials, error)
+
 	ListInstances(ctx context.Context, userID string) ([]*domain.Instance, error)
 	UpdateInstance(
 		ctx context.Context,

@@ -17,20 +17,23 @@ import (
 
 // instanceService implements domain.InstanceService.
 type instanceService struct {
-	client ports.InstanceClient
-	loki   *loki.Client
-	logger *slog.Logger
+	client  ports.InstanceClient
+	querier ports.Querier
+	loki    *loki.Client
+	logger  *slog.Logger
 }
 
 func NewInstanceService(
 	client ports.InstanceClient,
+	querier ports.Querier,
 	loki *loki.Client,
 	logger *slog.Logger,
 ) *instanceService {
 	return &instanceService{
-		client: client,
-		loki:   loki,
-		logger: logger,
+		client:  client,
+		querier: querier,
+		loki:    loki,
+		logger:  logger,
 	}
 }
 
@@ -102,6 +105,41 @@ func (s *instanceService) GetCredentials(
 	return s.client.GetInstanceCredentials(ctx, id, userID)
 }
 
+// ExecuteQuery runs a single ad-hoc SQL statement against id's database.
+// Ownership is enforced the same way as every other instance operation,
+// via GetInstanceInternalCredentials.
+func (s *instanceService) ExecuteQuery(
+	ctx context.Context,
+	id, userID, sql string,
+) (*domain.QueryResult, error) {
+	if id == "" || strings.TrimSpace(sql) == "" {
+		return nil, ErrInvalidInput
+	}
+
+	creds, err := s.client.GetInstanceInternalCredentials(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.querier.ExecuteQuery(ctx, id, creds, sql)
+	if err != nil {
+		return nil, err
+	}
+
+	// Deliberately not logging the SQL text itself - it may contain
+	// values a user typed into WHERE/INSERT clauses. Logging that this
+	// happened, by whom, and its shape is enough of an audit trail
+	// without risking sensitive data ending up in the API's own logs.
+	s.logger.Info("query executed",
+		"instanceId", id,
+		"userId", userID,
+		"rowCount", result.RowCount,
+		"durationMs", result.DurationMs,
+	)
+
+	return result, nil
+}
+
 // ListInstances retrive list instances.
 func (s *instanceService) ListInstances(ctx context.Context, userID string) (*domain.ListInstancesResult, error) {
 	instances, err := s.client.ListInstances(ctx, userID)
@@ -166,10 +204,5 @@ func (s *instanceService) GetAuditLogs(
 	if resourceID != "" {
 		logql = fmt.Sprintf(`{namespace="dbaas-api"} | json | component="audit" | resource_id=%q`, resourceID)
 	}
-	return s.loki.Query(
-		ctx,
-		logql,
-		limit,
-		168*time.Hour, // 7 days, matches your Loki retention_period
-	)
+	return s.loki.Query(ctx, logql, limit, 168*time.Hour) // 7 days, matches your Loki retention_period
 }

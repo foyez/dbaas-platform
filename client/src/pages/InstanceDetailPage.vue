@@ -21,6 +21,7 @@ import InstanceStatus from '@/components/instances/InstanceStatus.vue'
 import UpdateInstanceForm from '@/components/instances/UpdateInstanceForm.vue'
 import InstanceCredentials from '@/components/instances/InstanceCredentials.vue'
 import InstanceLogs from '@/components/instances/InstanceLogs.vue'
+import QueryConsole from '@/components/instances/QueryConsole.vue'
 
 import { useInstance } from '@/composables/useInstance'
 import type { UpdateInstanceInput } from '@/schemas/instance'
@@ -309,6 +310,8 @@ onMounted(load)
           :error="logsError"
           @reveal="revealLogs"
         />
+
+        <QueryConsole :instance-id="instance.id" />
 
         <!-- Metadata -->
 

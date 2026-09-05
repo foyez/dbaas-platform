@@ -136,61 +136,7 @@ func (c *client) GetInstanceCredentials(
 	ctx context.Context,
 	id, userID string,
 ) (*domain.InstanceCredentials, error) {
-	pg, err := c.getOwnedInstance(ctx, id, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	if pg.Status.Phase != databasev1.PostgreSQLPhaseReady {
-		return nil, domain.ErrInstanceNotReady
-	}
-
-	secret := &corev1.Secret{}
-
-	secretKey := ctrlclient.ObjectKey{
-		Namespace: pg.Namespace,
-		Name:      appSecretName(pg.Name),
-	}
-
-	if err := c.k8sClient.Get(ctx, secretKey, secret); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, domain.ErrInstanceNotReady
-		}
-
-		return nil, err
-	}
-
-	host, err := getSecretValue(secret.Data, "host")
-	if err != nil {
-		return nil, err
-	}
-
-	portRaw, err := getSecretValue(secret.Data, "port")
-	if err != nil {
-		return nil, err
-	}
-
-	port, err := parsePort([]byte(portRaw))
-	if err != nil {
-		return nil, err
-	}
-
-	database, err := getSecretValue(secret.Data, "dbname")
-	if err != nil {
-		return nil, err
-	}
-
-	username, err := getSecretValue(secret.Data, "username")
-	if err != nil {
-		return nil, err
-	}
-
-	password, err := getSecretValue(secret.Data, "password")
-	if err != nil {
-		return nil, err
-	}
-
-	uri, err := getSecretValue(secret.Data, "uri")
+	pg, creds, err := c.getInternalCredentials(ctx, id, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -205,15 +151,99 @@ func (c *client) GetInstanceCredentials(
 	// gitops/ingress-nginx-tcp-access) - those are still correct for
 	// someone using `kubectl port-forward` directly to the -rw service.
 	if pg.Status.ExternalPort != 0 && c.publicDBHost != "" {
-		host = c.publicDBHost
-		port = int(pg.Status.ExternalPort)
-		uri = fmt.Sprintf(
+		creds.Host = c.publicDBHost
+		creds.Port = int(pg.Status.ExternalPort)
+		creds.URI = fmt.Sprintf(
 			"postgresql://%s:%s@%s:%d/%s",
-			username, password, host, port, database,
+			creds.Username, creds.Password, creds.Host, creds.Port,
+			creds.Database,
 		)
 	}
 
-	return &domain.InstanceCredentials{
+	return creds, nil
+}
+
+// GetInstanceInternalCredentials always returns the cluster-internal
+// host/port - see the ports.InstanceClient doc comment for why callers
+// running inside the cluster (the query executor) should use this instead
+// of GetInstanceCredentials.
+func (c *client) GetInstanceInternalCredentials(
+	ctx context.Context,
+	id, userID string,
+) (*domain.InstanceCredentials, error) {
+	_, creds, err := c.getInternalCredentials(ctx, id, userID)
+	return creds, err
+}
+
+// getInternalCredentials fetches and validates ownership, then reads the
+// CNPG app secret. Always returns the cluster-internal host/port - callers
+// needing the externally-reachable ones apply that override themselves
+// (see GetInstanceCredentials), since it only makes sense for one of the
+// two public methods.
+func (c *client) getInternalCredentials(
+	ctx context.Context,
+	id, userID string,
+) (*databasev1.PostgreSQL, *domain.InstanceCredentials, error) {
+	pg, err := c.getOwnedInstance(ctx, id, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if pg.Status.Phase != databasev1.PostgreSQLPhaseReady {
+		return nil, nil, domain.ErrInstanceNotReady
+	}
+
+	secret := &corev1.Secret{}
+
+	secretKey := ctrlclient.ObjectKey{
+		Namespace: pg.Namespace,
+		Name:      appSecretName(pg.Name),
+	}
+
+	if err := c.k8sClient.Get(ctx, secretKey, secret); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, nil, domain.ErrInstanceNotReady
+		}
+
+		return nil, nil, err
+	}
+
+	host, err := getSecretValue(secret.Data, "host")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	portRaw, err := getSecretValue(secret.Data, "port")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	port, err := parsePort([]byte(portRaw))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	database, err := getSecretValue(secret.Data, "dbname")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	username, err := getSecretValue(secret.Data, "username")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	password, err := getSecretValue(secret.Data, "password")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	uri, err := getSecretValue(secret.Data, "uri")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pg, &domain.InstanceCredentials{
 		Host:     host,
 		Port:     port,
 		Database: database,

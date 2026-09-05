@@ -21,6 +21,8 @@ type InstanceService interface {
 
 	GetAuditLogs(ctx context.Context, resourceID string, limit int) ([]loki.LogLine, error)
 
+	ExecuteQuery(ctx context.Context, id, userID, sql string) (*QueryResult, error)
+
 	// Future APIs:
 	// GetInstance(...)
 	// ListInstances(...)
