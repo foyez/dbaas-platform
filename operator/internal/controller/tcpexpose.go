@@ -77,7 +77,7 @@ func (r *PostgreSQLReconciler) patchTCPServicesConfigMap(
 		Name:      tcpServicesConfigMap,
 	}
 
-	if err := r.Get(ctx, key, &cm); err != nil {
+	if err := r.RawClient.Get(ctx, key, &cm); err != nil {
 		return err
 	}
 
@@ -93,7 +93,7 @@ func (r *PostgreSQLReconciler) patchTCPServicesConfigMap(
 
 	cm.Data[portKey] = backend
 
-	return r.Update(ctx, &cm)
+	return r.RawClient.Update(ctx, &cm)
 }
 
 func (r *PostgreSQLReconciler) removeTCPServicesEntry(
@@ -107,7 +107,7 @@ func (r *PostgreSQLReconciler) removeTCPServicesEntry(
 		Name:      tcpServicesConfigMap,
 	}
 
-	if err := r.Get(ctx, key, &cm); err != nil {
+	if err := r.RawClient.Get(ctx, key, &cm); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
@@ -123,7 +123,7 @@ func (r *PostgreSQLReconciler) removeTCPServicesEntry(
 
 	delete(cm.Data, portKey)
 
-	return r.Update(ctx, &cm)
+	return r.RawClient.Update(ctx, &cm)
 }
 
 func (r *PostgreSQLReconciler) patchIngressServicePort(
@@ -137,7 +137,7 @@ func (r *PostgreSQLReconciler) patchIngressServicePort(
 		Name:      ingressServiceName,
 	}
 
-	if err := r.Get(ctx, key, &svc); err != nil {
+	if err := r.RawClient.Get(ctx, key, &svc); err != nil {
 		return err
 	}
 
@@ -154,7 +154,7 @@ func (r *PostgreSQLReconciler) patchIngressServicePort(
 		Protocol:   corev1.ProtocolTCP,
 	})
 
-	return r.Update(ctx, &svc)
+	return r.RawClient.Update(ctx, &svc)
 }
 
 func (r *PostgreSQLReconciler) removeIngressServicePort(
@@ -168,7 +168,7 @@ func (r *PostgreSQLReconciler) removeIngressServicePort(
 		Name:      ingressServiceName,
 	}
 
-	if err := r.Get(ctx, key, &svc); err != nil {
+	if err := r.RawClient.Get(ctx, key, &svc); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
@@ -194,5 +194,5 @@ func (r *PostgreSQLReconciler) removeIngressServicePort(
 
 	svc.Spec.Ports = kept
 
-	return r.Update(ctx, &svc)
+	return r.RawClient.Update(ctx, &svc)
 }
