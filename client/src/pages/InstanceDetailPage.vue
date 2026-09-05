@@ -24,9 +24,11 @@ import InstanceLogs from '@/components/instances/InstanceLogs.vue'
 import QueryConsole from '@/components/instances/QueryConsole.vue'
 
 import { useInstance } from '@/composables/useInstance'
+import { usePolling } from '@/composables/usePolling'
 import type { UpdateInstanceInput } from '@/schemas/instance'
 import { formatDate } from '@/lib/date'
 import { useInstanceLogs } from '@/composables/useInstanceLogs'
+import { isTerminalStatus } from '@/types/instance'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,9 +52,24 @@ const instanceId = String(route.params.id)
 const isEditing = ref(false)
 const isDeleting = ref(false)
 
+const polling = usePolling(async () => {
+  await fetchInstance(instanceId).catch(() => {
+    // Error is exposed by useInstance(); don't let a transient failure
+    // stop the poll loop.
+  })
+
+  if (instance.value && isTerminalStatus(instance.value.status)) {
+    polling.stop()
+  }
+}, 3000)
+
 async function load() {
   try {
     await fetchInstance(instanceId)
+
+    if (instance.value && !isTerminalStatus(instance.value.status)) {
+      polling.start()
+    }
   } catch {
     // Error is exposed by useInstance().
   }
