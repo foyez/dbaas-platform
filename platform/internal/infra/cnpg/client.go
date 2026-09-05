@@ -23,14 +23,17 @@ const (
 )
 
 type client struct {
-	k8sClient ctrlclient.Client
+	k8sClient    ctrlclient.Client
+	publicDBHost string
 }
 
 func NewClient(
 	k8sClient ctrlclient.Client,
+	publicDBHost string,
 ) ports.InstanceClient {
 	return &client{
-		k8sClient: k8sClient,
+		k8sClient:    k8sClient,
+		publicDBHost: publicDBHost,
 	}
 }
 
@@ -192,6 +195,24 @@ func (c *client) GetInstanceCredentials(
 		return nil, err
 	}
 
+	// The secret's host/port/uri are only reachable from inside the
+	// cluster (they point at CNPG's ClusterIP -rw Service). If the
+	// operator has allocated and wired up an external port for this
+	// instance, prefer that instead so credentials returned to a client
+	// outside the cluster actually work. Falls back to the internal
+	// values when no external port is set yet (e.g. local dev, which
+	// deliberately doesn't run the ingress-nginx TCP passthrough - see
+	// gitops/ingress-nginx-tcp-access) - those are still correct for
+	// someone using `kubectl port-forward` directly to the -rw service.
+	if pg.Status.ExternalPort != 0 && c.publicDBHost != "" {
+		host = c.publicDBHost
+		port = int(pg.Status.ExternalPort)
+		uri = fmt.Sprintf(
+			"postgresql://%s:%s@%s:%d/%s",
+			username, password, host, port, database,
+		)
+	}
+
 	return &domain.InstanceCredentials{
 		Host:     host,
 		Port:     port,
@@ -301,6 +322,7 @@ func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
 		ReadyInstances: int(pg.Status.ReadyInstances),
 		Status:         status,
 		CreatedAt:      pg.CreationTimestamp.Time.UTC(),
+		ExternalPort:   int(pg.Status.ExternalPort),
 	}
 }
 

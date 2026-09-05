@@ -52,7 +52,7 @@ func run() error {
 		return fmt.Errorf("create kubernetes client: %w", err)
 	}
 
-	instanceClient := cnpg.NewClient(k8sClient)
+	instanceClient := cnpg.NewClient(k8sClient, cfg.Server.PublicDBHost)
 	lokiClient := loki.NewClient(cfg.Server.LokiURL)
 
 	ctx := context.Background()

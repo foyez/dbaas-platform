@@ -98,6 +98,7 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 		ReadyInstances: instance.ReadyInstances,
 		Status:         instance.Status,
 		CreatedAt:      instance.CreatedAt,
+		ExternalPort:   instance.ExternalPort,
 	}
 
 	h.logger.Info(
@@ -138,6 +139,7 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 			ReadyInstances: instance.ReadyInstances,
 			Status:         instance.Status,
 			CreatedAt:      instance.CreatedAt,
+			ExternalPort:   instance.ExternalPort,
 		})
 	}
 
@@ -176,6 +178,7 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 		ReadyInstances: instance.ReadyInstances,
 		Status:         instance.Status,
 		CreatedAt:      instance.CreatedAt,
+		ExternalPort:   instance.ExternalPort,
 	}
 
 	httpx.JSON(c, http.StatusOK, resp)
@@ -312,6 +315,7 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 		ReadyInstances: instance.ReadyInstances,
 		Status:         instance.Status,
 		CreatedAt:      instance.CreatedAt,
+		ExternalPort:   instance.ExternalPort,
 	}
 
 	h.logger.Info(
