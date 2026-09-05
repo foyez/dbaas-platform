@@ -15,7 +15,12 @@ type InstanceService interface {
 	GetInstanceLogs(ctx context.Context, id, userID string) ([]loki.LogLine, error)
 	GetCredentials(ctx context.Context, id, userID string) (*InstanceCredentials, error)
 	GetInstance(ctx context.Context, id, userID string) (*Instance, error)
-	ListInstances(ctx context.Context, userID string) (*ListInstancesResult, error)
+	ListInstances(
+		ctx context.Context,
+		userID string,
+		limit int,
+		cursor string,
+	) (*ListInstancesResult, error)
 	UpdateInstance(ctx context.Context, input UpdateInstanceInput) (*Instance, error)
 	DeleteInstance(ctx context.Context, id, userID string) error
 

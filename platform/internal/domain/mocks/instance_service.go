@@ -32,8 +32,13 @@ func (m *MockInstanceService) GetInstance(ctx context.Context, id string) (*doma
 	return nil, args.Error(1)
 }
 
-func (m *MockInstanceService) ListInstances(ctx context.Context) (*domain.ListInstancesResult, error) {
-	args := m.Called(ctx)
+func (m *MockInstanceService) ListInstances(
+	ctx context.Context,
+	userID string,
+	limit int,
+	cursor string,
+) (*domain.ListInstancesResult, error) {
+	args := m.Called(ctx, userID, limit, cursor)
 
 	if result := args.Get(0); result != nil {
 		return result.(*domain.ListInstancesResult), args.Error(1)

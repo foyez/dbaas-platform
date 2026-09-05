@@ -34,8 +34,18 @@ export async function getInstanceCredentials(id: string): Promise<InstanceCreden
   return apiFetch<InstanceCredentials>(`/instances/${encodeURIComponent(id)}/credentials`)
 }
 
-export async function listInstances(): Promise<InstanceListResponse> {
-  return apiFetch<InstanceListResponse>('/instances')
+export async function listInstances(params: {
+  limit?: number
+  cursor?: string
+} = {}): Promise<InstanceListResponse> {
+  const query = new URLSearchParams()
+
+  if (params.limit) query.set('limit', String(params.limit))
+  if (params.cursor) query.set('cursor', params.cursor)
+
+  const qs = query.toString()
+
+  return apiFetch<InstanceListResponse>(`/instances${qs ? `?${qs}` : ''}`)
 }
 
 export async function updateInstance(id: string, data: UpdateInstanceRequest): Promise<Instance> {

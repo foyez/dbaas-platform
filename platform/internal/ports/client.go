@@ -37,7 +37,12 @@ type InstanceClient interface {
 		userID string,
 	) (*domain.InstanceCredentials, error)
 
-	ListInstances(ctx context.Context, userID string) ([]*domain.Instance, error)
+	ListInstances(
+		ctx context.Context,
+		userID string,
+		limit int,
+		cursor string,
+	) (instances []*domain.Instance, nextCursor string, err error)
 	UpdateInstance(
 		ctx context.Context,
 		input domain.UpdateInstanceInput,

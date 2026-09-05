@@ -57,6 +57,8 @@ type CreateInstanceResult struct {
 
 type ListInstancesResult struct {
 	Instances []*Instance
+	// NextCursor is empty when there are no more pages.
+	NextCursor string
 }
 
 type UpdateInstanceInput struct {

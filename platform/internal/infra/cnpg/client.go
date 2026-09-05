@@ -258,18 +258,28 @@ func (c *client) getInternalCredentials(
 	}, nil
 }
 
-func (c *client) ListInstances(ctx context.Context, userID string) ([]*domain.Instance, error) {
+func (c *client) ListInstances(
+	ctx context.Context,
+	userID string,
+	limit int,
+	cursor string,
+) ([]*domain.Instance, string, error) {
 	pgList := &databasev1.PostgreSQLList{}
 
-	if err := c.k8sClient.List(
-		ctx,
-		pgList,
+	opts := []ctrlclient.ListOption{
 		ctrlclient.InNamespace(Namespace),
 		ctrlclient.MatchingLabels{
 			UserIDLabel: userID,
 		},
-	); err != nil {
-		return nil, err
+		ctrlclient.Limit(int64(limit)),
+	}
+
+	if cursor != "" {
+		opts = append(opts, ctrlclient.Continue(cursor))
+	}
+
+	if err := c.k8sClient.List(ctx, pgList, opts...); err != nil {
+		return nil, "", err
 	}
 
 	instances := make([]*domain.Instance, 0, len(pgList.Items))
@@ -277,7 +287,12 @@ func (c *client) ListInstances(ctx context.Context, userID string) ([]*domain.In
 		instances = append(instances, toDomainInstance(&pgList.Items[i]))
 	}
 
-	return instances, nil
+	// pgList.Continue is empty once the API server has no more pages to
+	// give back - the Kubernetes List API only supports this kind of
+	// forward-only cursor (via Limit/Continue against etcd), not
+	// arbitrary offsets, so that's what's exposed all the way up through
+	// the REST API too.
+	return instances, pgList.Continue, nil
 }
 
 func (c *client) UpdateInstance(
