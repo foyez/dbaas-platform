@@ -83,14 +83,10 @@ function recentInstances(): Instance[] {
         >
           <div class="min-w-0">
             <p class="truncate font-medium">
-              {{ instance.name }}
+              {{ instance.database }}
             </p>
 
             <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              <span class="font-mono">
-                {{ instance.id }}
-              </span>
-
               <span> PostgreSQL {{ instance.version }} </span>
 
               <span>

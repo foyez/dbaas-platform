@@ -66,7 +66,7 @@ onMounted(async () => {
       </RouterLink>
     </nav>
 
-    <div class="mt-4 border-t p-4">
+    <!-- <div class="mt-4 border-t p-4">
       <a
         href="#"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -75,6 +75,6 @@ onMounted(async () => {
 
         Documentation
       </a>
-    </div>
+    </div> -->
   </aside>
 </template>
