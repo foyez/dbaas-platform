@@ -23,7 +23,7 @@ interface ParsedAuditEvent {
 const route = useRoute()
 const router = useRouter()
 
-const { logs, isLoading, error, fetchLogs } = useAuditLogs()
+const { logs, isLoading, isLoadingMore, error, hasMore, fetchLogs, loadMore } = useAuditLogs()
 
 const resourceId = ref(String(route.query.resourceId ?? ''))
 
@@ -117,6 +117,12 @@ onMounted(load)
               </TableRow>
             </TableBody>
           </Table>
+        </CardContent>
+
+        <CardContent v-if="hasMore" class="border-t pt-4">
+          <Button variant="outline" class="w-full" :disabled="isLoadingMore" @click="loadMore">
+            {{ isLoadingMore ? 'Loading...' : 'Load more' }}
+          </Button>
         </CardContent>
       </Card>
     </div>
