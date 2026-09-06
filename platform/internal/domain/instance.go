@@ -18,8 +18,13 @@ const (
 // Instance represents a provisioned PostgreSQL instance
 // and its current lifecycle state.
 type Instance struct {
-	ID             string
-	Name           string
+	ID   string
+	Name string
+	// Database is the actual database name chosen at creation time
+	// (spec.database on the CR) - the human-meaningful identifier, as
+	// opposed to ID/Name which are both the opaque system-generated
+	// resource name.
+	Database       string
 	Version        int
 	Storage        string
 	Instances      int

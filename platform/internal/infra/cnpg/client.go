@@ -378,6 +378,7 @@ func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
 	return &domain.Instance{
 		ID:             pg.Name,
 		Name:           pg.Name,
+		Database:       pg.Spec.Database,
 		Version:        version,
 		Storage:        pg.Spec.Storage,
 		Instances:      int(pg.Spec.Instances),

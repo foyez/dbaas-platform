@@ -93,6 +93,7 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 	resp := api.InstanceResponse{
 		ID:             instance.ID,
 		Name:           instance.Name,
+		Database:       instance.Database,
 		Version:        instance.Version,
 		Storage:        instance.Storage,
 		Instances:      instance.Instances,
@@ -139,6 +140,7 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 		resp.Items = append(resp.Items, api.InstanceResponse{
 			ID:             instance.ID,
 			Name:           instance.Name,
+			Database:       instance.Database,
 			Version:        instance.Version,
 			Storage:        instance.Storage,
 			Instances:      instance.Instances,
@@ -178,6 +180,7 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 	resp := api.InstanceResponse{
 		ID:             instance.ID,
 		Name:           instance.Name,
+		Database:       instance.Database,
 		Version:        instance.Version,
 		Storage:        instance.Storage,
 		Instances:      instance.Instances,
@@ -315,6 +318,7 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 	resp := api.InstanceResponse{
 		ID:             instance.ID,
 		Name:           instance.Name,
+		Database:       instance.Database,
 		Version:        instance.Version,
 		Storage:        instance.Storage,
 		Instances:      instance.Instances,

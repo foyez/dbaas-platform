@@ -35,6 +35,7 @@ type UpdateInstanceRequest struct {
 type InstanceResponse struct {
 	ID             string                `json:"id"`
 	Name           string                `json:"name"`
+	Database       string                `json:"database"`
 	Version        int                   `json:"version"`
 	Storage        string                `json:"storage"`
 	Instances      int                   `json:"instances"`
