@@ -20,6 +20,7 @@ export function isTerminalStatus(status: InstanceStatus): boolean {
 export interface Instance {
   id: string
   name: string
+  database: string
   version: number
   storage: string
   instances: number

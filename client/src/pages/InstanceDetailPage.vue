@@ -73,7 +73,7 @@ const polling = usePolling(async () => {
   if (instance.value && isTerminalStatus(instance.value.status)) {
     polling.stop()
   }
-}, 5000)
+}, 3000)
 
 async function load() {
   try {
@@ -180,15 +180,11 @@ onMounted(load)
           <div>
             <div class="flex items-center gap-3">
               <h1 class="text-2xl font-semibold tracking-tight">
-                {{ instance.name }}
+                {{ instance.database }}
               </h1>
 
               <InstanceStatus :status="instance.status" />
             </div>
-
-            <p class="mt-1 font-mono text-sm text-muted-foreground">
-              {{ instance.id }}
-            </p>
           </div>
 
           <div class="flex gap-2">
@@ -213,7 +209,7 @@ onMounted(load)
 
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle> Delete {{ instance.name }}? </AlertDialogTitle>
+                  <AlertDialogTitle> Delete {{ instance.database }}? </AlertDialogTitle>
 
                   <AlertDialogDescription>
                     This action cannot be undone. The PostgreSQL instance and its associated

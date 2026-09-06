@@ -181,12 +181,8 @@ onMounted(load)
                       }"
                       class="font-medium text-foreground hover:underline"
                     >
-                      {{ instance.name }}
+                      {{ instance.database }}
                     </RouterLink>
-
-                    <div class="mt-1 font-mono text-xs text-muted-foreground">
-                      {{ instance.id }}
-                    </div>
                   </td>
 
                   <td class="px-6 py-4">
