@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
+	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -61,4 +62,20 @@ func (m *MockInstanceService) UpdateInstance(
 func (m *MockInstanceService) DeleteInstance(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
+}
+
+func (m *MockInstanceService) GetAuditLogs(
+	ctx context.Context,
+	resourceID string,
+	limit int,
+	cursor string,
+) ([]loki.LogLine, string, error) {
+	args := m.Called(ctx, resourceID, limit, cursor)
+
+	var logs []loki.LogLine
+	if result := args.Get(0); result != nil {
+		logs = result.([]loki.LogLine)
+	}
+
+	return logs, args.String(1), args.Error(2)
 }

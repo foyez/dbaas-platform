@@ -67,6 +67,8 @@ type InstanceLogsResponse struct {
 
 type AuditLogsResponse struct {
 	Logs []loki.LogLine `json:"logs"`
+	// NextCursor is empty when there are no more pages.
+	NextCursor string `json:"nextCursor,omitempty"`
 }
 
 type QueryRequest struct {

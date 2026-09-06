@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -90,7 +91,7 @@ func (s *instanceService) GetInstanceLogs(ctx context.Context, id, userID string
 	}
 
 	logql := fmt.Sprintf(`{instance_id=%q}`, id)
-	return s.loki.Query(ctx, logql, 200, 24*time.Hour)
+	return s.loki.Query(ctx, logql, 200, 24*time.Hour, time.Now())
 }
 
 // GetCredentials retrieves the credentials for an instance.
@@ -213,18 +214,58 @@ func (s *instanceService) DeleteInstance(ctx context.Context, id, userID string)
 	return s.client.DeleteInstance(ctx, id, userID)
 }
 
+const (
+	defaultAuditLogLimit = 50
+	maxAuditLogLimit     = 200
+	auditLogLookback     = 168 * time.Hour // 7 days, matches your Loki retention_period
+)
+
+// GetAuditLogs retrieves a page of audit log entries, newest first.
+// Pagination is cursor-based, matching ListInstances: Loki has no
+// offset/skip concept either, only a time-range window. The cursor is the
+// oldest entry's timestamp from the previous page (Loki's own
+// nanosecond-epoch string format), used as the next page's end boundary -
+// Loki's end is exclusive, so the boundary entry itself is never
+// re-returned.
 func (s *instanceService) GetAuditLogs(
 	ctx context.Context,
 	resourceID string,
 	limit int,
-) ([]loki.LogLine, error) {
-	if limit <= 0 {
-		limit = 200
+	cursor string,
+) ([]loki.LogLine, string, error) {
+	switch {
+	case limit <= 0:
+		limit = defaultAuditLogLimit
+	case limit > maxAuditLogLimit:
+		limit = maxAuditLogLimit
+	}
+
+	end := time.Now()
+	if cursor != "" {
+		ns, err := strconv.ParseInt(cursor, 10, 64)
+		if err != nil {
+			return nil, "", ErrInvalidInput
+		}
+		end = time.Unix(0, ns)
 	}
 
 	logql := `{namespace="dbaas-api"} | json | component="audit"`
 	if resourceID != "" {
 		logql = fmt.Sprintf(`{namespace="dbaas-api"} | json | component="audit" | resource_id=%q`, resourceID)
 	}
-	return s.loki.Query(ctx, logql, limit, 168*time.Hour) // 7 days, matches your Loki retention_period
+
+	logs, err := s.loki.Query(ctx, logql, limit, auditLogLookback, end)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var nextCursor string
+	if len(logs) == limit {
+		// A full page - there may be more before the oldest entry we
+		// got back. If this page came back short, we've reached
+		// either the start of the lookback window or true history.
+		nextCursor = logs[len(logs)-1].Timestamp
+	}
+
+	return logs, nextCursor, nil
 }

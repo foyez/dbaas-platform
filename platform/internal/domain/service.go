@@ -24,7 +24,12 @@ type InstanceService interface {
 	UpdateInstance(ctx context.Context, input UpdateInstanceInput) (*Instance, error)
 	DeleteInstance(ctx context.Context, id, userID string) error
 
-	GetAuditLogs(ctx context.Context, resourceID string, limit int) ([]loki.LogLine, error)
+	GetAuditLogs(
+		ctx context.Context,
+		resourceID string,
+		limit int,
+		cursor string,
+	) (logs []loki.LogLine, nextCursor string, err error)
 
 	ExecuteQuery(ctx context.Context, id, userID, sql string) (*QueryResult, error)
 

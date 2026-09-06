@@ -367,8 +367,10 @@ func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 // GetAuditLogs handles GET /v1/audit-logs requests (admin only).
 func (h *InstanceHandler) GetAuditLogs(c *gin.Context) {
 	resourceID := c.Query("resourceId")
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	cursor := c.Query("cursor")
 
-	logs, err := h.svc.GetAuditLogs(c.Request.Context(), resourceID, 200)
+	logs, nextCursor, err := h.svc.GetAuditLogs(c.Request.Context(), resourceID, limit, cursor)
 	if err != nil {
 		h.logger.Error("failed to get audit logs", "error", err)
 
@@ -376,7 +378,7 @@ func (h *InstanceHandler) GetAuditLogs(c *gin.Context) {
 		return
 	}
 
-	httpx.JSON(c, http.StatusOK, api.AuditLogsResponse{Logs: logs})
+	httpx.JSON(c, http.StatusOK, api.AuditLogsResponse{Logs: logs, NextCursor: nextCursor})
 }
 
 // ExecuteQuery handles POST /v1/instances/:id/query requests.

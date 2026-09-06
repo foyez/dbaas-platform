@@ -25,9 +25,16 @@ type LogLine struct {
 	Line      string `json:"line"`
 }
 
-// Query runs a LogQL query against Loki's range endpoint.
-func (c *Client) Query(ctx context.Context, logql string, limit int, lookback time.Duration) ([]LogLine, error) {
-	end := time.Now()
+// Query runs a LogQL query against Loki's range endpoint, over the window
+// (end-lookback, end]. Pass time.Now() for the most recent page; for
+// subsequent pages, pass the oldest timestamp from the previous page as end
+func (c *Client) Query(
+	ctx context.Context,
+	logql string,
+	limit int,
+	lookback time.Duration,
+	end time.Time,
+) ([]LogLine, error) {
 	start := end.Add(-lookback)
 
 	params := url.Values{}
