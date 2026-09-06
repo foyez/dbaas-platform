@@ -4,6 +4,21 @@ A self-service **Database-as-a-Service** platform for provisioning and managing 
 
 Built as part of a cloud-native platform engineering track (Infrastructure → Platform → Product), where the goal was to own the whole stack rather than a single layer of it.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    User(["Client"]) --> UI["Web UI<br/>(Vue)"]
+    UI --> API["API<br/>(Go)"]
+
+    API --> Auth["ZITADEL<br/>(Auth)"]
+    API --> Obs["Grafana<br/>(Logs & Metrics)"]
+    API --> Operator["Operator"]
+
+    Operator --> CNPG["CloudNativePG"]
+    CNPG --> PG[("PostgreSQL")]
+```
+
 ## Features
 
 - **Custom Kubernetes Operator**: A `PostgreSQL` CRD (built with Kubebuilder) that reconciles into a [CloudNativePG](https://cloudnative-pg.io/) `Cluster`, exposing a simplified spec (`version`, `instances`, `storage`, `database`, `username`) and a status (`phase`, `readyInstances`, conditions) so the API never has to speak CNPG directly.

@@ -361,6 +361,18 @@ func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
 
 	case databasev1.PostgreSQLPhaseCreating:
 		status = domain.InstanceStatusPending
+
+	case databasev1.PostgreSQLPhaseDeleting:
+		status = domain.InstanceStatusDeleting
+	}
+
+	// Belt-and-suspenders: DeletionTimestamp is set by the API server the
+	// instant a delete is requested, before the operator's own reconcile
+	// even runs. Checking it directly here means the platform reflects
+	// "deleting" immediately rather than however many milliseconds it
+	// takes the operator to observe and persist the phase itself.
+	if !pg.DeletionTimestamp.IsZero() {
+		status = domain.InstanceStatusDeleting
 	}
 
 	return &domain.Instance{

@@ -25,6 +25,7 @@ import QueryConsole from '@/components/instances/QueryConsole.vue'
 
 import { useInstance } from '@/composables/useInstance'
 import { usePolling } from '@/composables/usePolling'
+import { ApiError } from '@/api/errors'
 import type { UpdateInstanceInput } from '@/schemas/instance'
 import { formatDate } from '@/lib/date'
 import { useInstanceLogs } from '@/composables/useInstanceLogs'
@@ -53,15 +54,26 @@ const isEditing = ref(false)
 const isDeleting = ref(false)
 
 const polling = usePolling(async () => {
-  await fetchInstance(instanceId).catch(() => {
-    // Error is exposed by useInstance(); don't let a transient failure
-    // stop the poll loop.
-  })
+  try {
+    await fetchInstance(instanceId)
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      // The instance has actually finished deleting - not a transient
+      // failure. instance.value would otherwise stay stale forever (a
+      // failed fetch never clears it), so the isTerminalStatus check
+      // below would never fire and this would poll a 404 indefinitely.
+      polling.stop()
+      router.push({ name: 'instances' })
+      return
+    }
+    // Any other error: transient, keep polling.
+    return
+  }
 
   if (instance.value && isTerminalStatus(instance.value.status)) {
     polling.stop()
   }
-}, 15000)
+}, 5000)
 
 async function load() {
   try {

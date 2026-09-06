@@ -8,10 +8,11 @@ import "time"
 type InstanceStatus string
 
 const (
-	InstanceStatusPending InstanceStatus = "Pending"
-	InstanceStatusRunning InstanceStatus = "Running"
-	InstanceStatusFailed  InstanceStatus = "Failed"
-	InstanceStatusDeleted InstanceStatus = "Deleted"
+	InstanceStatusPending  InstanceStatus = "Pending"
+	InstanceStatusRunning  InstanceStatus = "Running"
+	InstanceStatusFailed   InstanceStatus = "Failed"
+	InstanceStatusDeleting InstanceStatus = "Deleting"
+	InstanceStatusDeleted  InstanceStatus = "Deleted"
 )
 
 // Instance represents a provisioned PostgreSQL instance
