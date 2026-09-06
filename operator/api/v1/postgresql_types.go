@@ -13,6 +13,7 @@ const (
 	PostgreSQLPhaseCreating PostgreSQLPhase = "Creating"
 	PostgreSQLPhaseReady    PostgreSQLPhase = "Ready"
 	PostgreSQLPhaseFailed   PostgreSQLPhase = "Failed"
+	PostgreSQLPhaseDeleting PostgreSQLPhase = "Deleting"
 )
 
 const (
