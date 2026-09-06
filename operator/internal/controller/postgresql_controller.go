@@ -82,6 +82,19 @@ func (r *PostgreSQLReconciler) Reconcile(
 	)
 
 	if !pg.DeletionTimestamp.IsZero() {
+		if pg.Status.Phase != databasev1.PostgreSQLPhaseDeleting {
+			if err := r.setStatus(
+				ctx,
+				&pg,
+				databasev1.PostgreSQLPhaseDeleting,
+				pg.Status.ReadyInstances,
+				"Deleting",
+				"Instance is being deleted",
+			); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
 		if controllerutil.ContainsFinalizer(&pg, tcpExposeFinalizer) {
 			if err := r.cleanupExternalExposure(ctx, &pg); err != nil {
 				return ctrl.Result{}, fmt.Errorf(
