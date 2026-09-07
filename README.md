@@ -10,8 +10,9 @@ Built as part of a cloud-native platform engineering track (Infrastructure → P
 flowchart LR
     User(["Client"]) --> UI["Web UI<br/>(Vue)"]
     UI --> API["API<br/>(Go)"]
+    UI --> Auth["ZITADEL<br/>(Auth)"]
+    API --> Auth
 
-    API --> Auth["ZITADEL<br/>(Auth)"]
     API --> Obs["Grafana<br/>(Logs & Metrics)"]
     API --> Operator["Operator"]
 
