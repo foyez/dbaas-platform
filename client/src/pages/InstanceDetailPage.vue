@@ -105,9 +105,22 @@ async function revealCredentials() {
 
 async function saveChanges(data: UpdateInstanceInput) {
   try {
-    await updateInstance(instanceId, data)
+    const updated = await updateInstance(instanceId, data)
+
+    if (instance.value) {
+      instance.value = updated
+    }
 
     isEditing.value = false
+
+    // The update may have kicked off a real change (e.g. version/storage)
+    // that takes the instance through Pending again. Polling stops once
+    // an instance reaches a terminal status like Running, so it needs to
+    // be explicitly restarted here - otherwise the transition back to
+    // Ready would never be reflected without a manual refresh.
+    if (!isTerminalStatus(updated.status)) {
+      polling.start()
+    }
   } catch {
     // Error is exposed by useInstance().
   }
