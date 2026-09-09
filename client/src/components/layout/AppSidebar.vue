@@ -17,7 +17,7 @@ onMounted(async () => {
 <template>
   <aside class="hidden w-64 shrink-0 border-r bg-background md:block">
     <div class="flex h-16 items-center border-b px-6">
-      <RouterLink to="/" class="flex items-center gap-2 font-semibold">
+      <RouterLink :to="{ name: 'dashboard' }" class="flex items-center gap-2 font-semibold">
         <Database class="h-5 w-5" />
 
         PostgreSQL PaaS
@@ -26,7 +26,7 @@ onMounted(async () => {
 
     <nav class="space-y-1 p-4">
       <RouterLink
-        to="/"
+        :to="{ name: 'dashboard' }"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         active-class="
           bg-muted
@@ -39,7 +39,7 @@ onMounted(async () => {
       </RouterLink>
 
       <RouterLink
-        to="/instances"
+        :to="{ name: 'instances' }"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         active-class="
           bg-muted
@@ -53,7 +53,7 @@ onMounted(async () => {
 
       <RouterLink
         v-if="isAdmin"
-        to="/audit-logs"
+        :to="{ name: 'audit-logs' }"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         active-class="
           bg-muted
@@ -66,15 +66,15 @@ onMounted(async () => {
       </RouterLink>
     </nav>
 
-    <!-- <div class="mt-4 border-t p-4">
-      <a
-        href="#"
+    <div class="mt-4 border-t p-4">
+      <RouterLink
+        :to="{ name: 'docs-overview' }"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <BookOpen class="h-4 w-4" />
 
         Documentation
-      </a>
-    </div> -->
+      </RouterLink>
+    </div>
   </aside>
 </template>

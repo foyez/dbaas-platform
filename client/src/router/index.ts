@@ -11,13 +11,36 @@ import { userManager } from '@/auth/oidc'
 import AuditLogsPage from '@/pages/AuditLogsPage.vue'
 import { hasRole } from '@/auth/roles'
 
+import DocsLayout from '@/components/docs/DocsLayout.vue'
+import DocsOverviewPage from '@/pages/docs/DocsOverviewPage.vue'
+import DocsGettingStartedPage from '@/pages/docs/DocsGettingStartedPage.vue'
+import DocsArchitecturePage from '@/pages/docs/DocsArchitecturePage.vue'
+import DocsApiPage from '@/pages/docs/DocsApiPage.vue'
+import DocsSdkPage from '@/pages/docs/DocsSdkPage.vue'
+
 const router = createRouter({
   history: createWebHistory(),
 
   routes: [
-    // protected
+    // public - marketing homepage
+    { path: '/', name: 'landing', component: LandingPage },
+
+    // public - documentation
     {
-      path: '/',
+      path: '/docs',
+      component: DocsLayout,
+      children: [
+        { path: '', name: 'docs-overview', component: DocsOverviewPage },
+        { path: 'getting-started', name: 'docs-getting-started', component: DocsGettingStartedPage },
+        { path: 'architecture', name: 'docs-architecture', component: DocsArchitecturePage },
+        { path: 'api', name: 'docs-api', component: DocsApiPage },
+        { path: 'sdk', name: 'docs-sdk', component: DocsSdkPage },
+      ],
+    },
+
+    // protected - the actual app
+    {
+      path: '/dashboard',
       component: AppLayout,
       meta: { requiresAuth: true },
 
@@ -55,8 +78,6 @@ const router = createRouter({
       ],
     },
 
-    // public routes - outside the protected layout
-    { path: '/landing', name: 'landing', component: LandingPage },
     { path: '/auth/callback', name: 'callback', component: CallbackPage },
   ],
 })
