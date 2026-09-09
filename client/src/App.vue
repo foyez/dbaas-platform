@@ -4,7 +4,7 @@ import { oidcSettings, onSigninCallback } from './auth/oidc'
 </script>
 
 <template>
-  <AuthProvider v-bind="oidcSettings" :redirect_uri="onSigninCallback">
+  <AuthProvider v-bind="oidcSettings" :onSigninCallback="onSigninCallback">
     <RouterView />
   </AuthProvider>
 </template>
