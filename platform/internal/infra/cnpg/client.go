@@ -304,18 +304,34 @@ func (c *client) UpdateInstance(
 		return nil, err
 	}
 
-	if input.Version != nil {
+	changed := false
+
+	if input.Version != nil && pg.Spec.Version != strconv.Itoa(*input.Version) {
 		pg.Spec.Version = strconv.Itoa(*input.Version)
+		changed = true
 	}
-	if input.Storage != nil {
+	if input.Storage != nil && pg.Spec.Storage != *input.Storage {
 		pg.Spec.Storage = *input.Storage
+		changed = true
 	}
 
 	if err := c.k8sClient.Update(ctx, pg); err != nil {
 		return nil, err
 	}
 
-	return toDomainInstance(pg), nil
+	instance := toDomainInstance(pg)
+
+	// pg.Status here is whatever it was BEFORE this edit - a spec update
+	// doesn't touch status, and the operator's reconcile (which would
+	// actually move phase off Ready while it applies the change) runs
+	// asynchronously off the watch, after this call has already
+	// returned. Reporting the stale Ready/Running status would make the
+	// UI think the update already fully settled.
+	if changed {
+		instance.Status = domain.InstanceStatusPending
+	}
+
+	return instance, nil
 }
 
 func (c *client) DeleteInstance(ctx context.Context, id, userID string) error {
