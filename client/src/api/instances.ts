@@ -49,7 +49,7 @@ export async function listInstances(params: {
 }
 
 export async function updateInstance(id: string, data: UpdateInstanceRequest): Promise<Instance> {
-  return apiFetch<Instance>(`/instances/${encodeURIComponent(id)}/credentials`, {
+  return apiFetch<Instance>(`/instances/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
