@@ -16,11 +16,6 @@ type InstanceClient interface {
 		input domain.CreateInstanceInput,
 	) (*domain.Instance, error)
 
-	GetInstanceByIdempotencyKey(
-		ctx context.Context,
-		key string,
-	) (*domain.Instance, error)
-
 	GetInstance(ctx context.Context, id, userID string) (*domain.Instance, error)
 	GetInstanceCredentials(
 		ctx context.Context,
@@ -30,7 +25,10 @@ type InstanceClient interface {
 
 	// GetInstanceInternalCredentials always returns the CNPG -rw service's
 	// cluster-internal host/port, never the externally-reachable one
-	// GetInstanceCredentials prefers.
+	// GetInstanceCredentials prefers. For use by callers running inside
+	// the cluster (the query executor) - going out through the public
+	// endpoint and back in would be a pointless extra hop and an
+	// unnecessary dependency on DNS/ingress-nginx being reachable.
 	GetInstanceInternalCredentials(
 		ctx context.Context,
 		id string,

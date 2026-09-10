@@ -26,18 +26,6 @@ func (m *MockInstanceClient) CreateInstance(
 	return nil, args.Error(1)
 }
 
-func (m *MockInstanceClient) GetInstanceByIdempotencyKey(
-	ctx context.Context,
-	key string,
-) (*domain.Instance, error) {
-	args := m.Called(ctx, key)
-
-	if result := args.Get(0); result != nil {
-		return result.(*domain.Instance), args.Error(1)
-	}
-	return nil, args.Error(1)
-}
-
 func (m *MockInstanceClient) GetInstance(
 	ctx context.Context,
 	id string,

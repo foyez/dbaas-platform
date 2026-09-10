@@ -41,7 +41,7 @@ func (c *client) CreateInstance(
 	ctx context.Context,
 	input domain.CreateInstanceInput,
 ) (*domain.Instance, error) {
-	resourceName := crName(input.IdempotencyKey)
+	resourceName := crName(input.UserID, input.IdempotencyKey)
 
 	instances := input.Instances
 	if instances == 0 {
@@ -80,6 +80,16 @@ func (c *client) CreateInstance(
 				return nil, err
 			}
 
+			// Defense in depth: crName is now scoped by user, so this
+			// should be unreachable for a different user in practice -
+			// but verify explicitly rather than trusting the name alone.
+			// Report the same "not found" a genuinely-absent resource
+			// would give, rather than a 409/conflict that would confirm
+			// something exists here at all.
+			if existing.Labels[UserIDLabel] != input.UserID {
+				return nil, domain.ErrNotFound
+			}
+
 			return toDomainInstance(existing), nil
 		}
 
@@ -87,15 +97,6 @@ func (c *client) CreateInstance(
 	}
 
 	return toDomainInstance(pg), nil
-}
-
-func (c *client) GetInstanceByIdempotencyKey(
-	ctx context.Context,
-	key string,
-) (*domain.Instance, error) {
-	// Lookup existing instance.
-
-	return nil, nil
 }
 
 // getOwnedInstance fetches a PostgreSQL CR by name and verifies it belongs
@@ -405,8 +406,8 @@ func toDomainInstance(pg *databasev1.PostgreSQL) *domain.Instance {
 	}
 }
 
-func crName(idempotencyKey string) string {
-	sum := sha256.Sum256([]byte(idempotencyKey))
+func crName(userID, idempotencyKey string) string {
+	sum := sha256.Sum256([]byte(userID + ":" + idempotencyKey))
 	return "instance-" + hex.EncodeToString(sum[:8])
 }
 
