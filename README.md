@@ -1,8 +1,10 @@
 # DBaaS Platform
 
-A self-service **Database-as-a-Service** platform for provisioning and managing PostgreSQL instances on Kubernetes — built end-to-end, from raw IaaS on OpenStack up to a production-style PaaS product with an API, a web UI, GitOps delivery, and full observability.
+A self-service **Database-as-a-Service** platform: developers create, scale and query their own PostgreSQL databases through a web UI, REST API or Go SDK. Built end to end, from raw IaaS on OpenStack (Terraform + Ansible) to a product **deployed on STACKIT Kubernetes Engine (SKE)**.
 
-Built as part of a cloud-native platform engineering track (Infrastructure → Platform → Product), where the goal was to own the whole stack rather than a single layer of it.
+**How it's deployed:** SKE cluster and ZITADEL identity provisioned with Terraform · Forgejo CI runs Go tests, builds container images and pushes them to STACKIT Container Registry · Argo CD deploys from Git (GitOps) · HTTPS via ingress-nginx + Let's Encrypt · Prometheus, Loki and Grafana for metrics, logs and audit.
+
+**Status:** the cluster has been shut down to save costs. Everything can be recreated from this repo with Terraform plus the bootstrap pipeline.
 
 ## Architecture
 
