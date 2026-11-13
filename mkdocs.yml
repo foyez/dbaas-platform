@@ -55,3 +55,15 @@ plugins:
 
 nav:
   - Home: index.md
+  - Getting started: getting-started.md
+  - Architecture: architecture/index.md
+  - Design decisions:
+      - design-decisions/index.md
+      - design-decisions/kubernetes-as-state-store.md
+      - design-decisions/own-crd-over-cnpg.md
+      - design-decisions/shared-loadbalancer.md
+      - design-decisions/idempotent-creation.md
+      - design-decisions/sql-console-through-api.md
+      - design-decisions/auth-with-zitadel.md
+      - design-decisions/audit-in-loki.md
+      - design-decisions/gitops-delivery.md
