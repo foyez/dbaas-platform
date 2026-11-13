@@ -126,6 +126,35 @@ Delivery path (not drawn): a push to `main` triggers Forgejo CI, which builds an
 - **Go SDK**: A typed client library (`sdk/`) with OAuth2 client-credentials auth, wrapping the full instance API for programmatic use.
 - **Infrastructure as Code**: Terraform + Ansible provisioning of the underlying Kubernetes cluster — from a single/multi-node cluster on self-hosted OpenStack (DevStack) up to a managed [STACKIT SKE](https://www.stackit.de/en/product/stackit-kubernetes-engine/) cluster.
 
+## Run it locally
+
+One command brings up the whole platform on a local [kind](https://kind.sigs.k8s.io/) cluster, including its own ZITADEL instance, so you don't need any cloud account.
+
+**Requirements:** Docker (Docker Desktop, OrbStack or Colima) with about 6 GB of memory, plus `make`, `curl`, `unzip` and `openssl`. kind, kubectl, Helm and Terraform are downloaded at pinned versions into `./bin`.
+
+```sh
+make dev
+```
+
+The first run takes about 10 minutes, most of it building images and initialising ZITADEL. Re-running is safe and only applies changes. It:
+
+1. creates the `dbaas-dev` kind cluster with ingress-nginx on port 80
+2. installs CloudNativePG and a local ZITADEL backed by it
+3. applies [`infra/zitadel/tf`](infra/zitadel/tf) to create the project, roles and apps (the same Terraform used for production)
+4. builds the operator, API and frontend images and deploys them through the `gitops/*/overlays/dev` overlays
+
+| What | URL |
+|---|---|
+| App | http://app.dbaas.localhost |
+| API | http://api.dbaas.localhost/api/v1 |
+| ZITADEL console | http://auth.dbaas.localhost/ui/console |
+
+Log in with `admin@dbaas.auth.dbaas.localhost` / `Password1!`, which has the `dbaas.admin` role.
+
+`make dev-status` shows what's running and `make dev-down` deletes the cluster. `make help` lists every target.
+
+Compared with production, the local setup has no HTTPS, observability stack or public database ports. To connect to an instance directly, run `kubectl --context kind-dbaas-dev port-forward -n database-system svc/<instance>-rw 5432`. The `*.localhost` hostnames resolve to your machine without any `/etc/hosts` changes in Chrome and Firefox. Safari may not resolve them.
+
 ## Design decisions and trade-offs
 
 ### 1\. The Kubernetes API Is the Only State Store
@@ -207,6 +236,7 @@ They don't live in a database table.
 | [`sdk/`](sdk) | Go client SDK for the REST API |
 | [`infra/`](infra) | Terraform + Ansible for OpenStack (DevStack) and STACKIT SKE clusters |
 | [`gitops/`](gitops) | Kustomize manifests + ArgoCD Application definitions for every component |
+| [`hack/dev/`](hack/dev) | Local kind setup behind `make dev` |
 
 Each folder has (or will have) its own README with implementation details.
 
