@@ -67,3 +67,13 @@ nav:
       - design-decisions/auth-with-zitadel.md
       - design-decisions/audit-in-loki.md
       - design-decisions/gitops-delivery.md
+  - Components:
+      - components/index.md
+      - components/operator.md
+      - components/api.md
+      - components/frontend.md
+      - components/auth.md
+      - components/sdk.md
+      - components/delivery.md
+      - components/observability.md
+      - components/infrastructure.md
