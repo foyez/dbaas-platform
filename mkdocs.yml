@@ -99,6 +99,8 @@ nav:
       - Security:
           - notes/kubernetes-security.md
           - notes/authentication.md
+      - Frontend:
+          - notes/frontend.md
   - Build journal:
       - journal/README.md
       - Week 0:
