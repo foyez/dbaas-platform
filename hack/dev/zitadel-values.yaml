@@ -1,0 +1,50 @@
+# Helm values for a local, plain-HTTP ZITADEL at http://auth.dbaas.localhost.
+# Dev only: fixed admin password, no TLS.
+zitadel:
+  masterkeySecretName: zitadel-masterkey
+  configmapConfig:
+    ExternalDomain: auth.dbaas.localhost
+    ExternalPort: 80
+    ExternalSecure: false
+    TLS:
+      Enabled: false
+    FirstInstance:
+      Org:
+        Name: dbaas
+        Human:
+          UserName: admin
+          FirstName: Dev
+          LastName: Admin
+          Email:
+            Address: admin@dbaas.localhost
+            Verified: true
+          Password: Password1!
+          PasswordChangeRequired: false
+        # Machine user with IAM owner rights; its key is written to the
+        # "terraform" secret and used by infra/zitadel/tf.
+        Machine:
+          Machine:
+            Username: terraform
+            Name: Terraform
+          MachineKey:
+            ExpirationDate: "2099-01-01T00:00:00Z"
+            Type: 1
+
+# CNPG app secret; ZITADEL connects with the database owner, no admin user.
+env:
+  - name: ZITADEL_DATABASE_POSTGRES_DSN
+    valueFrom:
+      secretKeyRef:
+        name: zitadel-db-app
+        key: uri
+
+ingress:
+  enabled: true
+  className: nginx
+  # Plain HTTP/1.1 proxying; "nginx" would force gRPC backends, which needs TLS.
+  controller: generic
+
+login:
+  ingress:
+    enabled: true
+    className: nginx

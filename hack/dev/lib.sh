@@ -18,6 +18,7 @@ API_HOST="api.$DOMAIN"
 AUTH_HOST="auth.$DOMAIN"
 
 INGRESS_NGINX_VERSION="controller-v1.15.1"
+ZITADEL_CHART_VERSION="10.5.0"
 
 : "${KIND:?run via make}" "${KUBECTL:?run via make}" "${HELM:?run via make}" "${TERRAFORM:?run via make}"
 

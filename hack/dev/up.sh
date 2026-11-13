@@ -14,7 +14,6 @@ create_cluster() {
 install_ingress() {
   step "ingress-nginx ($INGRESS_NGINX_VERSION)"
   k apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/$INGRESS_NGINX_VERSION/deploy/static/provider/kind/deploy.yaml"
-  k wait -n ingress-nginx --for=condition=Complete job --all --timeout=180s
   k wait -n ingress-nginx --for=condition=Available deployment/ingress-nginx-controller --timeout=180s
   # The admission webhook can refuse connections for a few seconds after the
   # deployment reports Available; wait until it actually serves.
@@ -37,11 +36,34 @@ configure_dns() {
   k rollout status -n kube-system deployment/coredns --timeout=120s
 }
 
+install_cnpg() {
+  step "CloudNativePG operator"
+  k apply --server-side --force-conflicts -k "$ROOT/gitops/cnpg/overlays/dev" >/dev/null
+  k wait -n cnpg-system --for=condition=Available deployment --all --timeout=180s
+}
+
+install_zitadel() {
+  step "ZITADEL ($ZITADEL_CHART_VERSION) at http://$AUTH_HOST"
+  k apply -f "$DEV_DIR/manifests/zitadel-db.yaml"
+  k wait -n zitadel --for=condition=Ready cluster.postgresql.cnpg.io/zitadel-db --timeout=300s
+
+  if ! k get secret -n zitadel zitadel-masterkey >/dev/null 2>&1; then
+    k create secret generic -n zitadel zitadel-masterkey --from-literal=masterkey="$(openssl rand -hex 16)"
+  fi
+
+  h upgrade --install zitadel zitadel --repo https://charts.zitadel.com \
+    --version "$ZITADEL_CHART_VERSION" -n zitadel \
+    -f "$DEV_DIR/zitadel-values.yaml" --wait --timeout 10m
+  k wait -n zitadel --for=create secret/terraform --timeout=120s
+}
+
 main() {
   mkdir -p "$STATE_DIR"
   create_cluster
   install_ingress
   configure_dns
+  install_cnpg
+  install_zitadel
 }
 
 main "$@"
