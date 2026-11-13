@@ -261,13 +261,16 @@ creds, _ := c.Instances.Credentials(ctx, inst.ID)
 
 ## Documentation
 
-| Doc | Covers |
+The full documentation is at **[foyez.github.io/dbaas-platform](https://foyez.github.io/dbaas-platform/)** (source in [`docs/`](docs), preview locally with `make docs`).
+
+| Page | Covers |
 |---|---|
-| [`operator/README.md`](operator/README.md) | CRD design, reconciliation logic, running/testing the operator locally |
+| [Getting started](https://foyez.github.io/dbaas-platform/getting-started/) | Running the platform locally with `make dev` |
+| [Architecture](https://foyez.github.io/dbaas-platform/architecture/) | C4 diagrams and request flow |
+| [Design decisions](https://foyez.github.io/dbaas-platform/design-decisions/) | Each major decision and its trade-offs |
+| [Components](https://foyez.github.io/dbaas-platform/components/) | Operator, API, UI, auth, SDK, delivery, observability, infrastructure |
+| [Build journal](https://foyez.github.io/dbaas-platform/journal/) | Week-by-week notes from building it, from OpenStack to the product |
 | [`platform/docs/openapi.yaml`](platform/docs/openapi.yaml) | Full REST API contract |
-| [`client/README.md`](client/README.md) | UI structure, running dev server, unit/e2e tests |
-| [`sdk/README.md`](sdk/README.md) | SDK usage and examples |
-| [`infra/README.md`](infra/README.md) | OpenStack + SKE provisioning steps |
 
 ## Tech stack
 
