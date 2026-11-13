@@ -4,3 +4,7 @@ dbaas-api-zitadel-sa-key.json
 **/charts
 .envrc
 ./scripts/env.sh
+
+# Local dev tools and state (make dev)
+/bin/
+/hack/dev/.state/

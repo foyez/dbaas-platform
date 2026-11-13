@@ -1,0 +1,14 @@
+# Only ever applied with --dry-run=server, to check the ingress-nginx
+# admission webhook is serving before real Ingresses are created.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-probe
+  namespace: default
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: ingress-probe
+      port:
+        number: 80
