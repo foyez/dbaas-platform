@@ -89,6 +89,10 @@ nav:
       - Kubernetes:
           - notes/kubernetes-concepts.md
           - notes/operators.md
+      - API:
+          - notes/api-design.md
+          - notes/connection-pooling.md
+          - notes/health-and-scaling.md
   - Build journal:
       - journal/README.md
       - Week 0:
