@@ -44,6 +44,10 @@ type ServerConfig struct {
 type ZitadelConfig struct {
 	Domain  string `envconfig:"ZITADEL_DOMAIN"`
 	KeyPath string `envconfig:"ZITADEL_KEY_PATH"`
+
+	// InsecurePort, when set, talks to ZITADEL over plain HTTP on this port.
+	// Only for the local kind setup (see hack/dev); rejected in production.
+	InsecurePort string `envconfig:"ZITADEL_INSECURE_PORT"`
 }
 
 // Load loads configuration from enviroment variables
@@ -94,6 +98,10 @@ func (cfg *Config) validate() error {
 
 	if cfg.Zitadel.KeyPath == "" {
 		return fmt.Errorf("ZITADEL_KEY_PATH is required")
+	}
+
+	if cfg.Zitadel.InsecurePort != "" && cfg.App.Env.IsProduction() {
+		return fmt.Errorf("ZITADEL_INSECURE_PORT must not be set in production")
 	}
 
 	return nil

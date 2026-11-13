@@ -18,9 +18,14 @@ type Middleware struct {
 }
 
 func New(ctx context.Context, cfg config.ZitadelConfig) (*Middleware, error) {
+	var opts []zitadel.Option
+	if cfg.InsecurePort != "" {
+		opts = append(opts, zitadel.WithInsecure(cfg.InsecurePort))
+	}
+
 	authZ, err := authorization.New(
 		ctx,
-		zitadel.New(cfg.Domain),
+		zitadel.New(cfg.Domain, opts...),
 		oauth.DefaultAuthorization(cfg.KeyPath),
 	)
 	if err != nil {
