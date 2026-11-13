@@ -18,7 +18,7 @@ flowchart LR
 
 The production cluster has been shut down to save costs. Everything can be recreated from the [repository](https://github.com/foyez/dbaas-platform), and the whole platform runs locally with one command.
 
-New here? [Run it locally](getting-started.md) in about 10 minutes, then read the [architecture](architecture/index.md) and the [design decisions](design-decisions/index.md) behind it. The [build journal](journal/README.md) tells the story of how it was built, week by week, starting from a bare OpenStack install.
+New here? [Run it locally](getting-started.md) in about 10 minutes, then read the [architecture](architecture/index.md) and the [design decisions](design-decisions/index.md) behind it. The [learning notes](notes/index.md) cover what I learned building it, from a bare OpenStack install to the finished product, with review questions on every page.
 
 ## Features
 

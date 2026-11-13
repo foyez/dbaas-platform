@@ -269,7 +269,7 @@ The full documentation is at **[foyez.github.io/dbaas-platform](https://foyez.gi
 | [Architecture](https://foyez.github.io/dbaas-platform/architecture/) | C4 diagrams and request flow |
 | [Design decisions](https://foyez.github.io/dbaas-platform/design-decisions/) | Each major decision and its trade-offs |
 | [Components](https://foyez.github.io/dbaas-platform/components/) | Operator, API, UI, auth, SDK, delivery, observability, infrastructure |
-| [Build journal](https://foyez.github.io/dbaas-platform/journal/) | Week-by-week notes from building it, from OpenStack to the product |
+| [Learning notes](https://foyez.github.io/dbaas-platform/notes/) | What I learned building it, by topic, with review questions |
 | [`platform/docs/openapi.yaml`](platform/docs/openapi.yaml) | Full REST API contract |
 
 ## Tech stack
