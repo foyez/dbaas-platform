@@ -96,6 +96,9 @@ nav:
       - Networking:
           - notes/networking.md
           - notes/exposing-services.md
+      - Security:
+          - notes/kubernetes-security.md
+          - notes/authentication.md
   - Build journal:
       - journal/README.md
       - Week 0:
