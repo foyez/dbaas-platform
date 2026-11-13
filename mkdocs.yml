@@ -81,6 +81,11 @@ nav:
       - components/delivery.md
       - components/observability.md
       - components/infrastructure.md
+  - Learning notes:
+      - Infrastructure:
+          - notes/openstack.md
+          - notes/terraform.md
+          - notes/kubernetes-on-vms.md
   - Build journal:
       - journal/README.md
       - Week 0:
