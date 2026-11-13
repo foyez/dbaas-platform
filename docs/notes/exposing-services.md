@@ -16,6 +16,17 @@
 
 An Ingress resource does nothing on its own; an **Ingress controller** such as ingress-nginx watches Ingresses and configures its proxy. One controller sits behind one cloud load balancer and serves every host.
 
+How this platform's traffic would map onto Gateway API, including the database passthrough that ingress-nginx does today with its `tcp-services` ConfigMap:
+
+```mermaid
+flowchart LR
+    Client((Client)) --> GW[Gateway<br/>listeners: 443, 30100–30999]
+    GC[GatewayClass] -.selects controller.-> GW
+    GW --> R1[HTTPRoute<br/>app.*] --> S1[Service: frontend]
+    GW --> R2[HTTPRoute<br/>api.*] --> S2[Service: API]
+    GW --> R3[TCPRoute<br/>port 30101] --> S3[Service: instance -rw]
+```
+
 ### Certificates with cert-manager
 
 cert-manager is an operator that turns a `Certificate` resource into a Secret holding a certificate and key, and renews it before it expires.

@@ -31,6 +31,28 @@
 
 A stolen authorization code is useless without the verifier, which never left the browser. PKCE protects the code exchange; the separate `state` parameter protects against CSRF on the redirect. Neither encrypts anything.
 
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant V as Vue SPA
+    participant Z as ZITADEL
+    U->>V: Click "Log in"
+    V->>V: Generate state, nonce, code_verifier
+    V->>V: code_challenge = SHA256(code_verifier)
+    V->>Z: /authorize: client_id, redirect_uri, scope, state, code_challenge
+    Z->>U: Login page
+    U->>Z: Authenticate
+    Z->>V: Redirect to /auth/callback with code + state
+    V->>V: Check state matches
+    V->>Z: /token: code + code_verifier
+    Z->>Z: SHA256(code_verifier) == code_challenge?
+    alt Match
+        Z-->>V: Access token, ID token, refresh token
+    else No match
+        Z-->>V: Rejected
+    end
+```
+
 ## How this project uses it
 
 - **Two ZITADEL apps**: `dbaas-web` (user-agent, PKCE, no secret) for login, and `dbaas-api` (API app, private-key JWT) so the API can call ZITADEL's introspection endpoint.
@@ -39,6 +61,46 @@ A stolen authorization code is useless without the verifier, which never left th
 - **Roles come from ZITADEL.** Project role assertion puts `dbaas.user` and `dbaas.admin` into tokens; a registration action gives every new user `dbaas.user`.
 - **Identity is the `sub` claim**, which becomes the owner label on every instance.
 
+**Logging in with Google.** ZITADEL sits between the app and Google, so the app's flow doesn't change at all: it still does PKCE with ZITADEL and gets ZITADEL tokens. Google login is configured in production; the local setup leaves it out.
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant V as Vue SPA
+    participant Z as ZITADEL
+    participant G as Google
+    U->>V: Click "Log in"
+    V->>Z: Authorization request + code_challenge
+    Z->>U: Login page
+    U->>Z: Choose "Sign in with Google"
+    Z->>G: OIDC authorization request
+    G->>U: Google login (and MFA)
+    U->>G: Authenticate
+    G-->>Z: Google identity
+    Z->>Z: Find, link or auto-create the ZITADEL user
+    Z-->>V: Authorization code
+    V->>Z: Code + code_verifier
+    Z-->>V: ZITADEL tokens (not Google's)
+```
+
+**Calling the API, and what happens when the token expires:**
+
+```mermaid
+sequenceDiagram
+    participant V as Vue SPA
+    participant API as Go API
+    participant Z as ZITADEL
+    V->>API: GET /api/v1/instances, Bearer access token
+    API->>Z: Introspect token (private-key JWT auth)
+    Z-->>API: active, sub, roles
+    API-->>V: The caller's instances
+    Note over V: Later: the access token expires
+    V->>V: Router guard sees the expired token
+    V->>Z: signinRedirect (new PKCE flow)
+    Note over Z: ZITADEL's own session is still valid,<br/>so no password prompt
+    Z-->>V: New code, exchanged for new tokens
+```
+
 ## What I learned building it
 
 - **Audience is not permission.** `aud` only says who a token is *for*. The API still checks roles for admin routes, and ownership for every instance.
@@ -46,6 +108,7 @@ A stolen authorization code is useless without the verifier, which never left th
 - **Use `sub`, not email, as the identity key.** Emails change; `sub` doesn't.
 - **Redirect URIs are compared exactly.** Moving to HTTPS, or to the local `*.dbaas.localhost` hosts, means updating them in ZITADEL. A bug where the sign-in callback overrode the configured `redirect_uri` broke login until it was fixed.
 - **Where the SPA keeps tokens is a real trade-off.** The project uses `oidc-client-ts` defaults (tokens in `sessionStorage`), which is simple but readable by injected scripts. The stronger design from my notes is a backend-for-frontend: access token in memory only, refresh token in an `HttpOnly` cookie with rotation and CSRF protection.
+- **A refresh token isn't a refresh flow.** The app requests `offline_access` and receives a refresh token, but automatic renewal is commented out; an expired token sends the user back through ZITADEL instead. That works because ZITADEL's session cookie skips the password, but API calls made with an expired token in between get `401`.
 - **ZITADEL creates login names from the org domain.** The local admin's login name is `admin@dbaas.auth.dbaas.localhost`, not its email address, which is why the local Terraform looks the admin up by email instead of username.
 
 ## Review questions

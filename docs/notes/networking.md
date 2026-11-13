@@ -17,9 +17,43 @@ A name is resolved by asking a chain of servers for more and more specific answe
 
 Inside Kubernetes the same thing happens through CoreDNS: `dbaas-svc.dbaas-api.svc.cluster.local` resolves to the Service's virtual IP.
 
+```mermaid
+sequenceDiagram
+    participant C as Your machine
+    participant R as Recursive resolver
+    participant Root as Root (.)
+    participant TLD as .com TLD
+    participant Auth as Authoritative<br/>(example.com)
+
+    C->>R: example.com?
+    alt In cache
+        R-->>C: 93.184.x.x
+    else Not in cache
+        R->>Root: Who handles .com?
+        Root-->>R: .com nameservers
+        R->>TLD: Who handles example.com?
+        TLD-->>R: example.com nameservers
+        R->>Auth: IP of example.com?
+        Auth-->>R: 93.184.x.x, TTL 300
+        Note over R: Cache for the TTL
+        R-->>C: 93.184.x.x
+    end
+    C->>C: Connect to 93.184.x.x
+```
+
 ### TCP
 
 A connection starts with the three-way handshake: `SYN` → `SYN-ACK` → `ACK`. Sequence and acknowledgement numbers then let both sides detect loss and reorder data.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server:443
+    C->>S: SYN, seq = x
+    S->>C: SYN-ACK, seq = y, ack = x + 1
+    C->>S: ACK, ack = y + 1
+    Note over C,S: Connection established, data can flow
+```
 
 The two failures look different and mean different things:
 
@@ -27,6 +61,22 @@ The two failures look different and mean different things:
 |---|---|---|
 | **Connection refused** (immediate) | The host answered with `RST` | Nothing listening on that port |
 | **Connection timeout** (slow) | No answer at all | A firewall or security group drops packets, or the host is down |
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant F as Firewall
+    participant S as Server
+    Note over C,S: Connection refused
+    C->>S: SYN
+    S-->>C: RST (nothing listening on the port)
+    Note over C,S: Connection timeout
+    C->>F: SYN
+    F--xS: dropped
+    C->>F: SYN (retry)
+    F--xS: dropped
+    Note over C: No SYN-ACK, gives up after the timeout
+```
 
 ### TLS 1.3
 
@@ -37,6 +87,37 @@ TLS gives three separate guarantees, each from a different mechanism:
 | **Identity**: you're talking to the real `api.example.com` | The certificate, signed by a CA the client trusts, plus proof the server holds the private key |
 | **Confidentiality**: nobody can read the traffic | ECDHE key agreement → shared secret → traffic keys → symmetric encryption (AES-GCM) |
 | **Integrity**: nobody can change the traffic | The AEAD authentication tag on every record |
+
+```mermaid
+flowchart TD
+    TLS[TLS] --> ID[1. Identity]
+    TLS --> ENC[2. Confidentiality]
+    TLS --> INT[3. Integrity]
+    ID --> ID1["Certificate signed by a trusted CA<br/>says: this public key belongs to example.com"]
+    ID1 --> ID2["CertificateVerify: server signs the handshake<br/>with the matching private key"]
+    ENC --> ENC1[ECDHE key share → shared secret]
+    ENC1 --> ENC2[HKDF → traffic keys]
+    ENC2 --> ENC3[AES-GCM / ChaCha20 encrypts the data]
+    INT --> INT1[AEAD tag on every record]
+    INT1 --> INT2[Any modified byte fails verification]
+```
+
+The TLS 1.3 handshake, as it happens at the Ingress:
+
+```mermaid
+sequenceDiagram
+    participant C as Browser
+    participant S as Ingress (TLS termination)
+    C->>S: ClientHello: versions, cipher suites, ECDHE key share, SNI
+    S->>C: ServerHello: chosen parameters, ECDHE key share
+    Note over C,S: Both derive the same secret. Everything after this is encrypted
+    S->>C: Certificate: api.example.com + public key
+    S->>C: CertificateVerify: signature with the private key
+    S->>C: Finished
+    C->>S: Finished
+    C->>S: Encrypted HTTP request
+    S->>C: Encrypted HTTP response
+```
 
 The certificate's private key **doesn't encrypt your data**. It proves identity by signing the handshake. The encryption keys come from the ECDHE exchange and are never sent over the wire.
 

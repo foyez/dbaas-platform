@@ -30,6 +30,30 @@ The core services, and their AWS equivalents:
 
 **How a VM gets created:** Keystone authenticates the request → Nova API stores it in the database → the scheduler (using Placement) picks a compute node → the command travels over **RabbitMQ** to `nova-compute` → the hypervisor boots the image from Glance, and Neutron plugs it into the network. Services talk to users over REST APIs and to each other over the message queue.
 
+```mermaid
+sequenceDiagram
+    actor U as User / CLI
+    participant K as Keystone
+    participant N as Nova API
+    participant S as Scheduler + Placement
+    participant MQ as RabbitMQ
+    participant C as nova-compute
+    participant G as Glance
+    participant Ne as Neutron
+    U->>K: Authenticate
+    K-->>U: Token
+    U->>N: Create server (image, flavor, network), token
+    N->>N: Record request in the database
+    N->>S: Which host fits this flavor?
+    S-->>N: compute-01
+    N->>MQ: Build instance on compute-01
+    MQ->>C: Build instance
+    C->>G: Download image
+    C->>Ne: Create port, get IP
+    C->>C: libvirt + KVM boot the VM
+    C->>MQ: Instance ACTIVE
+```
+
 Modern Neutron uses **OVN** (Open Virtual Network) instead of the older per-node agents for L2/L3 networking.
 
 ## What I learned building it

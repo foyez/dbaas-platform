@@ -45,7 +45,7 @@ The contract is written in `openapi.yaml` and the code implements it. Clients (U
 2. The API derives the resource name: `instance-` + `sha256(userID + ":" + key)`.
 3. It calls `Create` on the Kubernetes API. If the name already exists, it fetches the existing resource and returns it instead of an error.
 
-The API server's uniqueness check on names is the atomic deduplication step, so it works across any number of API replicas. Creation is asynchronous: the API returns `202 Accepted` with status `Pending`, and the operator does the work.
+The API server's uniqueness check on names is the atomic deduplication step, so it works across any number of API replicas. Creation is asynchronous: the API returns `202 Accepted` with status `Pending`, and the operator does the work. The [operators page](operators.md#how-this-projects-operator-is-built) shows the whole sequence, from the request to a running database.
 
 ## What I learned building it
 

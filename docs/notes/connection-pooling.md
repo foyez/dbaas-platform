@@ -9,11 +9,37 @@ Opening a PostgreSQL connection is expensive: a TCP (and often TLS) handshake, a
 
 A **connection pool** keeps connections open and lends them out. A request borrows one, uses it and returns it.
 
+```mermaid
+sequenceDiagram
+    participant A as Request handler
+    participant P as Pool (max 3)
+    participant DB as PostgreSQL
+    A->>P: Acquire
+    alt Idle connection available
+        P-->>A: Connection #1 (already open)
+    else All busy
+        Note over A,P: Wait until one is released,<br/>or fail after the acquire timeout
+    end
+    A->>DB: Run query
+    DB-->>A: Rows
+    A->>P: Release
+    Note over P: Connection #1 stays open for the next request
+```
+
 - **`MinConns`** keeps a few ready, so the first request doesn't pay the setup cost.
 - **`MaxConns`** caps how many exist. When all are busy, new requests wait (up to a timeout) instead of opening more.
 - The right maximum depends on the database's `max_connections`, how many app replicas share it, and how long queries take. More connections past a point make the database slower, not faster.
 
 **PgBouncer** pools *between* many clients and the database. Many app instances, each with their own pool, can still add up to too many backend connections; PgBouncer multiplexes them onto a small number of real ones. App-side pools and PgBouncer solve different problems and are often used together.
+
+```mermaid
+flowchart LR
+    A1[API pod 1<br/>own pool] --> PB[PgBouncer]
+    A2[API pod 2<br/>own pool] --> PB
+    A3[API pod 3<br/>own pool] --> PB
+    W[Worker<br/>own pool] --> PB
+    PB -->|a few real connections| DB[(PostgreSQL)]
+```
 
 ## How this project uses it
 

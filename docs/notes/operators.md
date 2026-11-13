@@ -17,9 +17,57 @@ Every custom resource has:
 
 **The reconcile loop** is level-triggered: it gets "something about object X changed", not what changed. It reads the current spec and the real world, makes one pass towards the desired state, writes status, and returns. Every step has to be **idempotent**, because reconcile runs again and again.
 
+```mermaid
+flowchart TD
+    W[Watch event for object X<br/>or an object it owns] --> R[Reconcile X]
+    R --> Read[Read X's spec and the real state]
+    Read --> D{Desired == observed?}
+    D -->|Yes| S[Update status]
+    D -->|No| A[Create / update / delete<br/>one step towards desired]
+    A --> S
+    S --> Done[Return; requeue on error]
+    Done -.->|next change| W
+```
+
 **Kubebuilder** scaffolds the project. You write Go types with markers (`+kubebuilder:validation:Minimum=1`, `+kubebuilder:subresource:status`, `+kubebuilder:printcolumn`) and `make manifests` generates the CRD YAML and RBAC from them. `make generate` writes the DeepCopy code.
 
 ## How this project's operator is built
+
+What happens when a user creates a database, end to end:
+
+```mermaid
+sequenceDiagram
+    participant C as Client (UI / SDK)
+    participant API as Go API
+    participant K as Kubernetes API
+    participant Op as dbaas-operator
+    participant CNPG as CloudNativePG
+    participant Ing as ingress-nginx
+
+    C->>API: POST /api/v1/instances, Idempotency-Key
+    API->>API: Validate, name = instance-sha256(userID:key)
+    API->>K: Create PostgreSQL CR
+    alt Created
+        K-->>API: Created
+    else AlreadyExists (a retry)
+        API->>K: Get existing CR, check owner
+    end
+    API-->>C: 202 Accepted, status Pending
+
+    Note over K,Ing: Asynchronous from here
+    K-->>Op: Watch: new PostgreSQL CR
+    Op->>K: Add finalizer, create CNPG Cluster (owner = CR)
+    K-->>CNPG: Watch: new Cluster
+    CNPG->>K: Create pods, PVCs, Services, Secrets
+    Op->>K: Allocate port in the allocator ConfigMap
+    Op->>K: Add port to ingress-nginx tcp-services ConfigMap and Service
+    K-->>Ing: Watch: config changed, start proxying the port
+    CNPG->>K: Cluster status: ready
+    K-->>Op: Watch: owned Cluster changed
+    Op->>K: PostgreSQL status: Ready, externalPort
+    C->>API: GET /api/v1/instances/{id} (polling)
+    API-->>C: Running, port
+```
 
 - **A narrow spec over CNPG.** Users set `version`, `instances`, `storage`, `database` and `username`. The operator builds the CNPG `Cluster`, so CNPG's large API never leaks to the API or UI. See [design decision 2](../design-decisions/own-crd-over-cnpg.md).
 - **Owner references give cascade delete for free.** The CNPG `Cluster` has the `PostgreSQL` CR as its controller owner, so deleting the CR garbage-collects the cluster, its pods and its PVCs.
