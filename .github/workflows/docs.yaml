@@ -1,7 +1,8 @@
 name: Docs
 
-# Builds the MkDocs site on every docs change, and publishes it to GitHub
-# Pages from main. Uses the same pinned image as `make docs-build`.
+# Builds the MkDocs site and checks its Mermaid diagrams on every docs change,
+# and publishes it to GitHub Pages from main. Uses the same pinned images as
+# `make docs-build` and `make docs-check`.
 on:
   push:
     branches:
@@ -10,12 +11,14 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "Makefile"
+      - "hack/docs/**"
       - ".github/workflows/docs.yaml"
   pull_request:
     paths:
       - "docs/**"
       - "mkdocs.yml"
       - "Makefile"
+      - "hack/docs/**"
       - ".github/workflows/docs.yaml"
   workflow_dispatch:
 
@@ -35,16 +38,20 @@ jobs:
       - name: Build site (strict)
         run: make docs-build
 
-      - if: github.event_name != 'pull_request'
+      # mkdocs can't see Mermaid errors: diagrams render in the browser.
+      - name: Check Mermaid diagrams
+        run: make docs-check
+
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      - if: github.event_name != 'pull_request'
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     permissions:

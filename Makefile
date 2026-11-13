@@ -13,6 +13,7 @@ KUBECTL_VERSION   ?= v1.35.10
 HELM_VERSION      ?= v3.22.1
 TERRAFORM_VERSION ?= 1.17.2
 MKDOCS_MATERIAL_VERSION ?= 9.8.0
+MERMAID_CLI_VERSION     ?= 12.0.0
 
 LOCALBIN  ?= $(CURDIR)/bin
 KIND      ?= $(LOCALBIN)/kind-$(KIND_VERSION)
@@ -59,6 +60,10 @@ docs: ## Preview the docs site at http://localhost:8000/dbaas-platform/ (live re
 .PHONY: docs-build
 docs-build: ## Build the docs site into ./site, failing on warnings such as broken links.
 	$(MKDOCS_RUN) $(MKDOCS_IMAGE) build --strict
+
+.PHONY: docs-check
+docs-check: ## Render every Mermaid diagram in docs/ to catch syntax errors.
+	MERMAID_CLI_VERSION=$(MERMAID_CLI_VERSION) hack/docs/check-mermaid.sh
 
 ##@ Tools
 
