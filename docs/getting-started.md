@@ -55,7 +55,7 @@ kubectl --context kind-dbaas-dev get postgresql -A
 | `make dev` | Create or update the local platform |
 | `make dev-status` | Show pods, ingresses and PostgreSQL instances |
 | `make dev-down` | Delete the cluster and its local state |
-| `make docs` | Preview this documentation at <http://localhost:8000> |
+| `make docs` | Preview this documentation at <http://localhost:8000/dbaas-platform/> |
 | `make help` | List every target |
 
 ## How it differs from production

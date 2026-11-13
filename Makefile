@@ -53,7 +53,7 @@ MKDOCS_RUN = docker run --rm -e NO_MKDOCS_2_WARNING=1 -v "$(CURDIR)":/docs
 MKDOCS_IMAGE = squidfunk/mkdocs-material:$(MKDOCS_MATERIAL_VERSION)
 
 .PHONY: docs
-docs: ## Preview the docs site at http://localhost:8000 (live reload).
+docs: ## Preview the docs site at http://localhost:8000/dbaas-platform/ (live reload).
 	$(MKDOCS_RUN) -it -p 8000:8000 $(MKDOCS_IMAGE)
 
 .PHONY: docs-build
