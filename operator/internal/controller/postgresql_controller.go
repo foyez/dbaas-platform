@@ -150,9 +150,8 @@ func (r *PostgreSQLReconciler) Reconcile(
 // together with the rest of the status in updateStatus.
 //
 // External exposure is treated as best-effort: environments that don't run
-// ingress-nginx (e.g. local dev, which deliberately skips it - see
-// scripts/local-forward.sh) shouldn't have every PostgreSQL CR stuck
-// permanently failing because of it. A missing ingress-nginx ConfigMap/
+// ingress-nginx (or don't grant the operator access to it) shouldn't have
+// every PostgreSQL CR stuck permanently failing because of it. A missing ingress-nginx ConfigMap/
 // Service is logged and skipped rather than returned as an error; anything
 // else (a real RBAC problem, a conflict that won't resolve, etc.) still
 // fails the reconcile so it isn't silently swallowed.
