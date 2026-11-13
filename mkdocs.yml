@@ -38,6 +38,10 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+      # GitHub-style anchors, so in-page links written on GitHub keep working.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
@@ -77,3 +81,142 @@ nav:
       - components/delivery.md
       - components/observability.md
       - components/infrastructure.md
+  - Build journal:
+      - journal/README.md
+      - Week 0:
+          - journal/week-0/README.md
+          - journal/week-0/phase-1.md
+          - journal/week-0/phase-2.md
+      - Week 1:
+          - journal/week-1/README.md
+          - journal/week-1/learning-map.md
+          - Ansible:
+              - journal/week-1/ansible/ansible-basics.md
+              - journal/week-1/ansible/automate-provisioning-vm-k8s-installation.md
+          - Kubernetes:
+              - journal/week-1/k8s/install-k8s.md
+              - journal/week-1/k8s/install-two-node.md
+              - journal/week-1/k8s/jump-host.md
+              - journal/week-1/k8s/k8s-basics.md
+              - journal/week-1/k8s/kubernetes-the-hard-way.md
+              - journal/week-1/k8s/two-node-cluster-validation.md
+          - OpenStack:
+              - journal/week-1/openstack/1-os-basics.md
+              - journal/week-1/openstack/2-core-arch.md
+              - journal/week-1/openstack/3-core-services.md
+              - journal/week-1/openstack/4-services-communication.md
+              - Installation:
+                  - journal/week-1/openstack/installation/README.md
+                  - journal/week-1/openstack/installation/config.md
+                  - journal/week-1/openstack/installation/verify-installation.md
+              - Provisioning:
+                  - journal/week-1/openstack/provision/README.md
+          - Terraform:
+              - journal/week-1/terraform/provision-vm.md
+              - journal/week-1/terraform/tf-basics.md
+              - journal/week-1/terraform/why-tf.md
+      - Week 2:
+          - journal/week-2/README.md
+          - journal/week-2/final-project-idea.md
+          - journal/week-2/my-project-idea.md
+          - journal/week-2/week-plan.md
+          - GitOps:
+              - journal/week-2/gitops/gitops-with-argocd.md
+          - Kubernetes:
+              - journal/week-2/k8s/build-k8s-operator-tutorial.md
+              - journal/week-2/k8s/custom-resources.md
+              - journal/week-2/k8s/differences.md
+              - journal/week-2/k8s/project-note.md
+              - journal/week-2/k8s/provision-ske.md
+              - Operators tutorial:
+                  - journal/week-2/k8s/operators-tutorial/1-crds.md
+                  - journal/week-2/k8s/operators-tutorial/2-operators.md
+                  - journal/week-2/k8s/operators-tutorial/3-kubebuilder.md
+      - Week 3:
+          - journal/week-3/README.md
+          - journal/week-3/project-structure.md
+          - journal/week-3/week-plan.md
+          - API:
+              - journal/week-3/api/flowcharts.md
+              - journal/week-3/api/k6.md
+              - journal/week-3/api/openapi.md
+              - journal/week-3/api/performance-tests.md
+              - journal/week-3/api/pragmatic-clean-arch.md
+              - journal/week-3/api/safe-idempotent.md
+          - Go:
+              - journal/week-3/go/pragmatic-clean-arch.md
+          - Kubernetes:
+              - journal/week-3/k8s/configure-k8s-api-with-kubebuilder.md
+              - journal/week-3/k8s/distroless-cotnainer.md
+              - journal/week-3/k8s/hpa.md
+              - journal/week-3/k8s/ingress.md
+              - journal/week-3/k8s/k9s.md
+              - journal/week-3/k8s/secret.md
+              - journal/week-3/k8s/stackit-secret-manager.md
+      - Week 4:
+          - journal/week-4/README.md
+          - Architecture:
+              - journal/week-4/arch/arch.md
+              - journal/week-4/arch/connection-pool.md
+              - journal/week-4/arch/dns.md
+              - journal/week-4/arch/k8s.md
+              - journal/week-4/arch/tcp.md
+              - journal/week-4/arch/tls.md
+          - Authentication:
+              - journal/week-4/auth/zitadel-authN.md
+              - journal/week-4/auth/zitadel-authZ.md
+              - journal/week-4/auth/zitadel-config.md
+              - journal/week-4/auth/zitadel-tf.md
+              - Notes:
+                  - journal/week-4/auth/note/oauth2.md
+                  - journal/week-4/auth/note/pkce.md
+                  - journal/week-4/auth/note/zitadel-flow.md
+                  - journal/week-4/auth/note/zitadel-impl.md
+          - Editor:
+              - journal/week-4/editor/helix.md
+          - Frontend:
+              - journal/week-4/frontend/containerization.md
+              - journal/week-4/frontend/ui-auth.md
+              - journal/week-4/frontend/ui-create-ins.md
+              - journal/week-4/frontend/ui-dashboard.md
+              - journal/week-4/frontend/ui-ins-details.md
+              - journal/week-4/frontend/ui-ins-list.md
+              - journal/week-4/frontend/vue.md
+              - journal/week-4/frontend/zitadel.md
+          - Kubernetes:
+              - journal/week-4/k8s/gateway-api.md
+              - journal/week-4/k8s/sa-role.md
+              - journal/week-4/k8s/tls-config.md
+              - journal/week-4/k8s/tls-explanation.md
+              - journal/week-4/k8s/tls-setup.md
+      - Week 5:
+          - journal/week-5/README.md
+          - API:
+              - journal/week-5/api/health-endpoints.md
+          - Basics:
+              - journal/week-5/basics/roadmap.md
+              - 1 foundation:
+                  - 2 networking:
+                      - journal/week-5/basics/1-foundation/2-networking/latency-timeout.md
+              - 2 observability:
+                  - journal/week-5/basics/2-observability/1-telemetry-data.md
+                  - journal/week-5/basics/2-observability/2-events.md
+                  - journal/week-5/basics/2-observability/3-metrics.md
+                  - journal/week-5/basics/2-observability/4-logs.md
+                  - journal/week-5/basics/2-observability/5-traces.md
+                  - journal/week-5/basics/2-observability/6-time-series-data.md
+                  - journal/week-5/basics/2-observability/6A-metric-types.md
+                  - journal/week-5/basics/2-observability/7-cardinality.md
+                  - journal/week-5/basics/2-observability/8-sli-slo-sla.md
+              - 3 tools:
+                  - journal/week-5/basics/3-tools/1-prometheus.md
+                  - journal/week-5/basics/3-tools/1A-prometheus-concepts.md
+                  - journal/week-5/basics/3-tools/2-grafana.md
+                  - journal/week-5/basics/3-tools/3-loki-alloy.md
+                  - journal/week-5/basics/3-tools/4-alert.md
+                  - journal/week-5/basics/3-tools/5-otel-tempo-jaeger.md
+          - Git:
+              - journal/week-5/git/commit.md
+          - Observability:
+              - journal/week-5/paas-observablity/phase-1.md
+              - journal/week-5/paas-observablity/roadmap.md
