@@ -15,3 +15,8 @@ output "api_client_id" {
 output "api_audience_scope" {
   value = "urn:zitadel:iam:org:project:id:${zitadel_project.paas.id}:aud"
 }
+
+output "api_key_details" {
+  value     = one(zitadel_application_key.backend[*].key_details)
+  sensitive = true
+}

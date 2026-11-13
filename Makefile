@@ -11,7 +11,7 @@ ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 KIND_VERSION      ?= v0.33.0
 KUBECTL_VERSION   ?= v1.35.10
 HELM_VERSION      ?= v3.22.1
-TERRAFORM_VERSION ?= 1.12.2
+TERRAFORM_VERSION ?= 1.17.2
 
 LOCALBIN  ?= $(CURDIR)/bin
 KIND      ?= $(LOCALBIN)/kind-$(KIND_VERSION)

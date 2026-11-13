@@ -3,11 +3,9 @@ resource "zitadel_login_policy" "paas" {
 
   user_login         = true
   allow_register     = true
-  allow_external_idp = true
+  allow_external_idp = length(zitadel_org_idp_google.google) > 0
 
-  idps = [
-    zitadel_org_idp_google.google.id
-  ]
+  idps = zitadel_org_idp_google.google[*].id
 
   force_mfa            = false
   force_mfa_local_only = false

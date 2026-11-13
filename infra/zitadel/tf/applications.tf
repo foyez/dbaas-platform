@@ -45,3 +45,15 @@ resource "zitadel_application_api" "backend" {
 
   auth_method_type = "API_AUTH_METHOD_TYPE_PRIVATE_KEY_JWT"
 }
+
+# Key the API uses to call ZITADEL's introspection endpoint. Opt-in because the
+# private key ends up in Terraform state; production creates it by hand instead.
+resource "zitadel_application_key" "backend" {
+  count = var.create_api_key ? 1 : 0
+
+  org_id          = var.zitadel_org_id
+  project_id      = zitadel_project.paas.id
+  app_id          = zitadel_application_api.backend.id
+  key_type        = "KEY_TYPE_JSON"
+  expiration_date = "2099-01-01T00:00:00Z"
+}

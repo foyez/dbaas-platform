@@ -8,3 +8,6 @@ dbaas-api-zitadel-sa-key.json
 # Local dev tools and state (make dev)
 /bin/
 /hack/dev/.state/
+
+# Terraform working dir for the local ZITADEL
+/hack/dev/terraform/.terraform/

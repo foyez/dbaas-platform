@@ -57,13 +57,46 @@ install_zitadel() {
   k wait -n zitadel --for=create secret/terraform --timeout=120s
 }
 
+configure_zitadel() {
+  step "ZITADEL project, roles and apps (infra/zitadel/tf)"
+  local tf_key="$STATE_DIR/zitadel-terraform.json" port=18080
+  k get secret -n zitadel terraform -o jsonpath='{.data.terraform\.json}' | base64 -d >"$tf_key"
+  chmod 600 "$tf_key"
+
+  # Run the binary directly (not via k) so $! is kubectl itself.
+  "$KUBECTL" --context "$CTX" port-forward -n zitadel svc/zitadel "$port:8080" >/dev/null 2>&1 &
+  PF_PID=$!
+  until curl -fs "http://localhost:$port/debug/healthz" >/dev/null; do
+    kill -0 "$PF_PID" 2>/dev/null || { echo "port-forward failed; is port $port in use?" >&2; exit 1; }
+    sleep 1
+  done
+
+  local tf=("$TERRAFORM" -chdir="$DEV_DIR/terraform")
+  "${tf[@]}" init -input=false >/dev/null
+  "${tf[@]}" apply -input=false -auto-approve \
+    -var "zitadel_port=$port" -var "jwt_profile_file=$tf_key"
+
+  "${tf[@]}" output -raw api_key_details >"$STATE_DIR/api-key.json"
+  chmod 600 "$STATE_DIR/api-key.json"
+  FRONTEND_CLIENT_ID="$("${tf[@]}" output -raw frontend_client_id)"
+  PROJECT_ID="$("${tf[@]}" output -raw project_id)"
+
+  cleanup
+  PF_PID=""
+}
+
+PF_PID=""
+cleanup() { [[ -z "$PF_PID" ]] || kill "$PF_PID" 2>/dev/null || true; }
+
 main() {
+  trap cleanup EXIT
   mkdir -p "$STATE_DIR"
   create_cluster
   install_ingress
   configure_dns
   install_cnpg
   install_zitadel
+  configure_zitadel
 }
 
 main "$@"
