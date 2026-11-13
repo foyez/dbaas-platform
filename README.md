@@ -153,7 +153,7 @@ Log in with `admin@dbaas.auth.dbaas.localhost` / `Password1!`, which has the `db
 
 `make dev-status` shows what's running and `make dev-down` deletes the cluster. `make help` lists every target.
 
-Compared with production, the local setup has no HTTPS, observability stack or public database ports. To connect to an instance directly, run `kubectl --context kind-dbaas-dev port-forward -n database-system svc/<instance>-rw 5432`. The `*.localhost` hostnames resolve to your machine without any `/etc/hosts` changes in Chrome and Firefox. Safari may not resolve them.
+Compared with production, the local setup has no HTTPS or observability stack. Direct database connections work the same way as in production: the credentials in the UI point at `127.0.0.1:<port>`, which kind forwards to ingress-nginx's TCP passthrough. Ports 30100–30119 are mapped, which is enough for 20 instances. The `*.localhost` hostnames resolve to your machine without any `/etc/hosts` changes in Chrome and Firefox. Safari may not resolve them.
 
 ## Design decisions and trade-offs
 

@@ -17,7 +17,11 @@ APP_HOST="app.$DOMAIN"
 API_HOST="api.$DOMAIN"
 AUTH_HOST="auth.$DOMAIN"
 
-INGRESS_NGINX_VERSION="controller-v1.15.1"
+# The operator hands out database ports from 30100 up; kind-config.yaml maps
+# the first 20 to 127.0.0.1, enough for local use.
+DB_PORT_FIRST=30100
+DB_PORT_LAST=30119
+
 ZITADEL_CHART_VERSION="10.5.0"
 
 : "${KIND:?run via make}" "${KUBECTL:?run via make}" "${HELM:?run via make}" "${TERRAFORM:?run via make}"

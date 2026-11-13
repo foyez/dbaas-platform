@@ -54,8 +54,9 @@ patches:
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
 
-  # Local ZITADEL over plain HTTP (see hack/dev/zitadel-values.yaml). No
-  # public DB host: the TCP passthrough isn't wired up locally.
+  # Local ZITADEL over plain HTTP (see hack/dev/zitadel-values.yaml).
+  # Databases are reached on 127.0.0.1:<allocated port> via kind's port
+  # mappings (hack/dev/kind-config.yaml).
   - target:
       kind: ConfigMap
       name: dbaas-api-config
@@ -74,4 +75,4 @@ patches:
         value: "80"
       - op: replace
         path: /data/PUBLIC_DB_HOST
-        value: ""
+        value: 127.0.0.1

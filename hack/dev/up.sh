@@ -12,8 +12,9 @@ create_cluster() {
 }
 
 install_ingress() {
-  step "ingress-nginx ($INGRESS_NGINX_VERSION)"
-  k apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/$INGRESS_NGINX_VERSION/deploy/static/provider/kind/deploy.yaml"
+  step "ingress-nginx (HTTP on :80, database TCP on :$DB_PORT_FIRST-$DB_PORT_LAST)"
+  k apply -k "$DEV_DIR/ingress-nginx"
+  k rollout status -n ingress-nginx deployment/ingress-nginx-controller --timeout=180s
   k wait -n ingress-nginx --for=condition=Available deployment/ingress-nginx-controller --timeout=180s
   # The admission webhook can refuse connections for a few seconds after the
   # deployment reports Available; wait until it actually serves.
@@ -94,8 +95,6 @@ deploy_operator() {
   step "dbaas operator"
   build_image postgres-platform-operator:dev "$ROOT/operator"
   k apply -k "$ROOT/gitops/operator/overlays/dev"
-  # The operator wires instances into ingress-nginx's tcp-services ConfigMap.
-  k apply -k "$ROOT/gitops/ingress-nginx-tcp-access/base"
   k rollout restart -n dbaas-operator deployment >/dev/null
   k rollout status -n dbaas-operator deployment --timeout=180s
 

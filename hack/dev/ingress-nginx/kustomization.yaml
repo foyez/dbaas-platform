@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ingress-nginx's kind manifest (last upstream release), patched so the
+# operator's TCP passthrough works locally like it does in production.
+resources:
+  - https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.15.1/deploy/static/provider/kind/deploy.yaml
+  - ../../../gitops/ingress-nginx-tcp-access/base
+
+patches:
+  # Serve the tcp-services ConfigMap the operator writes to, and listen on the
+  # node's network so allocated ports (30100+) reach the kind port mappings.
+  - target:
+      kind: Deployment
+      name: ingress-nginx-controller
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+      - op: add
+        path: /spec/template/spec/hostNetwork
+        value: true
+      - op: replace
+        path: /spec/template/spec/dnsPolicy
+        value: ClusterFirstWithHostNet
