@@ -12,6 +12,7 @@ KIND_VERSION      ?= v0.33.0
 KUBECTL_VERSION   ?= v1.35.10
 HELM_VERSION      ?= v3.22.1
 TERRAFORM_VERSION ?= 1.17.2
+MKDOCS_MATERIAL_VERSION ?= 9.8.0
 
 LOCALBIN  ?= $(CURDIR)/bin
 KIND      ?= $(LOCALBIN)/kind-$(KIND_VERSION)
@@ -43,6 +44,21 @@ dev-down: tools ## Delete the kind cluster and local state.
 .PHONY: dev-status
 dev-status: tools ## Show what is running in the local cluster.
 	hack/dev/status.sh
+
+##@ Documentation
+
+# Material for MkDocs is supported until May 2027; mkdocs.yml also builds with
+# its successor Zensical (zensical/zensical image), so moving is a tool swap.
+MKDOCS_RUN = docker run --rm -e NO_MKDOCS_2_WARNING=1 -v "$(CURDIR)":/docs
+MKDOCS_IMAGE = squidfunk/mkdocs-material:$(MKDOCS_MATERIAL_VERSION)
+
+.PHONY: docs
+docs: ## Preview the docs site at http://localhost:8000 (live reload).
+	$(MKDOCS_RUN) -it -p 8000:8000 $(MKDOCS_IMAGE)
+
+.PHONY: docs-build
+docs-build: ## Build the docs site into ./site, failing on warnings such as broken links.
+	$(MKDOCS_RUN) $(MKDOCS_IMAGE) build --strict
 
 ##@ Tools
 
