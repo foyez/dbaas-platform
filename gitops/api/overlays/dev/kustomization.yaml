@@ -1,25 +1,27 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+# Local kind cluster (make dev). Built and loaded by hack/dev/up.sh:
+#   docker build -f platform/Containerfile --target prod -t dbaas-platform-api:dev ./platform
 resources:
   - ../../base
 
-# Build locally with: docker build -t dbaas-platform-api:dev ./platform
-# OrbStack's Kubernetes shares Docker's image store, so no push/registry needed.
 images:
   - name: registry.onstackit.cloud/dbaas-platform/dbaas-platform-api
     newName: dbaas-platform-api
     newTag: dev
 
 patches:
-  # No Ingress/TLS locally - reach the API via `kubectl port-forward` instead
-  - patch: |-
-      apiVersion: networking.k8s.io/v1
+  # Plain HTTP on http://api.dbaas.localhost - no TLS or cert-manager locally.
+  - target:
       kind: Ingress
-      metadata:
-        name: dbaas-api
-        namespace: dbaas-api
-      $patch: delete
+      name: dbaas-api
+    patch: |-
+      - op: remove
+        path: /spec/tls
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.dbaas.localhost
 
   - patch: |-
       apiVersion: cert-manager.io/v1
@@ -29,18 +31,31 @@ patches:
         namespace: dbaas-api
       $patch: delete
 
-  # Drop the private-registry pull secret and force IfNotPresent so the
-  # kubelet never tries to actually pull ":dev" from a registry.
+  # One replica is enough on a laptop.
+  - patch: |-
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: dbaas-api
+        namespace: dbaas-api
+      $patch: delete
+
+  # Image is loaded into kind, never pulled from the private registry.
   - target:
       kind: Deployment
       name: dbaas-deploy
     patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
       - op: remove
         path: /spec/template/spec/imagePullSecrets
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
 
+  # Local ZITADEL over plain HTTP (see hack/dev/zitadel-values.yaml). No
+  # public DB host: the TCP passthrough isn't wired up locally.
   - target:
       kind: ConfigMap
       name: dbaas-api-config
@@ -50,5 +65,13 @@ patches:
         value: development
       - op: replace
         path: /data/SERVER_ALLOW_ORIGINS
-        value: http://localhost:5173
-
+        value: http://app.dbaas.localhost
+      - op: replace
+        path: /data/ZITADEL_DOMAIN
+        value: auth.dbaas.localhost
+      - op: add
+        path: /data/ZITADEL_INSECURE_PORT
+        value: "80"
+      - op: replace
+        path: /data/PUBLIC_DB_HOST
+        value: ""

@@ -1,25 +1,28 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+# Local kind cluster (make dev). Built and loaded by hack/dev/up.sh, with the
+# VITE_* build args pointing at the local ZITADEL and API.
 resources:
   - ../../base
 
-# Build locally with: docker build -t dbaas-frontend:dev ./client
 images:
   - name: registry.onstackit.cloud/dbaas-platform/dbaas-frontend
     newName: dbaas-frontend
     newTag: dev
 
 patches:
-  # No Ingress/TLS locally - reach the UI via `kubectl port-forward` instead
-  - patch: |-
-      apiVersion: networking.k8s.io/v1
+  # Plain HTTP on http://app.dbaas.localhost - no TLS or cert-manager locally.
+  - target:
       kind: Ingress
-      metadata:
-        name: dbaas-frontend
-        namespace: dbaas-frontend
-      $patch: delete
- 
+      name: dbaas-frontend
+    patch: |-
+      - op: remove
+        path: /spec/tls
+      - op: replace
+        path: /spec/rules/0/host
+        value: app.dbaas.localhost
+
   - patch: |-
       apiVersion: cert-manager.io/v1
       kind: Certificate
@@ -32,6 +35,9 @@ patches:
       kind: Deployment
       name: dbaas-frontend
     patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
       - op: remove
         path: /spec/template/spec/imagePullSecrets
       - op: add

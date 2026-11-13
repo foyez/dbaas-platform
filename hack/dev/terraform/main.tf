@@ -45,7 +45,7 @@ data "zitadel_orgs" "dbaas" {
 }
 
 data "zitadel_human_users" "admin" {
-  org_id           = data.zitadel_orgs.dbaas.ids[0]
+  org_id       = data.zitadel_orgs.dbaas.ids[0]
   email        = "admin@dbaas.localhost"
   email_method = "TEXT_QUERY_METHOD_EQUALS"
 }
@@ -75,5 +75,16 @@ output "frontend_client_id" {
 
 output "api_key_details" {
   value     = module.zitadel.api_key_details
+  sensitive = true
+}
+
+# Client-credentials login for the Go SDK examples (sdk/).
+output "sdk_client_id" {
+  value     = module.zitadel.sdk_test_client_id
+  sensitive = true
+}
+
+output "sdk_client_secret" {
+  value     = module.zitadel.sdk_test_client_secret
   sensitive = true
 }
