@@ -32,6 +32,7 @@ When it prints **Platform is up.**, these are available:
 | API | <http://api.dbaas.localhost/api/v1> |
 | API docs (Swagger UI) | <http://api.dbaas.localhost/docs> |
 | ZITADEL console | <http://auth.dbaas.localhost/ui/console> |
+| Grafana (metrics, logs, traces) | <http://grafana.dbaas.localhost>, `admin` / `admin` |
 
 !!! note "Browser support"
     The `*.localhost` hostnames resolve to your machine without any `/etc/hosts` changes in Chrome and Firefox. Safari may not resolve them.
@@ -48,6 +49,16 @@ To see the Kubernetes side, point kubectl at the cluster:
 ```sh
 kubectl --context kind-dbaas-dev get postgresql -A
 ```
+
+## See what's happening inside
+
+Open Grafana at <http://grafana.dbaas.localhost> and log in with `admin` / `admin`:
+
+- **Dashboards → DBaaS API Overview** for request rate, errors and latency.
+- **Explore → Loki**, query `{namespace="dbaas-api"} | json`, and click **TraceID** on a log line to open its trace.
+- **Explore → Tempo**, search for service `dbaas-api` to see each request's spans: token introspection, Kubernetes API calls and SQL console statements.
+
+The observability stack needs about 1 GB of memory. To skip it, run `OBSERVABILITY=false make dev`; the instance Logs tab and the audit log then have no data.
 
 ## Everyday commands
 
@@ -68,4 +79,4 @@ kubectl --context kind-dbaas-dev get postgresql -A
 | Identity | Self-hosted ZITADEL in the cluster | ZITADEL Cloud |
 | Database access | `127.0.0.1:<port>`, ports 30100–30119 | Shared LoadBalancer, ports 30100–30999 |
 | Delivery | Images built and loaded by `make dev` | Forgejo CI + Argo CD |
-| Observability | Not installed | Prometheus, Loki, Grafana |
+| Observability | Same stack: Prometheus, Loki, Tempo, Alloy, Grafana | Same |

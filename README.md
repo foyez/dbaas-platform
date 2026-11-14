@@ -28,7 +28,7 @@ flowchart LR
 - **Auth with ZITADEL.** OIDC login with PKCE, `dbaas.user` and `dbaas.admin` roles, token introspection in the API.
 - **Web UI and Go SDK.** A Vue 3 app for the full instance lifecycle, and a typed Go client using OAuth2 client credentials.
 - **GitOps delivery.** Forgejo CI builds images and commits their tags to Git; Argo CD deploys them.
-- **Observability.** Prometheus and Grafana for metrics, Loki and Alloy for logs, and an audit trail queryable through the API.
+- **Observability.** Prometheus for metrics, Loki for logs and Tempo for OpenTelemetry traces, linked in Grafana by trace ID, plus an audit trail queryable through the API. Runs locally with `make dev` too.
 - **Infrastructure as code.** OpenStack VMs and Kubernetes clusters (Terraform + Ansible), the SKE cluster and ZITADEL, all in Terraform.
 
 ## Quick start
@@ -47,6 +47,7 @@ About 10 minutes later the whole platform is running on a local [kind](https://k
 | API | http://api.dbaas.localhost/api/v1 |
 | API docs (Swagger UI) | http://api.dbaas.localhost/docs |
 | ZITADEL console | http://auth.dbaas.localhost/ui/console |
+| Grafana (metrics, logs, traces) | http://grafana.dbaas.localhost (admin / admin) |
 
 Log in with `admin@dbaas.auth.dbaas.localhost` / `Password1!`. `make dev-down` deletes everything and `make help` lists all targets. See [Getting started](https://foyez.github.io/dbaas-platform/getting-started/) for details.
 
@@ -98,4 +99,4 @@ The site is built from [`docs/`](docs). Preview it with `make docs`.
 - **Testing**: Go testing + testify, envtest, Vitest, Playwright, k6
 - **Infrastructure**: Terraform, Ansible, OpenStack (DevStack), STACKIT SKE, kind
 - **Delivery**: Forgejo Actions, Kustomize, Argo CD, GitHub Pages
-- **Observability**: Prometheus, Grafana, Loki, Grafana Alloy
+- **Observability**: Prometheus, Grafana, Loki, Tempo, Grafana Alloy, OpenTelemetry

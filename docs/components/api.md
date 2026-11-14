@@ -33,7 +33,7 @@ The code follows a pragmatic clean architecture: dependencies point inwards and 
 | `infra/loki` | LogQL queries for instance logs and the audit trail |
 | `infra/pgquery` | Connection pools for the SQL console |
 | `auth` | ZITADEL token introspection and role checks |
-| `observability` | Request logging, metrics and audit middleware |
+| `observability` | Request logging, metrics, tracing and audit middleware |
 
 ## Behaviour worth knowing
 
@@ -54,6 +54,9 @@ The code follows a pragmatic clean architecture: dependencies point inwards and 
 | `ZITADEL_INSECURE_PORT` | Plain-HTTP ZITADEL port, for the local setup only |
 | `PUBLIC_DB_HOST` | Host returned in credentials for external connections |
 | `LOKI_URL` | Loki endpoint for logs and audit queries |
+| `APP_LOG_FORMAT` | `json` (default, needed for Loki queries) or `text` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint for traces; tracing is off when unset |
+| `OTEL_SERVICE_NAME` | Service name on spans, `dbaas-api` |
 
 ## Develop and test
 
