@@ -79,8 +79,6 @@ func run() error {
 		auditLogger,
 	)
 
-	setupDocs(r)
-
 	if err := r.Run(cfg.Server.Address); err != nil {
 		return fmt.Errorf("start API server: %w", err)
 	}
