@@ -7,34 +7,61 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
-func (c *Client) do(
-	ctx context.Context,
-	method, path string,
-	body, out any,
-	headers map[string]string,
-) error {
+// maxErrorBody caps how much of an error response is read into an APIError.
+const maxErrorBody = 64 << 10
+
+// request is one API call.
+type request struct {
+	method string
+	path   string
+	query  url.Values
+	// headers are extra request headers, e.g. Idempotency-Key.
+	headers map[string]string
+	// body is encoded as JSON when non-nil.
+	body any
+	// out is decoded from the JSON response when non-nil.
+	out any
+}
+
+func (c *Client) do(ctx context.Context, r request) error {
 	var reqBody io.Reader
 
-	if body != nil {
-		b, err := json.Marshal(body)
+	if r.body != nil {
+		b, err := json.Marshal(r.body)
 		if err != nil {
 			return fmt.Errorf("encode request body: %w", err)
 		}
 		reqBody = bytes.NewReader(b)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, reqBody)
+	u := c.baseURL + r.path
+	if len(r.query) > 0 {
+		u += "?" + r.query.Encode()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, r.method, u, reqBody)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	if r.body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("Accept", "application/json")
 
-	for k, v := range headers {
+	for k, v := range r.headers {
 		req.Header.Set(k, v)
+	}
+
+	if c.tokenSource != nil {
+		token, err := c.tokenSource.Token()
+		if err != nil {
+			return fmt.Errorf("get access token: %w", err)
+		}
+		token.SetAuthHeader(req)
 	}
 
 	resp, err := c.httpClient.Do(req)
@@ -44,15 +71,21 @@ func (c *Client) do(
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
+		return newAPIError(resp.StatusCode, body)
 	}
 
-	if out != nil {
-		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+	if r.out != nil {
+		if err := json.NewDecoder(resp.Body).Decode(r.out); err != nil {
 			return fmt.Errorf("decode response: %w", err)
 		}
 	}
 
 	return nil
+}
+
+// instancePath builds /api/v1/instances/{id}[/suffix], escaping the id so
+// it can't change the path.
+func instancePath(id, suffix string) string {
+	return "/api/v1/instances/" + url.PathEscape(id) + suffix
 }
