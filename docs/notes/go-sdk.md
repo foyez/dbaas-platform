@@ -1,7 +1,7 @@
 # Building a Go SDK
 
 !!! abstract "Where it's used in this project"
-    The Go client in [`sdk/`](https://github.com/foyez/dbaas-platform/tree/main/sdk), its fake API in [`sdk/dbaastest`](https://github.com/foyez/dbaas-platform/tree/main/sdk/dbaastest) and its examples in [`sdk/example_test.go`](https://github.com/foyez/dbaas-platform/blob/main/sdk/example_test.go). See [Go SDK](../components/sdk.md).
+    The Go client in [`sdk/`](https://github.com/foyez/dbaas-platform/tree/main/sdk), its fake API in [`sdk/dbaas/dbaastest`](https://github.com/foyez/dbaas-platform/tree/main/sdk/dbaas/dbaastest) and its examples in [`sdk/dbaas/example_test.go`](https://github.com/foyez/dbaas-platform/blob/main/sdk/dbaas/example_test.go). See [Go SDK](../components/sdk.md).
 
 ## Key ideas
 
@@ -25,6 +25,17 @@ flowchart LR
 - **One request path.** Every method builds a `request` and calls `c.do`. Encoding, auth headers, error decoding and response decoding happen in one place, so a fix there fixes every endpoint.
 - **Functional options.** `New(baseURL, opts ...Option)` keeps the required argument positional, and lets new settings (`WithPollInterval`) be added without breaking callers. Options only *record* settings. `New` builds the token source after all options run, so their order doesn't matter.
 - **`context.Context` first, everywhere.** The caller decides timeouts and cancellation; the SDK never chooses for them.
+
+### Project structure
+
+Go has few rules about layout, but the ones it has matter for a library:
+
+- **The import path's last element is the package name.** `import ".../sdk"` giving `package dbaas` makes every reader guess the name, and tools add an alias to clarify it. So the library lives in `sdk/dbaas/`, and the module root (`sdk/`) holds what isn't the library: tooling, examples, the changelog.
+- **Test helpers get a `…test` subpackage.** `net/http/httptest` sits under `net/http`; `dbaastest` sits under `dbaas`. It's exported, so users can test their own code against it, without it bloating the main package.
+- **Tests mirror the source.** `request_test.go` tests `request.go`, and so on. Examples go in `example_test.go`, and slow tests sit behind a build tag (`//go:build integration`).
+- **External test package.** The tests are `package dbaas_test`, so they can only use the exported API, the same as a user.
+- **Lowest `go` version that works.** The `go` line in a library's `go.mod` is the oldest Go its users can build with. It's `1.25.0` because `golang.org/x/oauth2` needs that, not whatever the author has installed.
+- **Versions are directory-prefixed tags.** A module in a subdirectory is released with tags like `sdk/v0.1.0`. `Version` in the code and `CHANGELOG.md` say what each release contains.
 
 ### Authentication: client credentials
 
@@ -87,6 +98,8 @@ A fake is only as good as its fidelity. It must reuse the real error codes and s
 - **The SDK had drifted from the API, and nothing noticed.** `List` decoded into `[]*Instance`, but the API returns `{"items": [...], "nextCursor": "..."}`. `Instance` was missing `database` and `externalPort`. An example expected `Get` to return the input `Name`, but `Name` is the generated ID and the chosen name is `Database`. Each one was a silent zero value, not an error. Writing examples with exact `// Output:` is what exposed them.
 - **String errors aren't an API.** `fmt.Errorf("unexpected status %d: %s", ...)` forced callers to parse error text. A typed `APIError` with sentinels makes "treat not found as already deleted" a one-liner.
 - **Wrapping the `http.Client` for auth fights with `WithHTTPClient`.** The first version replaced `c.httpClient` with an OAuth2 client, so `WithHTTPClient` after `WithClientCredentials` silently dropped auth, and the other order dropped the custom client. Keeping the token source separate and adding the header in `do` removed the ordering trap.
+- **The first layout fought Go's conventions.** The package `dbaas` sat at the module root `sdk`, so every import needed `dbaas "…/sdk"`. Moving it to `sdk/dbaas` made the alias unnecessary. It also left room at the root for tooling and examples without mixing them into the library.
+- **Pin linters, but keep them current.** The operator's `golangci-lint` v2.12.2 couldn't load packages built with Go 1.27 ("export data version 5 is greater than maximum supported version 4"). A linter has to be at least as new as the Go that builds the code it checks.
 - **Escape path parameters.** `"/instances/" + id` lets an ID like `../audit-logs` change which endpoint is called. `url.PathEscape` keeps it one path segment.
 - **Don't generate idempotency keys inside the SDK.** A key generated per call is different on every retry, so it doesn't stop duplicates. The key must come from the caller, who knows what counts as "the same create".
 
@@ -109,6 +122,12 @@ A fake is only as good as its fidelity. It must reuse the real error codes and s
 
 ??? question "What can't the fake catch, and what does?"
     Differences between the fake and the real API, such as a renamed field, a new validation rule, or auth configuration. The integration test runs the same operations against the real API and ZITADEL, and catches them.
+
+??? question "Why does the SDK's code live in `sdk/dbaas/` and not in `sdk/`?"
+    The last element of an import path should be the package name, so `import ".../sdk/dbaas"` gives `package dbaas` without an alias. The module root holds the tooling, examples and changelog, which aren't part of the library.
+
+??? question "How is a Go module in a subdirectory released?"
+    With a tag prefixed by the directory: `sdk/v0.2.0`. The Go toolchain maps `go get github.com/foyez/dbaas-platform/sdk/dbaas@v0.2.0` to that tag.
 
 ??? question "Why is `IdempotencyKey` a header and `json:\"-\"` in `CreateInstanceInput`?"
     The API reads it from the `Idempotency-Key` header, the common convention for retry-safe POSTs. `json:"-"` keeps it out of the JSON body, and `Create` moves it into the header.

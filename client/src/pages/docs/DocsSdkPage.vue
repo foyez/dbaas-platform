@@ -8,7 +8,7 @@
 
     <div class="space-y-2">
       <h2 class="text-xl font-semibold tracking-tight">Install</h2>
-      <pre class="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm"><code>go get github.com/foyez/dbaas-platform/sdk</code></pre>
+      <pre class="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm"><code>go get github.com/foyez/dbaas-platform/sdk/dbaas</code></pre>
     </div>
 
     <div class="space-y-2">

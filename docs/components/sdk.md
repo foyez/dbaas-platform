@@ -3,11 +3,11 @@
 [`sdk/`](https://github.com/foyez/dbaas-platform/tree/main/sdk) is a typed Go client for the REST API, for teams that want to manage databases from code or CI instead of the UI. It's a thin wrapper: every method is one API call, plus `WaitUntilRunning` and `All`, which loop over calls.
 
 ```sh
-go get github.com/foyez/dbaas-platform/sdk
+go get github.com/foyez/dbaas-platform/sdk/dbaas
 ```
 
 ```go
-import dbaas "github.com/foyez/dbaas-platform/sdk"
+import "github.com/foyez/dbaas-platform/sdk/dbaas"
 
 c := dbaas.New("https://api.example.com",
     dbaas.WithClientCredentials(tokenURL, clientID, clientSecret, []string{
@@ -89,33 +89,46 @@ case err != nil:
 
 ## Project layout
 
-| Path | What's in it |
-|---|---|
-| `doc.go` | Package documentation |
-| `client.go`, `options.go`, `auth.go` | `New`, functional options, authentication |
-| `request.go` | The one place requests are built, authenticated, sent and decoded |
-| `errors.go` | `APIError` and the sentinels |
-| `types.go` | Response types |
-| `health.go`, `instances.go`, `audit.go` | One file per API area |
-| `dbaastest/` | In-memory fake API, exported so SDK users can test against it too |
-| `example_test.go` | Testable examples |
-| `client_test.go` | Unit tests |
-| `integration_test.go` | End-to-end test against a real API, behind the `integration` build tag |
-| `examples/provision/` | A runnable program that provisions a database for a CI job |
+```text
+sdk/                        module github.com/foyez/dbaas-platform/sdk
+├── dbaas/                  package dbaas: the client
+│   ├── doc.go              package documentation
+│   ├── client.go           Client and New
+│   ├── options.go          functional options
+│   ├── auth.go             WithClientCredentials, WithToken
+│   ├── request.go          the one place requests are sent and decoded
+│   ├── errors.go           APIError and sentinel errors
+│   ├── types.go            response types
+│   ├── version.go          Version, sent as the User-Agent
+│   ├── health.go, instances.go, audit.go   one file per API area
+│   ├── *_test.go           unit tests, one per source file
+│   ├── example_test.go     testable examples
+│   ├── integration_test.go against a real API, behind the integration build tag
+│   └── dbaastest/          package dbaastest: in-memory fake API for tests
+├── examples/provision/     runnable program: provision a database for CI
+├── .golangci.yml           lint configuration
+├── CHANGELOG.md
+└── Makefile
+```
+
+The library lives in `sdk/dbaas/`, not the module root, so the import path ends in the package name. The module root keeps the tooling, examples and docs. The fake is a subpackage of the package it fakes, the way `net/http/httptest` sits under `net/http`.
 
 ## Testing
 
-There are three layers, from fast and always-on to slow and opt-in:
+There are four layers, from fast and always-on to slow and opt-in:
 
 | Layer | Runs against | Command |
 |---|---|---|
-| Testable examples (`Example...` functions) | `dbaastest` fake | `make test` |
-| Unit tests (`Test...` functions) | `dbaastest` fake, or a one-response `httptest` server | `make test` |
-| Integration test | A real API and ZITADEL | `make test-integration` |
+| Testable examples (`example_test.go`) | `dbaastest` fake | `make test` |
+| Unit tests (`request_test.go`, `errors_test.go`, ...) | `dbaastest` fake, or a one-response `httptest` server | `make test` |
+| Fake contract tests (`dbaastest/server_test.go`) | `dbaastest` fake, in raw HTTP | `make test` |
+| Integration test (`integration_test.go`) | A real API and ZITADEL | `make test-integration` |
 
 The examples are the documentation. `go test` runs each one and fails if what it prints differs from its `// Output:` comment, so the examples on pkg.go.dev can't go stale. Browse them locally with `make docs`.
 
-`make test` needs no cluster and no credentials, so CI ([`.forgejo/workflows/sdk-ci.yaml`](https://github.com/foyez/dbaas-platform/blob/main/.forgejo/workflows/sdk-ci.yaml)) runs it on every change to `sdk/`.
+The contract tests pin the API behaviour the fake has to copy (status codes, error codes, the plain-text 401, idempotent create). The integration test checks the same behaviour on the real API.
+
+`make test` and `make lint` need no cluster and no credentials, so CI ([`.forgejo/workflows/sdk-ci.yaml`](https://github.com/foyez/dbaas-platform/blob/main/.forgejo/workflows/sdk-ci.yaml)) runs them on every change to `sdk/`.
 
 ### Test your own code with `dbaastest`
 
@@ -152,5 +165,15 @@ set -a; . ./.env; set +a
 go run ./examples/provision -name orders -key demo-1   # prints the connection URI
 go run ./examples/provision -key demo-1 -delete
 ```
+
+## Releasing
+
+The SDK is its own Go module inside the repository, so releases are tags prefixed with its directory, like the operator's `operator/vX.Y.Z`:
+
+1. Move the `Unreleased` entries in [`sdk/CHANGELOG.md`](https://github.com/foyez/dbaas-platform/blob/main/sdk/CHANGELOG.md) under the new version.
+2. Set `Version` in `sdk/dbaas/version.go`; it's sent as `User-Agent: dbaas-go/<version>`.
+3. `git tag sdk/v0.2.0 && git push origin sdk/v0.2.0`.
+
+Users then run `go get github.com/foyez/dbaas-platform/sdk/dbaas@v0.2.0`.
 
 How the SDK is designed, and what went wrong while building it, is in the learning notes: [Building a Go SDK](../notes/go-sdk.md).
