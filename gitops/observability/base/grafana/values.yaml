@@ -60,9 +60,12 @@ sidecar:
     # so default namespace-scoped RBAC (a Role, not ClusterRole) is enough -
     # no extra config needed unless you later want dashboards from other namespaces
 
+# Grafana 13 builds its search indexes in memory when dashboards are opened,
+# which pushed it past a 256Mi limit into OOM kills (502/503 at the ingress
+# while it restarted). It idles around 200Mi and peaks above 250Mi.
 resources:
   requests:
     cpu: 100m
-    memory: 128Mi
-  limits:
     memory: 256Mi
+  limits:
+    memory: 512Mi
