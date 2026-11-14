@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // Sentinel errors for the API's error codes. An *APIError matches one with
@@ -132,7 +133,7 @@ func newAPIError(status int, body []byte) *APIError {
 		return apiErr
 	}
 
-	apiErr.Message = string(body)
+	apiErr.Message = strings.TrimSpace(string(body))
 	if apiErr.Message == "" {
 		apiErr.Message = http.StatusText(status)
 	}

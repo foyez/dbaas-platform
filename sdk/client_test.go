@@ -112,7 +112,7 @@ func TestAPIErrorDecoding(t *testing.T) {
 		{
 			name:    "plain text from the auth middleware",
 			status:  http.StatusUnauthorized,
-			body:    "invalid token",
+			body:    "invalid token\n",
 			wantErr: dbaas.ErrUnauthorized,
 			wantMsg: "invalid token",
 		},
