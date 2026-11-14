@@ -4,6 +4,7 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -402,11 +403,17 @@ func (h *InstanceHandler) ExecuteQuery(c *gin.Context) {
 
 	result, err := h.svc.ExecuteQuery(c.Request.Context(), id, userID, req.SQL)
 	if err != nil {
-		h.logger.Error(
-			"failed to execute query",
-			"error", err,
-			"id", id,
-		)
+		// A rejected statement is the user's mistake, not an API failure,
+		// and its message can contain row values: log only the SQLSTATE.
+		var queryErr *domain.QueryError
+		switch {
+		case errors.As(err, &queryErr):
+			h.logger.Info("query rejected by database", "id", id, "sqlState", queryErr.SQLState)
+		case errors.Is(err, service.ErrQueryTimeout):
+			h.logger.Info("query timed out", "id", id)
+		default:
+			h.logger.Error("failed to execute query", "error", err, "id", id)
+		}
 
 		httpx.RespondError(c, err)
 		return

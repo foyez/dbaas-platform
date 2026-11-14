@@ -4,11 +4,13 @@ package pgquery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
@@ -81,7 +83,7 @@ func (p *Pool) ExecuteQuery(
 	// single ad-hoc statement with no bind parameters.
 	rows, err := pool.Query(ctx, sql, pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
-		return nil, fmt.Errorf("executing query: %w", err)
+		return nil, fmt.Errorf("executing query: %w", queryError(ctx, err))
 	}
 	defer rows.Close()
 
@@ -114,7 +116,7 @@ func (p *Pool) ExecuteQuery(
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("reading results: %w", err)
+		return nil, fmt.Errorf("reading results: %w", queryError(ctx, err))
 	}
 
 	rowCount := len(resultRows)
@@ -230,4 +232,28 @@ func normalizeValue(v any) any {
 	default:
 		return v
 	}
+}
+
+// queryError turns a failure of the user's statement into a domain error the
+// API can show them. ctx is the statement's own timeout context. Anything
+// else (connection problems, decoding errors) is returned unchanged.
+func queryError(ctx context.Context, err error) error {
+	// Check the deadline first: when pgx cancels a statement that ran too
+	// long, PostgreSQL reports it as a generic 57014 query_canceled error.
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return domain.ErrQueryTimeout
+	}
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return &domain.QueryError{
+			SQLState: pgErr.Code,
+			Message:  pgErr.Message,
+			Detail:   pgErr.Detail,
+			Hint:     pgErr.Hint,
+			Position: int(pgErr.Position),
+		}
+	}
+
+	return err
 }

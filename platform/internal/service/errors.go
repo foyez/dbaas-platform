@@ -13,6 +13,7 @@ var (
 	ErrNotFound         = domain.ErrNotFound
 	ErrAlreadyExists    = domain.ErrAlreadyExists
 	ErrInstanceNotReady = domain.ErrInstanceNotReady
+	ErrQueryTimeout     = domain.ErrQueryTimeout
 
 	ErrInvalidInput          = errors.New("invalid input")
 	ErrMissingIdempotencyKey = errors.New("missing idempotency key")

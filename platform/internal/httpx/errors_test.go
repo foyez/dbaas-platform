@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,7 @@ func TestRespondError(t *testing.T) {
 		{"missing idempotency key", service.ErrMissingIdempotencyKey, http.StatusBadRequest, CodeMissingIdempotencyKey},
 		{"no update fields", service.ErrNoUpdateFields, http.StatusBadRequest, CodeNoUpdateFields},
 		{"not ready", service.ErrInstanceNotReady, http.StatusConflict, CodeInstanceNotReady},
+		{"query timeout", fmt.Errorf("executing query: %w", service.ErrQueryTimeout), http.StatusUnprocessableEntity, CodeQueryTimeout},
 		{"unknown", errors.New("boom"), http.StatusInternalServerError, CodeInternalError},
 	}
 
@@ -45,4 +47,35 @@ func TestRespondError(t *testing.T) {
 			assert.Equal(t, tt.wantCode, body.Error.Code)
 		})
 	}
+}
+
+func TestRespondError_UsesSentinelMessage(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	RespondError(c, fmt.Errorf("executing query: %w", service.ErrQueryTimeout))
+
+	var body ErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+	assert.Equal(t, service.ErrQueryTimeout.Error(), body.Error.Message)
+}
+
+func TestRespondError_QueryError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	RespondError(c, fmt.Errorf("executing query: %w", &domain.QueryError{
+		SQLState: "42P01",
+		Message:  `relation "ordrs" does not exist`,
+		Position: 15,
+	}))
+
+	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	assert.JSONEq(t, `{"error": {
+		"code": "QUERY_FAILED",
+		"message": "relation \"ordrs\" does not exist",
+		"details": {"sqlState": "42P01", "position": 15}
+	}}`, w.Body.String())
 }

@@ -41,6 +41,7 @@ The code follows a pragmatic clean architecture: dependencies point inwards and 
 - **Idempotent create.** The resource name is derived from `sha256(userID + Idempotency-Key)`, so retries can't create duplicates. See [design decision 4](../design-decisions/idempotent-creation.md).
 - **Credentials** point at the public database host and the instance's allocated port when one exists, and otherwise at the in-cluster service.
 - **SQL console limits.** Each query runs for at most 10 seconds and returns at most 500 rows, with a small per-instance connection pool. See [design decision 5](../design-decisions/sql-console-through-api.md).
+- **SQL errors reach the user.** When PostgreSQL rejects a statement, the API returns `422 QUERY_FAILED` with PostgreSQL's message, SQLSTATE code, detail, hint and error position, and the console shows them like `psql` does. A statement that runs past the limit returns `422 QUERY_TIMEOUT`. The API logs only the SQLSTATE, since messages can contain row values.
 
 ## Configuration
 

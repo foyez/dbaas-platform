@@ -17,4 +17,6 @@ const (
 	CodeInstanceNotReady      ErrorCode = "INSTANCE_NOT_READY"
 	CodeMissingIdempotencyKey ErrorCode = "MISSING_IDEMPOTENCY_KEY"
 	CodeNoUpdateFields        ErrorCode = "NO_UPDATE_FIELDS"
+	CodeQueryFailed           ErrorCode = "QUERY_FAILED"
+	CodeQueryTimeout          ErrorCode = "QUERY_TIMEOUT"
 )

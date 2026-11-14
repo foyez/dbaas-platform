@@ -16,3 +16,22 @@ type QueryResult struct {
 
 	DurationMs int64 `json:"durationMs"`
 }
+
+// QueryError is a statement the database rejected: a syntax error, a missing
+// table, a constraint violation. The fields come from PostgreSQL and are safe
+// to return to the caller, who owns the database and wrote the statement.
+// Message and Detail can contain row values, so don't log them.
+type QueryError struct {
+	// SQLState is the PostgreSQL error code, e.g. 42P01 (undefined table).
+	SQLState string
+	Message  string
+	Detail   string
+	Hint     string
+	// Position is the 1-based character offset of the error in the
+	// statement, or 0 when PostgreSQL doesn't report one.
+	Position int
+}
+
+func (e *QueryError) Error() string {
+	return e.Message
+}

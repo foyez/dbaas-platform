@@ -299,15 +299,32 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/InstanceNotReady'
-        '500':
+        '422':
           description: |
-            Unexpected error. Also returned when the statement itself fails
-            (syntax error, missing table, timeout); the database's error
-            message isn't passed through yet.
+            The statement didn't complete. `QUERY_FAILED`: PostgreSQL
+            rejected it (syntax error, missing table, constraint violation),
+            and `message` and `details` are PostgreSQL's own error.
+            `QUERY_TIMEOUT`: it ran longer than 10 seconds and was cancelled.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                failed:
+                  value:
+                    error:
+                      code: QUERY_FAILED
+                      message: relation "ordrs" does not exist
+                      details:
+                        sqlState: 42P01
+                        position: 15
+                timeout:
+                  value:
+                    error:
+                      code: QUERY_TIMEOUT
+                      message: query exceeded the time limit and was cancelled
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /api/v1/instances/{id}/logs:
     parameters:
@@ -674,9 +691,35 @@ components:
                 - NO_UPDATE_FIELDS
                 - NOT_FOUND
                 - INSTANCE_NOT_READY
+                - QUERY_FAILED
+                - QUERY_TIMEOUT
                 - INTERNAL_ERROR
             message:
               type: string
+            details:
+              description: Extra data for some codes; for `QUERY_FAILED` it's a QueryErrorDetails.
+              allOf:
+                - $ref: '#/components/schemas/QueryErrorDetails'
+
+    QueryErrorDetails:
+      type: object
+      description: PostgreSQL's description of why it rejected a statement.
+      required: [sqlState]
+      properties:
+        sqlState:
+          type: string
+          description: PostgreSQL error code (SQLSTATE), e.g. `42P01` for an undefined table.
+          example: 42P01
+        detail:
+          type: string
+          description: Extra detail, e.g. which key violated a unique constraint.
+        hint:
+          type: string
+          description: PostgreSQL's suggestion for fixing the statement.
+        position:
+          type: integer
+          description: 1-based character offset of the error in the statement.
+          example: 15
 
   responses:
     BadRequest:
