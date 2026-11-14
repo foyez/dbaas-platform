@@ -18,7 +18,7 @@ import (
 	"os/signal"
 	"time"
 
-	dbaas "github.com/foyez/dbaas-platform/sdk"
+	"github.com/foyez/dbaas-platform/sdk/dbaas"
 )
 
 func main() {

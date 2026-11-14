@@ -5,8 +5,10 @@ import "time"
 // InstanceStatus is where an instance is in its lifecycle.
 type InstanceStatus string
 
+// The statuses an instance moves through.
 const (
-	// StatusPending: created or updated, the operator hasn't finished yet.
+	// StatusPending means created or updated, and the operator hasn't
+	// finished yet.
 	StatusPending  InstanceStatus = "Pending"
 	StatusRunning  InstanceStatus = "Running"
 	StatusFailed   InstanceStatus = "Failed"

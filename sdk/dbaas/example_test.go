@@ -12,8 +12,8 @@ import (
 	"log"
 	"time"
 
-	dbaas "github.com/foyez/dbaas-platform/sdk"
-	"github.com/foyez/dbaas-platform/sdk/dbaastest"
+	"github.com/foyez/dbaas-platform/sdk/dbaas"
+	"github.com/foyez/dbaas-platform/sdk/dbaas/dbaastest"
 )
 
 // The whole lifecycle of an instance: create it, wait for it, connect,

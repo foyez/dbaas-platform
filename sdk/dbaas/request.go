@@ -51,6 +51,7 @@ func (c *Client) do(ctx context.Context, r request) error {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", userAgent)
 
 	for k, v := range r.headers {
 		req.Header.Set(k, v)
@@ -68,7 +69,7 @@ func (c *Client) do(ctx context.Context, r request) error {
 	if err != nil {
 		return fmt.Errorf("send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))

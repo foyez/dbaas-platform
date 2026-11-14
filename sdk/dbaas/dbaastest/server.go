@@ -23,12 +23,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	dbaas "github.com/foyez/dbaas-platform/sdk"
+	"github.com/foyez/dbaas-platform/sdk/dbaas"
 )
 
 // Credentials the fake accepts.
@@ -203,9 +204,10 @@ func (s *Server) list(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	items := []*dbaas.Instance{}
 	end := min(offset+limit, len(s.order))
-	for _, id := range s.order[min(offset, end):end] {
+	page := s.order[min(offset, end):end]
+	items := make([]*dbaas.Instance, 0, len(page))
+	for _, id := range page {
 		items = append(items, s.instances[id])
 	}
 
@@ -375,9 +377,9 @@ func (s *Server) auditLogs(w http.ResponseWriter, r *http.Request) {
 
 	// Newest first, like the real API.
 	logs := []dbaas.LogLine{}
-	for i := len(s.audit) - 1; i >= 0; i-- {
-		if resourceID == "" || strings.Contains(s.audit[i].Line, `"resourceId":"`+resourceID+`"`) {
-			logs = append(logs, s.audit[i])
+	for _, l := range slices.Backward(s.audit) {
+		if resourceID == "" || strings.Contains(l.Line, `"resourceId":"`+resourceID+`"`) {
+			logs = append(logs, l)
 		}
 	}
 

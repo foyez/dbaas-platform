@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	dbaas "github.com/foyez/dbaas-platform/sdk"
+	"github.com/foyez/dbaas-platform/sdk/dbaas"
 )
 
 // integrationClient builds a client from the DBAAS_* environment variables
