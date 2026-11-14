@@ -14,25 +14,29 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 	"github.com/foyez/dbaas-platform/platform/internal/httpx"
 	"github.com/foyez/dbaas-platform/platform/internal/infra/loki"
+	"github.com/foyez/dbaas-platform/platform/internal/observability"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 type InstanceHandler struct {
-	svc    domain.InstanceService
-	logger *slog.Logger
-	authmw *auth.Middleware
+	svc     domain.InstanceService
+	logger  *slog.Logger
+	authmw  *auth.Middleware
+	metrics *observability.Metrics
 }
 
 func NewInstanceHandler(
 	svc domain.InstanceService,
 	logger *slog.Logger,
 	authmw *auth.Middleware,
+	metrics *observability.Metrics,
 ) *InstanceHandler {
 	return &InstanceHandler{
-		svc:    svc,
-		logger: logger,
-		authmw: authmw,
+		svc:     svc,
+		logger:  logger,
+		authmw:  authmw,
+		metrics: metrics,
 	}
 }
 
@@ -41,7 +45,8 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 	var req api.CreateInstanceRequest
 
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
-		h.logger.Warn(
+		h.logger.WarnContext(
+			c.Request.Context(),
 			"invalid create instance request",
 			"error", err,
 		)
@@ -79,7 +84,8 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 		input,
 	)
 	if err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to create instance",
 			"error", err,
 			"name", req.Name,
@@ -104,7 +110,8 @@ func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 		ExternalPort:   instance.ExternalPort,
 	}
 
-	h.logger.Info(
+	h.logger.InfoContext(
+		c.Request.Context(),
 		"instance created",
 		"id", instance.ID,
 		"name", instance.Name,
@@ -123,7 +130,8 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 
 	result, err := h.svc.ListInstances(c.Request.Context(), userID, limit, cursor)
 	if err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to list instances",
 			"error", err,
 		)
@@ -159,7 +167,7 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 func (h *InstanceHandler) GetInstance(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		h.logger.Warn("invalid instance id")
+		h.logger.WarnContext(c.Request.Context(), "invalid instance id")
 
 		httpx.RespondError(c, service.ErrInvalidInput)
 		return
@@ -168,7 +176,8 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 	userID := h.authmw.UserID(c.Request.Context())
 	instance, err := h.svc.GetInstance(c.Request.Context(), id, userID)
 	if err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to get instance",
 			"error", err,
 			"id", id,
@@ -198,7 +207,7 @@ func (h *InstanceHandler) GetInstance(c *gin.Context) {
 func (h *InstanceHandler) GetInstanceLogs(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		h.logger.Warn("invalid instance id")
+		h.logger.WarnContext(c.Request.Context(), "invalid instance id")
 
 		httpx.RespondError(c, service.ErrInvalidInput)
 		return
@@ -207,7 +216,8 @@ func (h *InstanceHandler) GetInstanceLogs(c *gin.Context) {
 	userID := h.authmw.UserID(c.Request.Context())
 	logs, err := h.svc.GetInstanceLogs(c.Request.Context(), id, userID)
 	if err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to get instance logs",
 			"error", err,
 			"id", id,
@@ -233,7 +243,7 @@ func (h *InstanceHandler) GetInstanceLogs(c *gin.Context) {
 func (h *InstanceHandler) GetCredentials(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		h.logger.Warn("invalid instance id")
+		h.logger.WarnContext(c.Request.Context(), "invalid instance id")
 
 		httpx.RespondError(c, service.ErrInvalidInput)
 		return
@@ -247,7 +257,8 @@ func (h *InstanceHandler) GetCredentials(c *gin.Context) {
 		userID,
 	)
 	if err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to get instance credentials",
 			"error", err,
 			"id", id,
@@ -273,7 +284,7 @@ func (h *InstanceHandler) GetCredentials(c *gin.Context) {
 func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		h.logger.Warn("invalid instance id")
+		h.logger.WarnContext(c.Request.Context(), "invalid instance id")
 
 		httpx.RespondError(c, service.ErrInvalidInput)
 		return
@@ -284,7 +295,8 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 	var req api.UpdateInstanceRequest
 
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
-		h.logger.Warn(
+		h.logger.WarnContext(
+			c.Request.Context(),
 			"invalid update instance request",
 			"error", err,
 		)
@@ -307,7 +319,8 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 
 	instance, err := h.svc.UpdateInstance(c.Request.Context(), input)
 	if err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to update instance",
 			"error", err,
 			"id", id,
@@ -330,7 +343,8 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 		ExternalPort:   instance.ExternalPort,
 	}
 
-	h.logger.Info(
+	h.logger.InfoContext(
+		c.Request.Context(),
 		"instance updated",
 		"id", instance.ID,
 	)
@@ -342,7 +356,7 @@ func (h *InstanceHandler) UpdateInstance(c *gin.Context) {
 func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		h.logger.Warn("invalid instance id")
+		h.logger.WarnContext(c.Request.Context(), "invalid instance id")
 
 		httpx.RespondError(c, service.ErrInvalidInput)
 		return
@@ -351,7 +365,8 @@ func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 	userID := h.authmw.UserID(c.Request.Context())
 
 	if err := h.svc.DeleteInstance(c, id, userID); err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			c.Request.Context(),
 			"failed to delete instance",
 			"error", err,
 		)
@@ -374,7 +389,7 @@ func (h *InstanceHandler) GetAuditLogs(c *gin.Context) {
 
 	logs, nextCursor, err := h.svc.GetAuditLogs(c.Request.Context(), resourceID, limit, cursor)
 	if err != nil {
-		h.logger.Error("failed to get audit logs", "error", err)
+		h.logger.ErrorContext(c.Request.Context(), "failed to get audit logs", "error", err)
 
 		httpx.RespondError(c, err)
 		return
@@ -387,7 +402,7 @@ func (h *InstanceHandler) GetAuditLogs(c *gin.Context) {
 func (h *InstanceHandler) ExecuteQuery(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		h.logger.Warn("invalid instance id")
+		h.logger.WarnContext(c.Request.Context(), "invalid instance id")
 
 		httpx.RespondError(c, service.ErrInvalidInput)
 		return
@@ -405,20 +420,27 @@ func (h *InstanceHandler) ExecuteQuery(c *gin.Context) {
 	if err != nil {
 		// A rejected statement is the user's mistake, not an API failure,
 		// and its message can contain row values: log only the SQLSTATE.
+		ctx := c.Request.Context()
 		var queryErr *domain.QueryError
 		switch {
 		case errors.As(err, &queryErr):
-			h.logger.Info("query rejected by database", "id", id, "sqlState", queryErr.SQLState)
+			h.metrics.SQLQueriesTotal.WithLabelValues("query_failed").Inc()
+			h.logger.InfoContext(ctx, "query rejected by database", "id", id, "sqlState", queryErr.SQLState)
 		case errors.Is(err, service.ErrQueryTimeout):
-			h.logger.Info("query timed out", "id", id)
+			h.metrics.SQLQueriesTotal.WithLabelValues("timeout").Inc()
+			h.logger.InfoContext(ctx, "query timed out", "id", id)
+		case errors.Is(err, service.ErrInstanceNotReady):
+			h.metrics.SQLQueriesTotal.WithLabelValues("not_ready").Inc()
 		default:
-			h.logger.Error("failed to execute query", "error", err, "id", id)
+			h.metrics.SQLQueriesTotal.WithLabelValues("error").Inc()
+			h.logger.ErrorContext(ctx, "failed to execute query", "error", err, "id", id)
 		}
 
 		httpx.RespondError(c, err)
 		return
 	}
 
+	h.metrics.SQLQueriesTotal.WithLabelValues("ok").Inc()
 	httpx.JSON(c, http.StatusOK, api.QueryResponse{
 		Columns:    result.Columns,
 		Rows:       result.Rows,

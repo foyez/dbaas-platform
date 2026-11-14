@@ -8,6 +8,9 @@ import (
 type Metrics struct {
 	HTTPRequestsTotal   *prometheus.CounterVec
 	HTTPRequestDuration *prometheus.HistogramVec
+	// SQLQueriesTotal counts SQL console statements by outcome: ok,
+	// query_failed (rejected by PostgreSQL), timeout, not_ready or error.
+	SQLQueriesTotal *prometheus.CounterVec
 }
 
 func NewMetrics() *Metrics {
@@ -31,6 +34,15 @@ func NewMetrics() *Metrics {
 			},
 			[]string{"method", "route"},
 		),
+		SQLQueriesTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: "dbaas",
+				Subsystem: "sql_console",
+				Name:      "queries_total",
+				Help:      "SQL console statements by outcome.",
+			},
+			[]string{"outcome"},
+		),
 	}
 }
 
@@ -40,6 +52,9 @@ func (m *Metrics) Register(registry prometheus.Registerer) error {
 	}
 
 	if err := registry.Register(m.HTTPRequestDuration); err != nil {
+		return err
+	}
+	if err := registry.Register(m.SQLQueriesTotal); err != nil {
 		return err
 	}
 

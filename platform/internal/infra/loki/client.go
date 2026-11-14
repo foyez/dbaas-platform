@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"net/http"
 	"net/url"
 	"sort"
@@ -17,7 +18,8 @@ type Client struct {
 }
 
 func NewClient(baseURL string) *Client {
-	return &Client{baseURL: baseURL, httpClient: &http.Client{}}
+	// otelhttp adds a client span per query, under the request's trace.
+	return &Client{baseURL: baseURL, httpClient: &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}}
 }
 
 type LogLine struct {

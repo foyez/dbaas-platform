@@ -27,6 +27,9 @@ type Config struct {
 type AppConfig struct {
 	Env      Env    `envconfig:"APP_ENV" default:"development"`
 	LogLevel string `envconfig:"APP_LOG_LEVEL" default:"info"`
+	// LogFormat is "json" (for Loki: every deployment, local kind included)
+	// or "text" (easier to read when running the binary directly).
+	LogFormat string `envconfig:"APP_LOG_FORMAT" default:"json"`
 }
 
 type ServerConfig struct {
@@ -90,6 +93,10 @@ func (cfg *Config) validate() error {
 			Development,
 			Production,
 		)
+	}
+
+	if cfg.App.LogFormat != "json" && cfg.App.LogFormat != "text" {
+		return fmt.Errorf("invalid APP_LOG_FORMAT %q (must be \"json\" or \"text\")", cfg.App.LogFormat)
 	}
 
 	if cfg.Zitadel.Domain == "" {

@@ -131,7 +131,7 @@ func (s *instanceService) ExecuteQuery(
 	// values a user typed into WHERE/INSERT clauses. Logging that this
 	// happened, by whom, and its shape is enough of an audit trail
 	// without risking sensitive data ending up in the API's own logs.
-	s.logger.Info("query executed",
+	s.logger.InfoContext(ctx, "query executed",
 		"instanceId", id,
 		"userId", userID,
 		"rowCount", result.RowCount,

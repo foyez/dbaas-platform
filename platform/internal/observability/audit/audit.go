@@ -26,7 +26,7 @@ func (a *AuditLogger) Record(
 	ctx context.Context,
 	e Event,
 ) {
-	a.log.Info("audit_event",
+	a.log.InfoContext(ctx, "audit_event",
 		"actor_id", e.ActorID,
 		"action", e.Action,
 		"resource_type", e.ResourceType,

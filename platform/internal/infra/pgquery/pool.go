@@ -12,6 +12,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/foyez/dbaas-platform/platform/internal/domain"
 )
@@ -65,7 +69,18 @@ func (p *Pool) ExecuteQuery(
 	instanceID string,
 	creds *domain.InstanceCredentials,
 	sql string,
-) (*domain.QueryResult, error) {
+) (result *domain.QueryResult, err error) {
+	// A span per statement, deliberately without the SQL text: it can
+	// contain values the user typed, same reason the service doesn't log it.
+	ctx, span := tracer.Start(ctx, "sql.query",
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			attribute.String("db.system.name", "postgresql"),
+			attribute.String("dbaas.instance_id", instanceID),
+		),
+	)
+	defer func() { endQuerySpan(span, result, err) }()
+
 	pool, err := p.getOrCreatePool(ctx, instanceID, creds)
 	if err != nil {
 		return nil, fmt.Errorf("connecting to instance: %w", err)
@@ -256,4 +271,30 @@ func queryError(ctx context.Context, err error) error {
 	}
 
 	return err
+}
+
+var tracer = otel.Tracer("github.com/foyez/dbaas-platform/platform/internal/infra/pgquery")
+
+// endQuerySpan records a statement's outcome on its span. For a rejected
+// statement it records only the SQLSTATE: PostgreSQL's message can contain
+// row values.
+func endQuerySpan(span trace.Span, result *domain.QueryResult, err error) {
+	defer span.End()
+
+	var queryErr *domain.QueryError
+	switch {
+	case err == nil:
+		span.SetAttributes(
+			attribute.Int("db.response.returned_rows", result.RowCount),
+			attribute.Bool("dbaas.truncated", result.Truncated),
+		)
+	case errors.As(err, &queryErr):
+		span.SetAttributes(attribute.String("db.response.status_code", queryErr.SQLState))
+		span.SetStatus(codes.Error, "SQLSTATE "+queryErr.SQLState)
+	case errors.Is(err, domain.ErrQueryTimeout):
+		span.SetStatus(codes.Error, "query timed out")
+	default:
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "query failed")
+	}
 }

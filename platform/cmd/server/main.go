@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/foyez/dbaas-platform/platform/internal/api/handler"
 	"github.com/foyez/dbaas-platform/platform/internal/api/router"
@@ -19,6 +23,7 @@ import (
 	"github.com/foyez/dbaas-platform/platform/internal/observability/audit"
 	"github.com/foyez/dbaas-platform/platform/internal/service"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -35,7 +40,27 @@ func run() error {
 		return fmt.Errorf("load configuration: %w", err)
 	}
 
-	log := logger.New(cfg.App.LogLevel, cfg.App.Env)
+	log := logger.New(cfg.App.LogLevel, cfg.App.LogFormat, cfg.App.Env)
+	// Libraries that log through slog's default (e.g. zitadel-go) get the
+	// same structured output.
+	slog.SetDefault(log)
+
+	// Stop on SIGTERM (Kubernetes) or Ctrl+C, so in-flight requests finish
+	// and buffered spans are flushed.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	shutdownTracing, err := observability.SetupTracing(ctx)
+	if err != nil {
+		return fmt.Errorf("set up tracing: %w", err)
+	}
+	defer func() {
+		flushCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownTracing(flushCtx); err != nil {
+			log.Error("flush traces", "error", err)
+		}
+	}()
 
 	metrics := observability.NewMetrics()
 	registry := prometheus.NewRegistry()
@@ -47,6 +72,10 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("load kubernetes config: %w", err)
 	}
+	// A client span for every Kubernetes API call.
+	k8sCfg.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return otelhttp.NewTransport(rt)
+	})
 
 	k8sClient, err := k8s.NewClient(k8sCfg)
 	if err != nil {
@@ -58,15 +87,13 @@ func run() error {
 	querier := pgquery.NewPool()
 	defer querier.Close()
 
-	ctx := context.Background()
-
 	authmw, err := auth.New(ctx, cfg.Zitadel)
 	if err != nil {
 		return fmt.Errorf("initialize auth: %w", err)
 	}
 
 	svc := service.NewInstanceService(instanceClient, querier, lokiClient, log)
-	handler := handler.NewInstanceHandler(svc, log, authmw)
+	handler := handler.NewInstanceHandler(svc, log, authmw, metrics)
 	auditLogger := audit.NewLogger(log)
 
 	r := router.New(
@@ -79,8 +106,29 @@ func run() error {
 		auditLogger,
 	)
 
-	if err := r.Run(cfg.Server.Address); err != nil {
+	srv := &http.Server{
+		Addr:              cfg.Server.Address,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	serveErr := make(chan error, 1)
+	go func() {
+		log.Info("API listening", "address", cfg.Server.Address)
+		serveErr <- srv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serveErr:
 		return fmt.Errorf("start API server: %w", err)
+	case <-ctx.Done():
+	}
+
+	log.Info("shutting down")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("shut down API server: %w", err)
 	}
 
 	return nil

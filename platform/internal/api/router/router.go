@@ -19,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 // New creates and configures a Gin HTTP server with all application routes
@@ -32,7 +33,16 @@ func New(
 	registry *prometheus.Registry,
 	auditLogger *audit.AuditLogger,
 ) *gin.Engine {
+	// Release mode: request logs come from requestlog, not gin's debug output.
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+
+	// Tracing first, so every later middleware and handler runs inside the
+	// request's span (and logs with its trace_id). Probes and scrapes run
+	// every few seconds and aren't worth a trace each.
+	r.Use(otelgin.Middleware("dbaas-api", otelgin.WithFilter(func(req *http.Request) bool {
+		return req.URL.Path != "/health" && req.URL.Path != "/metrics"
+	})))
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowOrigins,
