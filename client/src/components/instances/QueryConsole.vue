@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Play, Terminal } from 'lucide-vue-next'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 import { executeQuery } from '@/api/instances'
+import { sqlErrorPointer } from '@/lib/sqlErrorPointer'
 import type { QueryResult } from '@/types/instance'
-import type { ApiError } from '@/api/errors'
+import type { ApiError, QueryErrorDetails } from '@/api/errors'
 
 const props = defineProps<{
   instanceId: string
@@ -17,6 +18,18 @@ const sql = ref('')
 const loading = ref(false)
 const result = ref<QueryResult | null>(null)
 const error = ref<ApiError | null>(null)
+// The statement behind the current result or error, so the error pointer
+// stays right even if the editor text changes afterwards.
+const ranSql = ref('')
+
+// PostgreSQL's own explanation when it rejected the statement.
+const queryError = computed(() =>
+  error.value?.code === 'QUERY_FAILED'
+    ? ((error.value.details as QueryErrorDetails | undefined) ?? null)
+    : null,
+)
+
+const errorPointer = computed(() => sqlErrorPointer(ranSql.value, queryError.value?.position))
 
 async function run() {
   if (!sql.value.trim() || loading.value) {
@@ -25,6 +38,7 @@ async function run() {
 
   loading.value = true
   error.value = null
+  ranSql.value = sql.value
 
   try {
     result.value = await executeQuery(props.instanceId, sql.value)
@@ -56,9 +70,7 @@ function onKeydown(e: KeyboardEvent) {
     <CardHeader class="flex flex-row items-center justify-between space-y-0">
       <div>
         <CardTitle>Query console</CardTitle>
-        <CardDescription>
-          Run SQL directly against this instance's database.
-        </CardDescription>
+        <CardDescription> Run SQL directly against this instance's database. </CardDescription>
       </div>
 
       <Button size="sm" :disabled="loading || !sql.trim()" @click="run">
@@ -78,8 +90,7 @@ function onKeydown(e: KeyboardEvent) {
       />
 
       <p class="text-xs text-muted-foreground">
-        ⌘/Ctrl + Enter to run. Results are capped at 500 rows and each query
-        times out after 10s.
+        ⌘/Ctrl + Enter to run. Results are capped at 500 rows and each query times out after 10s.
       </p>
 
       <!-- Error -->
@@ -87,7 +98,15 @@ function onKeydown(e: KeyboardEvent) {
         v-if="error"
         class="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive"
       >
-        {{ error.message }}
+        <p class="font-medium">
+          <span v-if="queryError" class="font-mono">ERROR {{ queryError.sqlState }}:</span>
+          {{ error.message }}
+        </p>
+        <pre v-if="errorPointer" class="mt-2 overflow-x-auto font-mono text-xs">{{
+          errorPointer
+        }}</pre>
+        <p v-if="queryError?.detail" class="mt-2">Detail: {{ queryError.detail }}</p>
+        <p v-if="queryError?.hint" class="mt-2">Hint: {{ queryError.hint }}</p>
       </div>
 
       <!-- No result set (INSERT/UPDATE/DELETE/DDL) -->
@@ -95,8 +114,9 @@ function onKeydown(e: KeyboardEvent) {
         v-else-if="result && (result.columns ?? []).length === 0"
         class="rounded-lg border bg-muted/50 p-4 text-sm"
       >
-        Query OK. {{ result.rowCount }} row{{ result.rowCount === 1 ? '' : 's' }}
-        affected ({{ result.durationMs }}ms).
+        Query OK. {{ result.rowCount }} row{{ result.rowCount === 1 ? '' : 's' }} affected ({{
+          result.durationMs
+        }}ms).
       </div>
 
       <!-- Result table -->
@@ -122,16 +142,8 @@ function onKeydown(e: KeyboardEvent) {
             </thead>
 
             <tbody>
-              <tr
-                v-for="(row, i) in result.rows ?? []"
-                :key="i"
-                class="border-t hover:bg-muted/40"
-              >
-                <td
-                  v-for="(cell, j) in row"
-                  :key="j"
-                  class="whitespace-nowrap px-3 py-2 font-mono"
-                >
+              <tr v-for="(row, i) in result.rows ?? []" :key="i" class="border-t hover:bg-muted/40">
+                <td v-for="(cell, j) in row" :key="j" class="whitespace-nowrap px-3 py-2 font-mono">
                   {{ formatCell(cell) }}
                 </td>
               </tr>
@@ -147,7 +159,10 @@ function onKeydown(e: KeyboardEvent) {
         </div>
       </div>
 
-      <div v-else class="flex flex-col items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+      <div
+        v-else
+        class="flex flex-col items-center justify-center gap-2 py-12 text-sm text-muted-foreground"
+      >
         <Terminal class="h-6 w-6" />
         Write a query above and run it to see results here.
       </div>

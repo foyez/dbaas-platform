@@ -26,6 +26,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       error?: {
         code?: string
         message?: string
+        details?: unknown
       }
     } | null
 
@@ -33,6 +34,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       response.status,
       error?.error?.code ?? 'UNKNOWN_ERROR',
       error?.error?.message ?? 'Something went wrong.',
+      error?.error?.details,
     )
   }
 
