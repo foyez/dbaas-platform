@@ -262,6 +262,7 @@ func (h *InstanceHandler) GetCredentials(c *gin.Context) {
 		Database: credentials.Database,
 		Username: credentials.Username,
 		Password: credentials.Password,
+		URI:      credentials.URI,
 	}
 
 	httpx.JSON(c, http.StatusOK, resp)
@@ -359,7 +360,7 @@ func (h *InstanceHandler) DeleteInstance(c *gin.Context) {
 	}
 
 	httpx.JSON(c, http.StatusAccepted, api.DeleteInstanceResponse{
-		Message: "Deletetion initiated",
+		Message: "Deletion initiated",
 		Status:  "Deleting",
 	})
 }

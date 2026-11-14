@@ -39,6 +39,11 @@ var errorMappings = []errorMapping{
 		code:   CodeNoUpdateFields,
 	},
 	{
+		err:    service.ErrInvalidInput,
+		status: http.StatusBadRequest,
+		code:   CodeInvalidRequest,
+	},
+	{
 		err:    service.ErrInstanceNotReady,
 		status: http.StatusConflict,
 		code:   CodeInstanceNotReady,
