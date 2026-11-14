@@ -1,0 +1,40 @@
+name: DBAAS SDK CI
+
+# Unit tests and testable examples run against the in-memory fake API, so no
+# cluster or credentials are needed. The integration test is left to
+# `make test-integration` against a running platform.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'sdk/**'
+      - '.forgejo/workflows/sdk-ci.yaml'
+  pull_request:
+    paths:
+      - 'sdk/**'
+      - '.forgejo/workflows/sdk-ci.yaml'
+
+jobs:
+  test:
+    name: Vet and test SDK
+    runs-on: stackit-ubuntu-22
+
+    defaults:
+      run:
+        working-directory: sdk
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: sdk/go.mod
+
+      - name: Vet
+        run: make vet
+
+      - name: Test
+        run: make test
