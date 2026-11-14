@@ -1,0 +1,43 @@
+version: "2"
+run:
+  # Lint the integration test too.
+  build-tags:
+    - integration
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errcheck
+    - errorlint
+    - goconst
+    - gocyclo
+    - govet
+    - ineffassign
+    - misspell
+    - modernize
+    - nakedret
+    - noctx
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    revive:
+      rules:
+        - name: comment-spacings
+        - name: exported
+        - name: import-shadowing
+        - name: package-comments
+  exclusions:
+    rules:
+      # Test tables and fakes repeat literals on purpose.
+      - linters:
+          - goconst
+        path: _test\.go|dbaastest/
+formatters:
+  enable:
+    - gofmt
+    - goimports
