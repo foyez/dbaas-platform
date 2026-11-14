@@ -1,20 +1,55 @@
 openapi: 3.0.3
 
 info:
-  title: PostgreSQL Platform API
-  version: 0.1.0
-  description: API for managing PostgreSQL instances.
+  title: DBaaS Platform API
+  version: 0.2.0
+  description: |
+    Self-service PostgreSQL instances: create, scale, query and delete
+    databases, and read their credentials and logs.
+
+    ## Authentication
+
+    Every `/api/v1` endpoint needs a ZITADEL access token in the
+    `Authorization: Bearer <token>` header. The token must include the
+    platform project in its audience: request the scope
+    `urn:zitadel:iam:org:project:id:<project-id>:aud`. The web UI gets one
+    with OIDC (Authorization Code + PKCE); scripts and the Go SDK use the
+    client-credentials grant with a ZITADEL machine user.
+
+    Users only ever see their own instances. Admin endpoints need the
+    `dbaas.admin` role.
+
+    ## Asynchronous changes
+
+    Creating, updating and deleting an instance return `202 Accepted` as
+    soon as the change is recorded. A Kubernetes operator then does the
+    work. Poll `GET /api/v1/instances/{id}` until `status` is `Running`.
+
+    ## Errors
+
+    Application errors use one envelope:
+    `{"error": {"code": "NOT_FOUND", "message": "instance not found"}}`.
+    `401` and `403` come from the authentication middleware and have a
+    plain-text body instead.
 
 servers:
-  - url: http://localhost:8080
-    description: Local
-  - url: http://foyez.runs.onstackit.cloud
-    description: Server
+  - url: /
+    description: The server this document is served from
+  - url: http://api.dbaas.localhost
+    description: Local platform started with `make dev`
+  - url: https://api.foyez.runs.onstackit.cloud
+    description: Production (currently shut down)
 
 tags:
   - name: instances
-    description: Operations on PaaS product instances
- 
+    description: Create, read, update and delete PostgreSQL instances
+  - name: data
+    description: Connect to an instance and work with its data and logs
+  - name: admin
+    description: Admin-only endpoints (`dbaas.admin` role)
+  - name: system
+    description: Health and metrics, no authentication
+
 security:
   - bearerAuth: []
 
@@ -23,18 +58,16 @@ paths:
     post:
       tags: [instances]
       operationId: createInstance
-      summary: Create a new product instance
-      description: >
-        Accepts a request to provision a new product instance. The instance
-        is created asynchronously; this endpoint returns as soon as the
-        underlying resource has been accepted, not once provisioning has
-        completed. Clients should poll `GET /instances/{id}` and inspect
-        `status` until it reaches `Running`.
+      summary: Create an instance
+      description: |
+        Records a new instance and returns immediately with status
+        `Pending`; the operator provisions it asynchronously.
 
-
-        This operation is idempotent when the `Idempotency-Key` header is
-        supplied: repeating the same request with the same key returns the
-        original instance instead of creating a duplicate.
+        Creation is idempotent per user and `Idempotency-Key`: the
+        resource name is derived from both, so retrying with the same key
+        returns the existing instance (also with `202`) instead of
+        creating a second one. Reusing a key with a different body is not
+        detected; the original instance is returned.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -43,68 +76,74 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateInstanceRequest'
-            examples:
-              basic:
-                value:
-                  name: my-postgres-db
-                  version: 16
-                  storage: 10Gi
       responses:
         '202':
-          description: >
-            Request accepted. The instance has been registered and
-            provisioning has started asynchronously.
-          headers:
-            Location:
-              description: URL of the created instance resource
-              schema:
-                type: string
-                example: /v1/instances/inst-7f3a2b
+          description: Accepted (a new instance, or the existing one for a repeated key).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Instance'
-              examples:
-                accepted:
-                  value:
-                    id: inst-7f3a2b
-                    name: my-postgres-db
-                    version: 16
-                    storage: 10Gi
-                    status: Pending
-                    createdAt: "2026-08-04T09:12:00Z"
-        '200':
-          description: >
-            Idempotent replay: a request with this `Idempotency-Key` was
-            already processed. Returns the current state of the existing
-            instance rather than creating a new one.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Instance'
+              example:
+                id: instance-3f36fb6b69c92ce7
+                name: instance-3f36fb6b69c92ce7
+                database: orders
+                version: 16
+                storage: 10Gi
+                instances: 1
+                readyInstances: 0
+                status: Pending
+                createdAt: '2026-11-13T21:21:20Z'
+                externalPort: 0
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
-          description: An instance with this name already exists and does not match the idempotency key provided.
+          description: |
+            Invalid body (`INVALID_REQUEST`) or missing `Idempotency-Key`
+            header (`MISSING_IDEMPOTENCY_KEY`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          $ref: '#/components/responses/ValidationError'
+              examples:
+                invalid:
+                  value:
+                    error:
+                      code: INVALID_REQUEST
+                      message: "Key: 'CreateInstanceRequest.Version' Error:Field validation for 'Version' failed on the 'oneof' tag"
+                missingKey:
+                  value:
+                    error:
+                      code: MISSING_IDEMPOTENCY_KEY
+                      message: missing idempotency key
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
 
     get:
       tags: [instances]
       operationId: listInstances
-      summary: List PostgreSQL instances
-      description: Returns all instances visible to the caller.
+      summary: List your instances
+      description: |
+        Returns a page of the caller's instances. Pagination is
+        cursor-based because the Kubernetes List API has no offsets:
+        pass the previous response's `nextCursor` as `cursor` until it's
+        absent.
+      parameters:
+        - name: limit
+          in: query
+          description: Page size. Values below 1 use the default; values above 100 are capped.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: Opaque cursor from the previous page's `nextCursor`.
+          schema:
+            type: string
       responses:
         '200':
-          description: List of instances.
+          description: A page of instances.
           content:
             application/json:
               schema:
@@ -115,16 +154,14 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   /api/v1/instances/{id}:
+    parameters:
+      - $ref: '#/components/parameters/InstanceId'
+
     get:
       tags: [instances]
       operationId: getInstance
-      summary: Get a PostgreSQL instance
-      description: >
-        Returns the current state of a single instance, including its
-        `status`. Use this to poll an instance created via
-        `POST /instances` until it reaches `Running`.
-      parameters:
-        - $ref: '#/components/parameters/InstanceId'
+      summary: Get an instance
+      description: Current state of one instance. Poll this after a create or update.
       responses:
         '200':
           description: The instance.
@@ -142,63 +179,56 @@ paths:
     patch:
       tags: [instances]
       operationId: updateInstance
-      summary: Update a PostgreSQL instance
-      description: >
-        Applies a partial update to an instance, such as a storage resize
-        or a PostgreSQL version upgrade. The update is applied
-        asynchronously; this endpoint returns as soon as the change has
-        been accepted, not once it has completed. At least one field
-        must be provided.
-      parameters:
-        - $ref: '#/components/parameters/InstanceId'
+      summary: Update an instance
+      description: |
+        Changes the PostgreSQL major version and/or the storage size. At
+        least one field is required. The change is applied asynchronously,
+        so the response reports `Pending` until the operator has caught up.
+
+        Storage can only grow: Kubernetes can't shrink a volume. The API
+        doesn't reject a smaller size yet; the instance then fails to
+        reconcile.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateInstanceRequest'
-            examples:
-              resize:
-                value:
-                  storage: 20Gi
       responses:
         '202':
-          description: Update accepted and applied asynchronously.
+          description: Update accepted.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Instance'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid body (`INVALID_REQUEST`) or no fields to change (`NO_UPDATE_FIELDS`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
 
     delete:
       tags: [instances]
       operationId: deleteInstance
-      summary: Delete a PostgreSQL instance
-      description: >
-        Deletes a PostgreSQL instance asynchronously. The request returns
-        immediately with `202 Accepted`; actual deletion is performed
-        later by the Kubernetes operator.
-      parameters:
-        - $ref: '#/components/parameters/InstanceId'
+      summary: Delete an instance
+      description: |
+        Starts deletion and returns immediately. The operator releases the
+        instance's external port, then the database and its storage are
+        removed. Data can't be recovered.
       responses:
         '202':
-          description: Deletion accepted.
+          description: Deletion started.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteAcceptedResponse'
-              example:
-                message: Deletion initiated
-                status: Deleting
+                $ref: '#/components/schemas/DeleteInstanceResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -206,134 +236,348 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/instances/{id}/credentials:
+    parameters:
+      - $ref: '#/components/parameters/InstanceId'
+    get:
+      tags: [data]
+      operationId: getCredentials
+      summary: Get connection credentials
+      description: |
+        Connection details for the database owner. When the instance has an
+        external port, `host` and `port` point at the shared public
+        endpoint; otherwise they're the in-cluster service address.
+      responses:
+        '200':
+          description: Credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstanceCredentials'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InstanceNotReady'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/instances/{id}/query:
+    parameters:
+      - $ref: '#/components/parameters/InstanceId'
+    post:
+      tags: [data]
+      operationId: executeQuery
+      summary: Run a SQL statement
+      description: |
+        Runs one SQL statement as the database owner and returns the result.
+        This is what the web UI's SQL console uses.
+
+        Limits: 10 seconds per statement (cancelled on the server when it
+        runs over), at most 500 rows returned (`truncated` is `true` when
+        more were available), and at most 3 pooled connections per instance
+        per API replica.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Statement result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/InstanceNotReady'
+        '500':
+          description: |
+            Unexpected error. Also returned when the statement itself fails
+            (syntax error, missing table, timeout); the database's error
+            message isn't passed through yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/instances/{id}/logs:
+    parameters:
+      - $ref: '#/components/parameters/InstanceId'
+    get:
+      tags: [data]
+      operationId: getInstanceLogs
+      summary: Get PostgreSQL logs
+      description: |
+        The instance's most recent PostgreSQL log lines from Loki: up to
+        200 lines from the last 24 hours, newest first. Needs the
+        observability stack, which the local `make dev` setup doesn't
+        install, so locally this returns `500`.
+      responses:
+        '200':
+          description: Log lines.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstanceLogsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/audit-logs:
+    get:
+      tags: [admin]
+      operationId: getAuditLogs
+      summary: Get the audit trail
+      description: |
+        Who did what to which instance, from the API's `component=audit`
+        log stream in Loki, newest first, over the last 7 days. Requires
+        the `dbaas.admin` role. Like instance logs, it needs the
+        observability stack.
+      parameters:
+        - name: resourceId
+          in: query
+          description: Only events for this instance ID.
+          schema:
+            type: string
+            example: instance-3f36fb6b69c92ce7
+        - name: limit
+          in: query
+          description: Page size. Values below 1 use the default; values above 200 are capped.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          description: The previous page's `nextCursor` (a Unix timestamp in nanoseconds).
+          schema:
+            type: string
+            example: '1794604758000000000'
+      responses:
+        '200':
+          description: A page of audit events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogsResponse'
+        '400':
+          description: Invalid cursor (`INVALID_REQUEST`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /health:
+    get:
+      tags: [system]
+      operationId: health
+      summary: Liveness and readiness check
+      description: Used by the Kubernetes probes. Doesn't check dependencies.
+      security: []
+      responses:
+        '200':
+          description: The API process is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /metrics:
+    get:
+      tags: [system]
+      operationId: metrics
+      summary: Prometheus metrics
+      description: |
+        Request counts and latencies by method, route template and status,
+        in the Prometheus text format.
+      security: []
+      responses:
+        '200':
+          description: Metrics.
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      description: ZITADEL access token with the platform project in its audience.
 
   parameters:
     InstanceId:
       name: id
       in: path
       required: true
-      description: Unique identifier of the product instance
+      description: Instance ID, as returned by create and list.
       schema:
         type: string
-        example: inst-7f3a2b
+        example: instance-3f36fb6b69c92ce7
     IdempotencyKey:
       name: Idempotency-Key
       in: header
-      required: false
-      description: >
-        Client-generated unique key (UUID recommended) identifying a
-        logical create operation. Replaying the same key returns the
-        original result instead of creating a duplicate instance.
+      required: true
+      description: |
+        Client-generated key for one logical create, usually a UUID. Keep
+        the same key when retrying; generate a new one for the next create.
       schema:
         type: string
-        format: uuid
         example: 5b1e3c2a-4f3a-4e9a-9d0a-2f6b7a8c9d10
 
   schemas:
     CreateInstanceRequest:
       type: object
-      required: [name, storage, version]
+      required: [name, version, storage]
       properties:
         name:
           type: string
-          description: >
-            Unique instance name, 3-63 characters.
+          description: Database name inside the instance.
           minLength: 3
           maxLength: 63
-          example: my-app-db
+          example: orders
         version:
           type: integer
-          description: Major CNPG/PostgreSQL version.
+          description: PostgreSQL major version.
           enum: [14, 15, 16]
           example: 16
         storage:
           type: string
-          description: Kubernetes resource quantity for storage.
-          pattern: '^[0-9]+(Gi|Mi)$'
+          description: Volume size as a Kubernetes quantity, such as `10Gi`.
           example: 10Gi
         instances:
           type: integer
-          description: >
-            Accepted by the API but not yet wired to provisioning;
-            every instance is currently created as a single replica
-            regardless of this value.
+          description: Number of PostgreSQL replicas (one primary plus standbys).
           minimum: 1
           maximum: 5
           default: 1
-          example: 1
         username:
           type: string
-          description: Team or user identifier, used for filtering and RBAC.
+          description: Name of the database owner role. Defaults to the database name.
           maxLength: 128
-          example: team-checkout
-      example:
-        name: my-app-db
-        version: 16
-        storage: 10Gi
-        username: team-checkout
+          example: orders_admin
 
     UpdateInstanceRequest:
       type: object
-      description: >
-        Partial update payload. At least one property must be provided.
-      minProperties: 1
+      description: At least one field is required.
       properties:
         version:
           type: integer
-          description: Major CNPG/PostgreSQL version to upgrade to.
+          description: New PostgreSQL major version.
           enum: [14, 15, 16]
-          example: 16
         storage:
           type: string
-          description: New Kubernetes resource quantity for storage. Must not shrink.
-          pattern: '^[0-9]+(Gi|Mi)$'
+          description: New volume size. Must not be smaller than the current size.
           example: 20Gi
-      example:
-        storage: 20Gi
 
     Instance:
       type: object
+      required: [id, name, database, version, storage, instances, readyInstances, status, createdAt, externalPort]
       properties:
         id:
           type: string
-          example: inst-7f3a2b
+          description: Instance ID, derived from the owner and the idempotency key.
+          example: instance-3f36fb6b69c92ce7
         name:
           type: string
-          example: my-postgres-db
+          description: Kubernetes resource name; currently the same as `id`.
+          example: instance-3f36fb6b69c92ce7
+        database:
+          type: string
+          example: orders
         version:
           type: integer
           example: 16
         storage:
           type: string
           example: 10Gi
+        instances:
+          type: integer
+          description: Requested replicas.
+          example: 1
+        readyInstances:
+          type: integer
+          description: Replicas currently ready.
+          example: 1
         status:
-          type: string
-          description: >
-            `Pending` while the operator is provisioning/reconciling the
-            underlying resource, `Running` once ready, `Failed` if
-            reconciliation failed, `Deleted` once removed.
-          enum: [Pending, Running, Failed, Deleted]
-          example: Pending
+          $ref: '#/components/schemas/InstanceStatus'
         createdAt:
           type: string
           format: date-time
-          example: "2026-08-04T09:12:00Z"
+          example: '2026-11-13T21:21:20Z'
+        externalPort:
+          type: integer
+          description: Port on the shared public endpoint, or `0` until one is allocated.
+          example: 30101
+
+    InstanceStatus:
+      type: string
+      description: |
+        `Pending` while the operator creates or changes the instance,
+        `Running` when it's ready, `Failed` when reconciliation failed,
+        `Deleting` after a delete request.
+      enum: [Pending, Running, Failed, Deleting]
 
     ListInstancesResponse:
       type: object
+      required: [items]
       properties:
         items:
           type: array
           items:
             $ref: '#/components/schemas/Instance'
+        nextCursor:
+          type: string
+          description: Cursor for the next page; absent on the last page.
 
-    DeleteAcceptedResponse:
+    InstanceCredentials:
+      type: object
+      properties:
+        host:
+          type: string
+          example: 127.0.0.1
+        port:
+          type: integer
+          example: 30101
+        database:
+          type: string
+          example: orders
+        username:
+          type: string
+          example: orders
+        password:
+          type: string
+          format: password
+        uri:
+          type: string
+          description: The same details as a `postgresql://` connection string.
+          example: postgresql://orders:<password>@127.0.0.1:30101/orders
+
+    DeleteInstanceResponse:
       type: object
       properties:
         message:
@@ -343,53 +587,151 @@ components:
           type: string
           example: Deleting
 
+    QueryRequest:
+      type: object
+      required: [sql]
+      properties:
+        sql:
+          type: string
+          description: A single SQL statement.
+          example: SELECT id, item FROM orders ORDER BY id
+
+    QueryResponse:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          example: [id, item]
+        rows:
+          type: array
+          description: Rows as arrays of values, in column order.
+          items:
+            type: array
+            items: {}
+          example: [[1, keyboard], [2, monitor]]
+        rowCount:
+          type: integer
+          description: Rows returned (at most 500).
+          example: 2
+        truncated:
+          type: boolean
+          description: True when the statement produced more than 500 rows.
+          example: false
+        durationMs:
+          type: integer
+          format: int64
+          example: 4
+
+    LogLine:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: Unix timestamp in nanoseconds, as a string.
+          example: '1794604758123456789'
+        line:
+          type: string
+          description: The raw log line.
+
+    InstanceLogsResponse:
+      type: object
+      properties:
+        instanceId:
+          type: string
+          example: instance-3f36fb6b69c92ce7
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogLine'
+
+    AuditLogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          description: Audit events; each `line` is a JSON object with the action, user and resource.
+          items:
+            $ref: '#/components/schemas/LogLine'
+        nextCursor:
+          type: string
+          description: Cursor for the next page; absent on the last page.
+
     ErrorResponse:
       type: object
+      required: [error]
       properties:
         error:
           type: object
+          required: [code, message]
           properties:
             code:
               type: string
-              example: INSTANCE_NOT_FOUND
+              enum:
+                - INVALID_REQUEST
+                - MISSING_IDEMPOTENCY_KEY
+                - NO_UPDATE_FIELDS
+                - NOT_FOUND
+                - INSTANCE_NOT_READY
+                - INTERNAL_ERROR
             message:
               type: string
-              example: Product instance does not exist.
 
   responses:
     BadRequest:
-      description: Malformed request body
+      description: The request is invalid (`INVALID_REQUEST`).
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: INVALID_REQUEST
+              message: invalid input
     Unauthorized:
-      description: Missing or invalid authentication credentials
+      description: Missing, malformed, expired or wrong-audience token.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            type: string
+          example: missing or malformed token
     Forbidden:
-      description: Authenticated but not permitted to access this instance
+      description: The token is valid but lacks the required role.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            type: string
+          example: 'missing required role: `dbaas.admin`'
     NotFound:
-      description: Instance does not exist
+      description: |
+        No such instance for this user. Instances owned by someone else
+        also return `404`, so their existence isn't revealed.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-    ValidationError:
-      description: Request was well-formed but semantically invalid
+          example:
+            error:
+              code: NOT_FOUND
+              message: instance not found
+    InstanceNotReady:
+      description: The instance isn't `Running` yet (`INSTANCE_NOT_READY`).
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: INSTANCE_NOT_READY
+              message: instance not ready
     InternalError:
-      description: Unexpected server error
+      description: Unexpected server error (`INTERNAL_ERROR`).
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: something went wrong

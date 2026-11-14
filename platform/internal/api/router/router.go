@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/foyez/dbaas-platform/platform/docs"
 	"github.com/foyez/dbaas-platform/platform/internal/api/handler"
 	"github.com/foyez/dbaas-platform/platform/internal/auth"
 	"github.com/foyez/dbaas-platform/platform/internal/config"
@@ -61,6 +62,14 @@ func New(
 			promhttp.HandlerOpts{},
 		),
 	))
+
+	// API reference: the OpenAPI description and a Swagger UI page for it.
+	r.GET("/openapi.yaml", func(c *gin.Context) {
+		c.Data(http.StatusOK, "application/yaml", docs.OpenAPI)
+	})
+	r.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", docs.SwaggerUI)
+	})
 
 	v1 := r.Group("/api/v1")
 

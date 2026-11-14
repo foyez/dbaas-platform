@@ -17,5 +17,7 @@
 !go.mod
 !go.sum
 !**/*.go
+!docs/openapi.yaml
+!docs/swagger.html
 
 **/*_test.go

@@ -1,0 +1,12 @@
+# Lint config for openapi.yaml (`make api-lint`). Starts from Redocly's
+# recommended rules; each exception below is deliberate.
+extends:
+  - recommended
+
+rules:
+  # The repository has no license yet.
+  info-license: off
+  # http://api.dbaas.localhost is the intended local `make dev` server.
+  no-server-example.com: off
+  # Per-operation exceptions live in .redocly.lint-ignore.yaml: /health and
+  # /metrics are unauthenticated and can't return a 4XX.
