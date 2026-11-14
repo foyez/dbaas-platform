@@ -1,7 +1,20 @@
-controller:
-  type: daemonset
-
 alloy:
+  # Under `alloy:`: a top-level `resources` key isn't read by the chart.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
   configMap:
     content: |
       logging {
@@ -63,12 +76,34 @@ alloy:
         }
       }
 
+      // Traces: the API sends OTLP here (OTEL_EXPORTER_OTLP_ENDPOINT);
+      // Alloy batches them and forwards to Tempo.
+      otelcol.receiver.otlp "default" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+        output {
+          traces = [otelcol.processor.batch.default.input]
+        }
+      }
+
+      otelcol.processor.batch "default" {
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "dbaas-tempo:4317"
+          tls {
+            insecure = true
+          }
+        }
+      }
+
 controller:
   type: daemonset   # one Alloy pod per node - required to read local log files
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    memory: 256Mi

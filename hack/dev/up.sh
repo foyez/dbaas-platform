@@ -86,6 +86,39 @@ configure_zitadel() {
   PF_PID=""
 }
 
+install_observability() {
+  if [[ "$OBSERVABILITY" == "false" ]]; then
+    step "observability (skipped: OBSERVABILITY=false)"
+    return
+  fi
+
+  step "observability: Prometheus, Grafana, Loki, Tempo, Alloy"
+  local rendered="$STATE_DIR/observability.yaml"
+  "$KUBECTL" kustomize --enable-helm --helm-command "$HELM" \
+    "$ROOT/gitops/observability/overlays/dev" >"$rendered"
+
+  # Server-side: the Prometheus Operator CRDs are too big for client-side
+  # apply. On the first run the ServiceMonitors etc. are rejected because
+  # their CRDs aren't established yet, so wait for them and apply again.
+  if ! k apply --server-side --force-conflicts -f "$rendered" >/dev/null 2>&1; then
+    info "waiting for the Prometheus Operator CRDs"
+    k wait --for=condition=Established --timeout=120s \
+      crd/prometheuses.monitoring.coreos.com \
+      crd/servicemonitors.monitoring.coreos.com \
+      crd/podmonitors.monitoring.coreos.com \
+      crd/prometheusrules.monitoring.coreos.com
+    k apply --server-side --force-conflicts -f "$rendered" >/dev/null
+  fi
+
+  # Prometheus itself is a StatefulSet the operator creates from the CR.
+  k wait -n observability --for=create statefulset/prometheus-dbaas-prometheus-kube-prom-prometheus --timeout=180s
+  local workload
+  for workload in $(k get deployment,daemonset,statefulset -n observability -o name); do
+    k rollout status -n observability "$workload" --timeout=600s >/dev/null
+  done
+  info "all observability workloads ready"
+}
+
 # Builds an image and loads it into the kind node, so no registry is needed.
 build_image() {
   local tag="$1"; shift
@@ -109,6 +142,12 @@ deploy_api() {
   step "dbaas API at http://$API_HOST"
   build_image dbaas-platform-api:dev -f "$ROOT/platform/Containerfile" --target prod "$ROOT/platform"
   k apply -k "$ROOT/gitops/api/overlays/dev"
+  if [[ "$OBSERVABILITY" == "false" ]]; then
+    # No collector to send to: turn trace export off instead of logging
+    # export errors.
+    k patch configmap dbaas-api-config -n dbaas-api --type json \
+      -p '[{"op":"remove","path":"/data/OTEL_EXPORTER_OTLP_ENDPOINT"}]' >/dev/null
+  fi
   k create secret generic dbaas-zitadel-key -n dbaas-api \
     --from-file=zitadel-key.json="$STATE_DIR/api-key.json" \
     --dry-run=client -o yaml | k apply -f -
@@ -140,6 +179,7 @@ Platform is up.
   API       http://$API_HOST/api/v1
   API docs  http://$API_HOST/docs
   ZITADEL   http://$AUTH_HOST/ui/console
+$( [[ "$OBSERVABILITY" == "false" ]] || echo "  Grafana   http://$GRAFANA_HOST   (admin / admin)" )
 
   Login     admin@dbaas.$AUTH_HOST / Password1!   (dbaas.admin role)
 
@@ -164,6 +204,7 @@ main() {
   install_cnpg
   install_zitadel
   configure_zitadel
+  install_observability
   deploy_operator
   deploy_api
   deploy_frontend

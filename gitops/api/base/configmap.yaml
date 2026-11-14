@@ -14,3 +14,6 @@ data:
   # same IP as app.foyez.runs.onstackit.cloud, different DNS name since
   # this is reached by raw TCP:<allocated-port>, not HTTP/SNI routing.
   PUBLIC_DB_HOST: "db.foyez.runs.onstackit.cloud"
+  # Traces go over OTLP to Alloy, which forwards them to Tempo.
+  OTEL_SERVICE_NAME: "dbaas-api"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://dbaas-alloy.observability.svc.cluster.local:4317"

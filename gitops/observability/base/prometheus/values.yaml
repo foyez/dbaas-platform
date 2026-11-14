@@ -8,9 +8,21 @@ prometheus:
   prometheusSpec:
     retention: 7d
     serviceMonitorSelectorNilUsesHelmValues: false   # let it pick up ServiceMonitors outside its own release
+    podMonitorSelectorNilUsesHelmValues: false       # same for PodMonitors (PostgreSQL metrics)
     resources:
       requests:
         cpu: 200m
         memory: 400Mi
       limits:
         memory: 800Mi
+
+# The control plane is managed (SKE) or bound to localhost (kind), so these
+# targets are unreachable and would only show as down.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

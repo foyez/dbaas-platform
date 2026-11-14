@@ -9,7 +9,10 @@ datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
+      # Fixed UIDs so the datasources can link to each other.
+      # `$$` escapes Grafana variables from provisioning's env expansion.
       - name: Prometheus
+        uid: prometheus
         type: prometheus
         # points at the Prometheus Service from kube-prometheus-stack release
         url: http://dbaas-prometheus-kube-prom-prometheus:9090
@@ -17,10 +20,31 @@ datasources:
         isDefault: true
 
       - name: Loki
+        uid: loki
         type: loki
         url: http://dbaas-loki:3100
-        # url: http://dbaas-loki-gateway.observability.svc.cluster.local
         access: proxy
+        jsonData:
+          # A trace_id in a JSON log line becomes a link to the trace.
+          derivedFields:
+            - name: TraceID
+              matcherRegex: '"trace_id":"(\w+)"'
+              datasourceUid: tempo
+              url: "$${__value.raw}"
+
+      - name: Tempo
+        uid: tempo
+        type: tempo
+        url: http://dbaas-tempo:3200
+        access: proxy
+        jsonData:
+          # From a span, jump to the API's log lines for the same request.
+          tracesToLogsV2:
+            datasourceUid: loki
+            customQuery: true
+            query: '{namespace="dbaas-api"} | json | trace_id="$${__trace.traceId}"'
+            spanStartTimeShift: "-5m"
+            spanEndTimeShift: "5m"
 
 # Sidecar watches for ConfigMaps labeled grafana_dashboard=1
 # and loads them automatically - this is how dashboards-as-code works

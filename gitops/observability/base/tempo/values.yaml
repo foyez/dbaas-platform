@@ -1,0 +1,22 @@
+# Single-binary Tempo storing traces on local disk. Spans arrive over OTLP
+# from Alloy, which receives them from the API.
+tempo:
+  retention: 72h
+  receivers:
+    # Only OTLP; the chart also enables Jaeger receivers by default.
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+# Traces are short-lived debugging data; an emptyDir is enough.
+persistence:
+  enabled: false

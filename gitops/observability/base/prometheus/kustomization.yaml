@@ -8,5 +8,8 @@ helmCharts:
     repo: https://prometheus-community.github.io/helm-charts
     version: 87.21.0
     releaseName: dbaas-prometheus
+    # The Prometheus Operator CRDs (Prometheus, ServiceMonitor, PodMonitor, ...).
+    # Large, so apply the rendered output with --server-side.
+    includeCRDs: true
     namespace: observability
     valuesFile: values.yaml

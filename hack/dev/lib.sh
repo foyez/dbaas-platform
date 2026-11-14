@@ -16,6 +16,11 @@ DOMAIN="dbaas.localhost"
 APP_HOST="app.$DOMAIN"
 API_HOST="api.$DOMAIN"
 AUTH_HOST="auth.$DOMAIN"
+GRAFANA_HOST="grafana.$DOMAIN"
+
+# Set OBSERVABILITY=false to skip Prometheus, Grafana, Loki, Tempo and Alloy
+# (saves about 1 GB of memory; instance logs and audit logs need Loki).
+OBSERVABILITY="${OBSERVABILITY:-true}"
 
 # The operator hands out database ports from 30100 up; kind-config.yaml maps
 # the first 20 to 127.0.0.1, enough for local use.

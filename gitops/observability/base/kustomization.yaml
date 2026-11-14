@@ -7,4 +7,5 @@ resources:
   - servicemonitors
   - grafana
   - loki
+  - tempo
   - alloy
