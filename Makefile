@@ -14,6 +14,7 @@ HELM_VERSION      ?= v3.22.1
 TERRAFORM_VERSION ?= 1.17.2
 MKDOCS_MATERIAL_VERSION ?= 9.8.0
 MERMAID_CLI_VERSION     ?= 12.0.0
+REDOCLY_CLI_VERSION     ?= 2.72.1
 
 LOCALBIN  ?= $(CURDIR)/bin
 KIND      ?= $(LOCALBIN)/kind-$(KIND_VERSION)
@@ -64,6 +65,11 @@ docs-build: ## Build the docs site into ./site, failing on warnings such as brok
 .PHONY: docs-check
 docs-check: ## Render every Mermaid diagram in docs/ to catch syntax errors.
 	MERMAID_CLI_VERSION=$(MERMAID_CLI_VERSION) hack/docs/check-mermaid.sh
+
+.PHONY: api-lint
+api-lint: ## Validate and lint platform/docs/openapi.yaml.
+	docker run --rm -v "$(CURDIR)/platform/docs":/spec -w /spec redocly/cli:$(REDOCLY_CLI_VERSION) \
+		lint --config redocly.yaml openapi.yaml
 
 ##@ Tools
 

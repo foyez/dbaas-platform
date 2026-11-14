@@ -30,6 +30,7 @@ When it prints **Platform is up.**, these are available:
 |---|---|
 | App | <http://app.dbaas.localhost> |
 | API | <http://api.dbaas.localhost/api/v1> |
+| API docs (Swagger UI) | <http://api.dbaas.localhost/docs> |
 | ZITADEL console | <http://auth.dbaas.localhost/ui/console> |
 
 !!! note "Browser support"

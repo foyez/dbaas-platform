@@ -45,6 +45,7 @@ About 10 minutes later the whole platform is running on a local [kind](https://k
 |---|---|
 | App | http://app.dbaas.localhost |
 | API | http://api.dbaas.localhost/api/v1 |
+| API docs (Swagger UI) | http://api.dbaas.localhost/docs |
 | ZITADEL console | http://auth.dbaas.localhost/ui/console |
 
 Log in with `admin@dbaas.auth.dbaas.localhost` / `Password1!`. `make dev-down` deletes everything and `make help` lists all targets. See [Getting started](https://foyez.github.io/dbaas-platform/getting-started/) for details.
@@ -71,7 +72,7 @@ Each one is written up with its trade-offs in the [docs](https://foyez.github.io
 | [Architecture](https://foyez.github.io/dbaas-platform/architecture/) | C4 diagrams and request flow |
 | [Components](https://foyez.github.io/dbaas-platform/components/) | Operator, API, UI, auth, SDK, delivery, observability, infrastructure |
 | [Learning notes](https://foyez.github.io/dbaas-platform/notes/) | What I learned building it, by topic, with review questions |
-| [`platform/docs/openapi.yaml`](platform/docs/openapi.yaml) | Full REST API contract |
+| [API reference](https://foyez.github.io/dbaas-platform/api-reference/) | Every endpoint, rendered from [`platform/docs/openapi.yaml`](platform/docs/openapi.yaml) |
 
 The site is built from [`docs/`](docs). Preview it with `make docs`.
 

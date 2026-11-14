@@ -12,6 +12,9 @@ on:
       - "mkdocs.yml"
       - "Makefile"
       - "hack/docs/**"
+      - "platform/docs/openapi.yaml"
+      - "platform/docs/redocly.yaml"
+      - "platform/docs/.redocly.lint-ignore.yaml"
       - ".github/workflows/docs.yaml"
   pull_request:
     paths:
@@ -19,6 +22,9 @@ on:
       - "mkdocs.yml"
       - "Makefile"
       - "hack/docs/**"
+      - "platform/docs/openapi.yaml"
+      - "platform/docs/redocly.yaml"
+      - "platform/docs/.redocly.lint-ignore.yaml"
       - ".github/workflows/docs.yaml"
   workflow_dispatch:
 
@@ -41,6 +47,10 @@ jobs:
       # mkdocs can't see Mermaid errors: diagrams render in the browser.
       - name: Check Mermaid diagrams
         run: make docs-check
+
+      # The API reference page renders platform/docs/openapi.yaml.
+      - name: Lint OpenAPI spec
+        run: make api-lint
 
       - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

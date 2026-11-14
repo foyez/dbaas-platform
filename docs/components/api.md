@@ -1,6 +1,6 @@
 # REST API
 
-The API (`platform/`) is a Go service built with [Gin](https://gin-gonic.com/). It's the only thing the UI and SDK talk to: it authenticates the caller, checks ownership and translates requests into Kubernetes operations on `PostgreSQL` resources. The full contract is in [`platform/docs/openapi.yaml`](https://github.com/foyez/dbaas-platform/blob/main/platform/docs/openapi.yaml).
+The API (`platform/`) is a Go service built with [Gin](https://gin-gonic.com/). It's the only thing the UI and SDK talk to: it authenticates the caller, checks ownership and translates requests into Kubernetes operations on `PostgreSQL` resources. The full contract is in [`platform/docs/openapi.yaml`](https://github.com/foyez/dbaas-platform/blob/main/platform/docs/openapi.yaml): browse it in the [API reference](../api-reference.md), or at `/docs` on a running API (Swagger UI, with "Try it out").
 
 ## Endpoints
 
@@ -18,7 +18,7 @@ All routes live under `/api/v1` and require a valid ZITADEL access token.
 | `POST` | `/instances/{id}/query` | Run SQL through the console |
 | `GET` | `/audit-logs` | Audit trail, `dbaas.admin` only |
 
-`/health` and `/metrics` (Prometheus) are unauthenticated.
+`/health`, `/metrics` (Prometheus), `/docs` (Swagger UI) and `/openapi.yaml` are unauthenticated.
 
 ## Structure
 

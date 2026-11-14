@@ -185,6 +185,7 @@ Platform is up.
 
   App       http://$APP_HOST
   API       http://$API_HOST/api/v1
+  API docs  http://$API_HOST/docs
   ZITADEL   http://$AUTH_HOST/ui/console
 
   Login     admin@dbaas.$AUTH_HOST / Password1!   (dbaas.admin role)

@@ -71,6 +71,7 @@ nav:
       - design-decisions/auth-with-zitadel.md
       - design-decisions/audit-in-loki.md
       - design-decisions/gitops-delivery.md
+  - API reference: api-reference.md
   - Components:
       - components/index.md
       - components/operator.md

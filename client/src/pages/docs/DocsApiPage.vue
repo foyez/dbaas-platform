@@ -1,3 +1,8 @@
+<script setup lang="ts">
+// Swagger UI served by the API itself, next to /api/v1.
+const apiDocsUrl = new URL('/docs', import.meta.env.VITE_API_URL).href
+</script>
+
 <template>
   <article class="space-y-6">
     <h1 class="text-3xl font-bold tracking-tight">API reference</h1>
@@ -5,9 +10,11 @@
     <p class="leading-7 text-muted-foreground">
       All endpoints are under
       <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">/api/v1</code>
-      and require a Bearer token, obtained the same way the web UI signs in (OIDC). This page
-      covers the shape of the API - see the OpenAPI spec in the repository for full
-      request/response schemas.
+      and require a Bearer token, obtained the same way the web UI signs in (OIDC). This page covers
+      the shape of the API. For every request and response schema, and to try requests out, open the
+      <a :href="apiDocsUrl" class="font-medium text-foreground underline underline-offset-4"
+        >interactive API reference</a
+      >.
     </p>
 
     <div class="overflow-x-auto rounded-lg border">
