@@ -14,16 +14,20 @@
     <div class="space-y-2">
       <h2 class="text-xl font-semibold tracking-tight">Usage</h2>
       <pre class="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm"><code>c := dbaas.New("https://api.example.com",
-    dbaas.WithClientCredentials(tokenURL, clientID, clientSecret, []string{"dbaas"}),
+    dbaas.WithClientCredentials(tokenURL, clientID, clientSecret, []string{
+        "openid",
+        "urn:zitadel:iam:org:project:id:" + projectID + ":aud",
+    }),
 )
 
 inst, _ := c.Instances.Create(ctx, dbaas.CreateInstanceInput{
-    Name:           "orders-db",
+    Name:           "orders",
     Version:        16,
     Storage:        "10Gi",
-    IdempotencyKey: "orders-db-create-1",
+    IdempotencyKey: "orders-db",
 })
 
+inst, _ = c.Instances.WaitUntilRunning(ctx, inst.ID)
 creds, _ := c.Instances.Credentials(ctx, inst.ID)</code></pre>
     </div>
 

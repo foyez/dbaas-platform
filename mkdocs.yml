@@ -95,6 +95,7 @@ nav:
           - notes/api-design.md
           - notes/connection-pooling.md
           - notes/health-and-scaling.md
+          - notes/go-sdk.md
       - Networking:
           - notes/networking.md
           - notes/exposing-services.md

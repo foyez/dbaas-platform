@@ -22,6 +22,7 @@ What I learned building this platform, organised by topic instead of by when I l
 | API | [API design in Go](api-design.md) | Clean architecture, HTTP semantics, idempotent create |
 | | [Connection pooling](connection-pooling.md) | Pools, PgBouncer and the SQL console's limits |
 | | [Health checks and scaling](health-and-scaling.md) | Probes, HPA and load testing with k6 |
+| | [Building a Go SDK](go-sdk.md) | Client design, typed errors, testable examples, fakes |
 | Networking | [TCP, DNS, TLS](networking.md) | How connections, names and encryption work |
 | | [Exposing services](exposing-services.md) | Ingress, Gateway API, TCP passthrough, cert-manager |
 | Security | [Kubernetes security](kubernetes-security.md) | RBAC, Secrets and hardened containers |
