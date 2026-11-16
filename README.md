@@ -9,15 +9,17 @@ A self-service **Database-as-a-Service** platform: developers create, scale and 
 ```mermaid
 flowchart LR
     User(["Client"]) --> UI["Web UI<br/>(Vue)"]
+    User -->|Go SDK| API
     UI --> API["API<br/>(Go)"]
     UI --> Auth["ZITADEL<br/>(Auth)"]
     API --> Auth
 
-    API --> Obs["Grafana<br/>(Logs & Metrics)"]
+    API --> Obs["Grafana<br/>(Prometheus, Loki, Tempo)"]
     API --> Operator["dbaas-operator<br/>(PostgreSQL CRD)"]
 
     Operator --> CNPG["CloudNativePG"]
     CNPG --> PG[("PostgreSQL")]
+    App(["Your app"]) -->|SQL| PG
 ```
 
 ## Highlights
