@@ -17,7 +17,12 @@ What I learned building this platform, organised by topic instead of by when I l
 | Infrastructure | [OpenStack](openstack.md) | IaaS services and how a VM gets created |
 | | [Terraform](terraform.md) | Declarative provisioning, state and its pitfalls |
 | | [Kubernetes on VMs](kubernetes-on-vms.md) | Ansible + kubeadm, and what breaks on fresh nodes |
-| Kubernetes | [Kubernetes concepts](kubernetes-concepts.md) | Components, resources and control loops |
+| Kubernetes | [Kubernetes concepts and architecture](kubernetes-concepts.md) | The component map, the API server as hub, control loops |
+| | [The control plane](kubernetes-control-plane.md) | etcd, kube-apiserver, scheduler, controller-manager, CCM |
+| | [Worker nodes](kubernetes-nodes.md) | kubelet, CRI, containerd, runc, static Pods, TLS bootstrapping |
+| | [Cluster networking](kubernetes-cluster-networking.md) | CNI, overlays, Services and kube-proxy, CoreDNS |
+| | [Workloads and scheduling](kubernetes-workloads.md) | Pods, controllers, requests, affinity, taints |
+| | [Storage](kubernetes-storage.md) | Volumes, PV, PVC, StorageClass, CSI |
 | | [Custom resources and operators](operators.md) | CRDs, reconcile loops and this project's operator |
 | API | [API design in Go](api-design.md) | Clean architecture, HTTP semantics, idempotent create |
 | | [Connection pooling](connection-pooling.md) | Pools, PgBouncer and the SQL console's limits |

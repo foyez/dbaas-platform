@@ -96,6 +96,11 @@ nav:
           - notes/kubernetes-on-vms.md
       - Kubernetes:
           - notes/kubernetes-concepts.md
+          - notes/kubernetes-control-plane.md
+          - notes/kubernetes-nodes.md
+          - notes/kubernetes-cluster-networking.md
+          - notes/kubernetes-workloads.md
+          - notes/kubernetes-storage.md
           - notes/operators.md
       - API:
           - notes/api-design.md
