@@ -14,6 +14,11 @@ What I learned building this platform, organised by topic instead of by when I l
 
 | Layer | Page | In one line |
 |---|---|---|
+| Linux | [Linux fundamentals](linux-fundamentals.md) | Kernel, distributions, the shell and the filesystem tree |
+| | [Users and permissions](linux-users-permissions.md) | UIDs, sudo, rwx, special bits, capabilities |
+| | [Processes and services](linux-processes-services.md) | Signals, cgroups, systemd, packages, cron |
+| | [Networking and hardening](linux-networking-security.md) | ip, ss, netfilter/iptables, ufw, SSH |
+| | [Logs and troubleshooting](linux-logs-troubleshooting.md) | journald, grep/awk, dmesg, a method, backups |
 | Infrastructure | [OpenStack](openstack.md) | IaaS services and how a VM gets created |
 | | [Terraform](terraform.md) | Declarative provisioning, state and its pitfalls |
 | | [Kubernetes on VMs](kubernetes-on-vms.md) | Ansible + kubeadm, and what breaks on fresh nodes |

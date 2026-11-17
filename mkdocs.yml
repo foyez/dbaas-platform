@@ -90,6 +90,12 @@ nav:
       - components/infrastructure.md
   - Learning notes:
       - notes/index.md
+      - Linux:
+          - notes/linux-fundamentals.md
+          - notes/linux-users-permissions.md
+          - notes/linux-processes-services.md
+          - notes/linux-networking-security.md
+          - notes/linux-logs-troubleshooting.md
       - Infrastructure:
           - notes/openstack.md
           - notes/terraform.md
