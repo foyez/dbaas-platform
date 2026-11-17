@@ -6,4 +6,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: postgresql-sample
 spec:
-  # TODO(user): Add fields here
+  version: "16"
+  # Number of PostgreSQL pods (1 primary + N-1 replicas);
+  # 1 is enough for dev, use 3 for HA.
+  instances: 3
+  storage: 1Gi
+  database: customer
+  username: customer-admin
