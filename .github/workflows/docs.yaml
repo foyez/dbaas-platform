@@ -1,6 +1,6 @@
 name: Docs
 
-# Builds the MkDocs site and checks its Mermaid diagrams on every docs change,
+# Builds the MkDocs site and checks its Mermaid and C4 diagrams on every docs change,
 # and publishes it to GitHub Pages from main. Uses the same pinned images as
 # `make docs-build` and `make docs-check`.
 on:
@@ -47,6 +47,10 @@ jobs:
       # mkdocs can't see Mermaid errors: diagrams render in the browser.
       - name: Check Mermaid diagrams
         run: make docs-check
+
+      # C4 diagrams are committed as SVGs rendered from workspace.dsl.
+      - name: Check C4 diagrams are up to date
+        run: make diagrams-check
 
       # The API reference page renders platform/docs/openapi.yaml.
       - name: Lint OpenAPI spec

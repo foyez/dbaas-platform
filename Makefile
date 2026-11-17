@@ -14,6 +14,8 @@ HELM_VERSION      ?= v3.22.1
 TERRAFORM_VERSION ?= 1.17.2
 MKDOCS_MATERIAL_VERSION ?= 9.8.0
 MERMAID_CLI_VERSION     ?= 12.0.0
+STRUCTURIZR_VERSION     ?= 2026.10.26
+PLANTUML_VERSION        ?= 1.2026.10
 REDOCLY_CLI_VERSION     ?= 2.72.1
 
 LOCALBIN  ?= $(CURDIR)/bin
@@ -65,6 +67,21 @@ docs-build: ## Build the docs site into ./site, failing on warnings such as brok
 .PHONY: docs-check
 docs-check: ## Render every Mermaid diagram in docs/ to catch syntax errors.
 	MERMAID_CLI_VERSION=$(MERMAID_CLI_VERSION) hack/docs/check-mermaid.sh
+
+DIAGRAMS_ENV = STRUCTURIZR_VERSION=$(STRUCTURIZR_VERSION) PLANTUML_VERSION=$(PLANTUML_VERSION)
+
+.PHONY: diagrams
+diagrams: ## Render the C4 views in docs/architecture/workspace.dsl to SVG.
+	$(DIAGRAMS_ENV) hack/docs/diagrams.sh
+
+.PHONY: diagrams-check
+diagrams-check: ## Fail if the committed diagram SVGs don't match workspace.dsl.
+	$(DIAGRAMS_ENV) hack/docs/diagrams.sh --check
+
+.PHONY: diagrams-preview
+diagrams-preview: ## Edit the C4 model with live preview at http://localhost:8080.
+	docker run --rm -it -p 8080:8080 -v "$(CURDIR)/docs/architecture":/usr/local/structurizr \
+		structurizr/structurizr:$(STRUCTURIZR_VERSION) local
 
 .PHONY: api-lint
 api-lint: ## Validate and lint platform/docs/openapi.yaml.
