@@ -57,6 +57,12 @@ markdown_extensions:
 plugins:
   - search
 
+# Click-to-zoom for images and Mermaid diagrams.
+extra_css:
+  - assets/stylesheets/zoom.css
+extra_javascript:
+  - assets/javascripts/zoom.js
+
 nav:
   - Home: index.md
   - Getting started: getting-started.md
