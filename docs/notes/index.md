@@ -29,11 +29,13 @@ What I learned building this platform, organised by topic instead of by when I l
 | | [Workloads and scheduling](kubernetes-workloads.md) | Pods, controllers, requests, affinity, taints |
 | | [Storage](kubernetes-storage.md) | Volumes, PV, PVC, StorageClass, CSI |
 | | [Custom resources and operators](operators.md) | CRDs, reconcile loops and this project's operator |
-| API | [API design in Go](api-design.md) | REST, methods, status codes, errors, versioning, pagination, clean architecture |
+| API | [API design in Go](api-design.md) | REST, methods, status codes, errors, versioning, pagination, layering in brief |
 | | [Hardening the API](api-hardening.md) | Idempotency, validation, injection, SQL console limits, CORS, rate limiting, caching |
 | | [Connection pooling](connection-pooling.md) | Pools, PgBouncer and the SQL console's limits |
 | | [Health checks and scaling](health-and-scaling.md) | Probes, HPA and load testing with k6 |
 | | [Building a Go SDK](go-sdk.md) | Client design, typed errors, testable examples, fakes |
+| Code design | [Clean code principles](code-design-principles.md) | SOLID, DRY, KISS and YAGNI, with examples from the API and operator |
+| | [Clean architecture and project structure](code-design-clean-architecture.md) | Layers, the dependency rule, the composition root and the repo layout |
 | Networking | [TCP, DNS, TLS](networking.md) | How connections, names and encryption work |
 | | [Exposing services](exposing-services.md) | Ingress, Gateway API, TCP passthrough, cert-manager |
 | Security | [Kubernetes security](kubernetes-security.md) | RBAC, Secrets and hardened containers |
