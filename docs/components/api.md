@@ -22,7 +22,7 @@ All routes live under `/api/v1` and require a valid ZITADEL access token.
 
 ## Structure
 
-The code follows a pragmatic clean architecture: dependencies point inwards and infrastructure sits behind interfaces.
+The code follows a pragmatic [clean architecture](../notes/code-design-clean-architecture.md): dependencies point inwards and infrastructure sits behind interfaces.
 
 | Package | Role |
 |---|---|

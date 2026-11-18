@@ -158,7 +158,7 @@ The contract is written in `openapi.yaml`, and the code implements it. The UI an
 
 ### Pragmatic clean architecture
 
-Dependencies point inwards: HTTP and Kubernetes are details; the use cases don't import them.
+Dependencies point inwards: HTTP and Kubernetes are details; the use cases don't import them. The layers, the dependency rule and the project layout are covered in depth on [Clean architecture and project structure](code-design-clean-architecture.md).
 
 ```mermaid
 flowchart LR
