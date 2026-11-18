@@ -112,6 +112,7 @@ nav:
           - notes/kubernetes-workloads.md
           - notes/kubernetes-storage.md
           - notes/operators.md
+          - notes/kubernetes-kubebuilder.md
       - API:
           - notes/api-design.md
           - notes/api-hardening.md

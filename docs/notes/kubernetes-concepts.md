@@ -158,7 +158,7 @@ A certificate's **CN becomes the username and O becomes the groups**. That is th
 | PersistentVolumeClaim | A request for storage that outlives the Pod | [Storage](kubernetes-storage.md) |
 | Namespace | Partition for access control, quotas and naming | |
 | ConfigMap / Secret | Configuration and sensitive values, mounted or injected into Pods | [Security](kubernetes-security.md#secrets) |
-| CustomResourceDefinition | Teaches the API server a new kind, like this project's `PostgreSQL` | [Operators](operators.md) |
+| CustomResourceDefinition | Teaches the API server a new kind, like this project's `PostgreSQL` | [Operators](operators.md), [Kubebuilder](kubernetes-kubebuilder.md) |
 
 ## What I learned building it
 

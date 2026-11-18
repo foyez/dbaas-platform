@@ -125,7 +125,7 @@ If the operator is down or buggy, the CR hangs in `Terminating` until the finali
 
 ### Kubebuilder
 
-**Kubebuilder** scaffolds the project. You write Go types with markers (`+kubebuilder:validation:Minimum=1`, `+kubebuilder:subresource:status`, `+kubebuilder:printcolumn`) and `make manifests` generates the CRD YAML and RBAC from them (`+kubebuilder:rbac` markers on the controller). `make generate` writes the DeepCopy code. It also generates the Deployment, ServiceAccount and role bindings under `config/`.
+**Kubebuilder** scaffolds the project. You write Go types with markers (`+kubebuilder:validation:Minimum=1`, `+kubebuilder:subresource:status`, `+kubebuilder:printcolumn`) and `make manifests` generates the CRD YAML and RBAC from them (`+kubebuilder:rbac` markers on the controller). `make generate` writes the DeepCopy code. It also generates the Deployment, ServiceAccount and role bindings under `config/`. Details: [Building an operator with Kubebuilder](kubernetes-kubebuilder.md).
 
 ## How this project's operator is built
 

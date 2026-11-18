@@ -36,6 +36,7 @@ Check here before writing, so a concept goes into its existing page instead of a
 | | `kubernetes-workloads.md` | Pods, labels, workload controllers, rollouts, ConfigMap/Secret (brief), requests/limits, affinity, taints |
 | | `kubernetes-storage.md` | Volumes, PV/PVC/StorageClass, access modes, CSI, StatefulSet volumes |
 | | `operators.md` | CRD/CR/operator, reconcile loop, controller-runtime, owner refs, finalizers |
+| | `kubernetes-kubebuilder.md` | Kubebuilder vs controller-gen vs controller-runtime, layout, markers, make targets, manager/scheme, config/, envtest |
 | API | `api-design.md` | REST constraints, URLs, methods (safe/idempotent, PUT vs PATCH), status codes, error shape, versioning, pagination, short clean-architecture summary (links to code design) |
 | | `api-hardening.md` | Idempotency keys, input validation, injection, SQL console limits, CORS, HTTPS rules, rate limiting, caching |
 | | `connection-pooling.md`, `health-and-scaling.md`, `go-sdk.md` | |
