@@ -57,6 +57,10 @@ markdown_extensions:
 plugins:
   - search
 
+# Guide for coding agents; not part of the site.
+exclude_docs: |
+  AGENTS.md
+
 # Click-to-zoom for images and Mermaid diagrams.
 extra_css:
   - assets/stylesheets/zoom.css
@@ -110,11 +114,11 @@ nav:
           - notes/operators.md
       - API:
           - notes/api-design.md
+          - notes/api-hardening.md
           - notes/connection-pooling.md
           - notes/health-and-scaling.md
           - notes/go-sdk.md
       - Networking:
-          - notes/api-hardening.md
           - notes/networking.md
           - notes/exposing-services.md
       - Security:
