@@ -114,6 +114,7 @@ nav:
           - notes/health-and-scaling.md
           - notes/go-sdk.md
       - Networking:
+          - notes/api-hardening.md
           - notes/networking.md
           - notes/exposing-services.md
       - Security:

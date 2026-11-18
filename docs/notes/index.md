@@ -29,7 +29,8 @@ What I learned building this platform, organised by topic instead of by when I l
 | | [Workloads and scheduling](kubernetes-workloads.md) | Pods, controllers, requests, affinity, taints |
 | | [Storage](kubernetes-storage.md) | Volumes, PV, PVC, StorageClass, CSI |
 | | [Custom resources and operators](operators.md) | CRDs, reconcile loops and this project's operator |
-| API | [API design in Go](api-design.md) | Clean architecture, HTTP semantics, idempotent create |
+| API | [API design in Go](api-design.md) | REST, methods, status codes, errors, versioning, pagination, clean architecture |
+| | [Hardening the API](api-hardening.md) | Idempotency, validation, injection, SQL console limits, CORS, rate limiting, caching |
 | | [Connection pooling](connection-pooling.md) | Pools, PgBouncer and the SQL console's limits |
 | | [Health checks and scaling](health-and-scaling.md) | Probes, HPA and load testing with k6 |
 | | [Building a Go SDK](go-sdk.md) | Client design, typed errors, testable examples, fakes |
