@@ -176,7 +176,7 @@ sequenceDiagram
 - **Keep `Reconcile` an orchestrator.** Building CNPG objects lives in `cnpg.go` and port handling in `tcpexpose.go`, so the main loop reads as a list of steps.
 - **Shared state needs optimistic locking.** The port allocator is a ConfigMap. Two reconciles can race for the same port, so updates rely on `resourceVersion` conflicts and retry.
 - **Version-match your dependencies.** The operator compiles against a CNPG API version, which has to match the CNPG installed in the cluster.
-- **A PgBouncer StatefulSet was a good exercise but the wrong product choice.** Managing StatefulSet, PVC and Service directly taught the mechanics. CNPG's own `Pooler` is the better fit, so that code is disabled.
+- **A PgBouncer StatefulSet was a good exercise but the wrong product choice.** Managing StatefulSet, PVC and Service directly taught the mechanics. CNPG's own `Pooler` is the better fit, so that code is disabled. Why this project builds on CNPG at all: [Running PostgreSQL on Kubernetes](kubernetes-postgres.md).
 - **A CR is configuration, not a database.** Store desired state in CRs, not application or monitoring data.
 
 ## Review questions

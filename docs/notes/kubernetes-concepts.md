@@ -1,7 +1,7 @@
 # Kubernetes concepts and architecture
 
 !!! abstract "Where it's used in this project"
-    Everything after the OpenStack phase runs on Kubernetes: the operator, API, UI, CloudNativePG and every database. These are the ideas the rest of the notes build on. This page is the map; the deeper pages are [control plane](kubernetes-control-plane.md), [nodes](kubernetes-nodes.md), [cluster networking](kubernetes-cluster-networking.md), [workloads and scheduling](kubernetes-workloads.md) and [storage](kubernetes-storage.md).
+    Everything after the OpenStack phase runs on Kubernetes: the operator, API, UI, CloudNativePG and every database. These are the ideas the rest of the notes build on. This page is the map; the deeper pages are [control plane](kubernetes-control-plane.md), [nodes](kubernetes-nodes.md), [cluster networking](kubernetes-cluster-networking.md), [workloads and scheduling](kubernetes-workloads.md) and [storage](kubernetes-storage.md); [running PostgreSQL on Kubernetes](kubernetes-postgres.md) puts them together for databases.
 
 Sources: the official [Kubernetes docs](https://kubernetes.io/docs/concepts/architecture/), a Kubernetes fundamentals course, and [Kubernetes the (Very) Hard Way](https://labs.iximiuz.com/courses/kubernetes-the-very-hard-way-0cbfd997) on iximiuz Labs, which installs every component by hand as a systemd service.
 

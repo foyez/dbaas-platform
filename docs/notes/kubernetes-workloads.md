@@ -197,7 +197,7 @@ kubectl describe nodes | grep -A 5 "Allocated resources"
 - **Requests are a scheduling contract, not a measurement.** A Pod using 2 CPUs with a 100m request still counts as 100m; that's how nodes get overcommitted.
 - **Single-node clusters need the control-plane taint removed**, or nothing but system Pods will schedule.
 - **Rollouts are only as safe as the readiness probe.** Without one, a Deployment considers a crashing-on-first-request Pod available and keeps going.
-- **Databases need identity and their own disk.** That's what StatefulSets give; CloudNativePG gives the same guarantees by managing Pods and PVCs itself, plus failover a StatefulSet doesn't know how to do.
+- **Databases need identity and their own disk.** That's what StatefulSets give; CloudNativePG gives the same guarantees by managing Pods and PVCs itself, plus failover a StatefulSet doesn't know how to do. The full reasoning is in [Running PostgreSQL on Kubernetes](kubernetes-postgres.md).
 
 ## Review questions
 

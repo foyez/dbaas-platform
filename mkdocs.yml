@@ -113,6 +113,7 @@ nav:
           - notes/kubernetes-storage.md
           - notes/operators.md
           - notes/kubernetes-kubebuilder.md
+          - notes/kubernetes-postgres.md
       - API:
           - notes/api-design.md
           - notes/api-hardening.md
