@@ -43,6 +43,7 @@ Check here before writing, so a concept goes into its existing page instead of a
 | | `connection-pooling.md`, `health-and-scaling.md`, `go-sdk.md` | |
 | Code design | `code-design-principles.md` | SOLID, DRY/KISS/YAGNI, wrong abstraction, rule of three, with project examples |
 | | `code-design-clean-architecture.md` | Layers, dependency rule, request flow, composition root, DTO/domain/CRD models, repo and package layout |
+| System design | `system-design-fundamentals.md` | Hub: scaling out/LB, replicas, sharding, caching, async writes, consistency/CAP/PACELC, SPOFs, retries; links to the deep pages |
 | Networking | `networking.md` (TCP, DNS, TLS), `exposing-services.md` (Ingress, Gateway API, cert-manager) | |
 | Security | `kubernetes-security.md` (RBAC, Secrets, hardened containers), `authentication.md` (OAuth/OIDC/ZITADEL) | |
 | Frontend | `frontend.md` | |

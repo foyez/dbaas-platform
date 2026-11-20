@@ -123,6 +123,8 @@ nav:
       - Code design:
           - notes/code-design-principles.md
           - notes/code-design-clean-architecture.md
+      - System design:
+          - notes/system-design-fundamentals.md
       - Networking:
           - notes/networking.md
           - notes/exposing-services.md

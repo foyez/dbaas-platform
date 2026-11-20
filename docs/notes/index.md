@@ -38,6 +38,7 @@ What I learned building this platform, organised by topic instead of by when I l
 | | [Building a Go SDK](go-sdk.md) | Client design, typed errors, testable examples, fakes |
 | Code design | [Clean code principles](code-design-principles.md) | SOLID, DRY, KISS and YAGNI, with examples from the API and operator |
 | | [Clean architecture and project structure](code-design-clean-architecture.md) | Layers, the dependency rule, the composition root and the repo layout |
+| System design | [The five core challenges at scale](system-design-fundamentals.md) | Replication, sharding, caching, consistency and failure, mapped to this platform |
 | Networking | [TCP, DNS, TLS](networking.md) | How connections, names and encryption work |
 | | [Exposing services](exposing-services.md) | Ingress, Gateway API, TCP passthrough, cert-manager |
 | Security | [Kubernetes security](kubernetes-security.md) | RBAC, Secrets and hardened containers |
